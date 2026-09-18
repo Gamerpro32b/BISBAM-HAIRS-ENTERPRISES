@@ -1,7 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — shop.js
    Reads products from Supabase (via db.js).
-   Falls back to local placeholders if DB is empty.
+   Shows loading skeletons while fetching.
    ========================================================= */
 
 (function () {
@@ -18,6 +18,18 @@
 
   let allProducts = [];
 
+  /* ============ SKELETONS ============ */
+  function showSkeletons(n = 6) {
+    grid.innerHTML = Array.from({ length: n }).map(() => `
+      <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    `).join('');
+    if (countEl) countEl.textContent = 'Loading products…';
+  }
+
   /* ============ RENDER PRODUCTS ============ */
   function renderProducts(products) {
     if (!products || products.length === 0) {
@@ -25,6 +37,7 @@
         <p style="grid-column:1/-1;text-align:center;color:var(--grey);padding:var(--space-xl) 0;">
           No products yet. Products will appear here once added from the admin dashboard.
         </p>`;
+      if (countEl) countEl.textContent = 'Showing 0 products';
       return;
     }
 
@@ -50,12 +63,11 @@
     }).join('');
   }
 
-  /* ============ COLLECT CARDS ============ */
+  /* ============ FILTERS ============ */
   function getCards() {
     return Array.from(grid.querySelectorAll('.product-card'));
   }
 
-  /* ============ APPLY FILTERS + SORT ============ */
   function applyFilters() {
     const cat = (filterCategory?.value || '').toLowerCase();
     const length = (filterLength?.value || '').toLowerCase();
@@ -99,12 +111,10 @@
     }
   }
 
-  /* ============ WIRE EVENTS ============ */
   [filterCategory, filterLength, filterTexture, filterSort].forEach(el => {
     if (el) el.addEventListener('change', applyFilters);
   });
 
-  /* ============ READ URL PARAMS ============ */
   const params = new URLSearchParams(window.location.search);
   const catParam = params.get('cat');
   if (catParam && filterCategory) {
@@ -113,14 +123,13 @@
 
   /* ============ INIT ============ */
   async function init() {
-    await new Promise(r => setTimeout(r, 100));
+    showSkeletons(6);
     allProducts = await window.BisbamDB2.getProducts();
     renderProducts(allProducts);
     applyFilters();
   }
   init();
 
-  /* ============ EXPOSE ============ */
   window.BisbamShop = { applyFilters, renderProducts };
 
 })();

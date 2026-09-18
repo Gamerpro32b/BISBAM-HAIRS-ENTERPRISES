@@ -1981,3 +1981,40 @@ table {
     display: none !important;
   }
 }
+/* =========================================================
+   LOADING SKELETONS
+   ========================================================= */
+
+.skeleton-card {
+  background: var(--white);
+  border: 1px solid var(--pink-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: linear-gradient(90deg, #FDF5F9 25%, #F8E8F0 50%, #FDF5F9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 12px;
+  margin: var(--space-md) var(--space-md) var(--space-sm);
+  border-radius: 4px;
+  background: linear-gradient(90deg, #FDF5F9 25%, #F8E8F0 50%, #FDF5F9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+  width: 60%;
+  margin-bottom: var(--space-md);
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

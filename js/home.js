@@ -1,7 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — home.js
-   Homepage: renders category grid + featured products
-   from Supabase (via db.js).
+   Homepage: categories + featured products from Supabase.
+   Shows loading skeletons while fetching.
    ========================================================= */
 
 (function () {
@@ -11,6 +11,28 @@
   const featuredGrid = document.getElementById('featuredGrid');
 
   if (!categoryGrid && !featuredGrid) return;
+
+  /* ============ CATEGORY SKELETONS ============ */
+  function showCategorySkeletons(n = 4) {
+    if (!categoryGrid) return;
+    categoryGrid.innerHTML = Array.from({ length: n }).map(() => `
+      <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+      </div>
+    `).join('');
+  }
+
+  /* ============ FEATURED SKELETONS ============ */
+  function showFeaturedSkeletons(n = 4) {
+    if (!featuredGrid) return;
+    featuredGrid.innerHTML = Array.from({ length: n }).map(() => `
+      <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    `).join('');
+  }
 
   /* ============ CATEGORIES ============ */
   async function renderCategories() {
@@ -23,7 +45,6 @@
       return;
     }
 
-    // Map slug → default image (we don't have category images yet)
     const imageFor = (slug) => {
       if (slug === 'wigs' || slug === 'human-hair') return 'assets/images/banners/hero.jpg';
       return 'assets/images/banners/about.jpg';
@@ -37,7 +58,7 @@
     `).join('');
   }
 
-  /* ============ FEATURED PRODUCTS ============ */
+  /* ============ FEATURED ============ */
   async function renderFeatured() {
     if (!featuredGrid) return;
 
@@ -68,9 +89,14 @@
 
   /* ============ INIT ============ */
   async function init() {
-    await new Promise(r => setTimeout(r, 100));
-    await renderCategories();
-    await renderFeatured();
+    // Kick off both fetches in parallel, with skeletons while waiting
+    showCategorySkeletons(4);
+    showFeaturedSkeletons(4);
+
+    await Promise.all([
+      renderCategories(),
+      renderFeatured()
+    ]);
   }
   init();
 
