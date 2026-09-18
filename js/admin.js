@@ -1,7 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — admin.js
-   Admin dashboard + products + auth.
-   Sub-steps: 21a, 21b, 21c, 22b
+   Admin + products + auth + image upload.
+   Sub-steps: 21a, 21b, 21c, 22b, 23a
    ========================================================= */
 
 (function () {
@@ -49,10 +49,7 @@
       btn.disabled = true;
       errEl.hidden = true;
 
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { error } = await client.auth.signInWithPassword({ email, password });
 
       btn.textContent = originalText;
       btn.disabled = false;
@@ -63,7 +60,6 @@
         return;
       }
 
-      // Success — redirect to dashboard
       window.location.href = 'index.html';
     });
   }
@@ -71,7 +67,6 @@
   /* =========================================================
      PROTECT ADMIN PAGES
      ========================================================= */
-  // Only run on admin pages (not login.html)
   const path = window.location.pathname.split('/').pop() || 'index.html';
   const isLoginPage = path === 'login.html';
 
@@ -79,7 +74,6 @@
     (async () => {
       const client = db();
       const { data } = await client.auth.getSession();
-
       if (!data || !data.session) {
         window.location.href = 'login.html';
       }
@@ -100,7 +94,7 @@
   }
 
   /* =========================================================
-     REST OF ADMIN (only runs if not on login page)
+     REST OF ADMIN
      ========================================================= */
   if (isLoginPage) return;
 
@@ -318,20 +312,27 @@
       return;
     }
 
-    body.innerHTML = list.map(p => `
-      <tr>
-        <td><img src="../${p.image}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:6px;"></td>
-        <td>${p.name}</td>
-        <td>${p.category || '—'}</td>
-        <td>${naira(p.retail_price || p.price)}</td>
-        <td>${p.wholesale_price ? naira(p.wholesale_price) : '—'}</td>
-        <td>${p.stock}</td>
-        <td>${p.stock === 0 ? 'Out' : 'In Stock'}</td>
-        <td>
-          <button class="btn btn-small btn-outline edit-product" data-id="${p.id}">Edit</button>
-        </td>
-      </tr>
-    `).join('');
+    body.innerHTML = list.map(p => {
+      // Handle both relative paths and full URLs
+      const imgSrc = p.image && p.image.startsWith('http')
+        ? p.image
+        : '../' + p.image;
+
+      return `
+        <tr>
+          <td><img src="${imgSrc}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:6px;"></td>
+          <td>${p.name}</td>
+          <td>${p.category || '—'}</td>
+          <td>${naira(p.retail_price || p.price)}</td>
+          <td>${p.wholesale_price ? naira(p.wholesale_price) : '—'}</td>
+          <td>${p.stock}</td>
+          <td>${p.stock === 0 ? 'Out' : 'In Stock'}</td>
+          <td>
+            <button class="btn btn-small btn-outline edit-product" data-id="${p.id}">Edit</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 
   function wireProductsPageFilters() {
@@ -379,6 +380,9 @@
     const client = db();
     if (!client) return alert('Not connected to database.');
 
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+
     const name = form.querySelector('#pName').value.trim();
     const description = form.querySelector('#pDescription').value.trim();
     const categorySlug = form.querySelector('#pCategory').value;
@@ -404,11 +408,65 @@
     const featured = form.querySelector('#pFeatured').checked;
     const wholesaleAvailable = form.querySelector('#pWholesaleAvailable').checked;
 
+    /* ===== IMAGE UPLOAD ===== */
+    const fileInput = form.querySelector('#pImages');
+    const files = fileInput ? Array.from(fileInput.files || []) : [];
+    const uploadedImages = [];
+
+    if (files.length > 0) {
+      const { data: userData } = await client.auth.getUser();
+      if (!userData || !userData.user) {
+        alert('You must be logged in to upload images.');
+        return;
+      }
+
+      btn.textContent = 'Uploading images…';
+      btn.disabled = true;
+
+      for (const file of files) {
+        if (file.size > 500 * 1024) {
+          alert(`Image "${file.name}" is over 500KB. Please compress it first.`);
+          btn.textContent = originalText;
+          btn.disabled = false;
+          return;
+        }
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+        const filepath = `products/${filename}`;
+
+        const { error: uploadErr } = await client.storage
+          .from('Product-images')
+          .upload(filepath, file, {
+            cacheControl: '31536000',
+            upsert: false
+          });
+
+        if (uploadErr) {
+          console.error('Image upload error:', uploadErr);
+          alert('Image upload failed: ' + uploadErr.message);
+          btn.textContent = originalText;
+          btn.disabled = false;
+          return;
+        }
+
+        const { data: pub } = client.storage
+          .from('Product-images')
+          .getPublicUrl(filepath);
+
+        if (pub && pub.publicUrl) {
+          uploadedImages.push(pub.publicUrl);
+        }
+      }
+    }
+
+    const images = uploadedImages.length > 0
+      ? uploadedImages
+      : ['assets/images/products/placeholder.jpg'];
+
     const slug = name.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
-
-    const images = ['assets/images/products/placeholder.jpg'];
 
     const payload = {
       name, slug, description,
@@ -428,8 +486,6 @@
       wholesale_available: wholesaleAvailable
     };
 
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
     btn.textContent = 'Saving…';
     btn.disabled = true;
 
