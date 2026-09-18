@@ -1955,21 +1955,21 @@ table {
     display: none;
   }
 
-  /* Overlay behind drawer */
-  .nav-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(20, 20, 20, 0.4);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition);
-    z-index: 140;
-  }
+/* Overlay behind drawer */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+  z-index: 90;
+}
 
-  .nav-overlay.is-active {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.nav-overlay.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
 }
 
 /* On desktop, hide hamburger + overlay always */
