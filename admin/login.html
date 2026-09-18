@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Bisbam Hairs</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-login-body">
+
+  <div class="admin-login-wrap">
+
+    <div class="admin-login-card">
+
+      <div class="admin-login-brand">
+        <img src="../assets/logo/logo.png" alt="Bisbam Hairs">
+        <h1>Bisbam Admin</h1>
+        <p>Sign in to manage your store.</p>
+      </div>
+
+      <form id="adminLoginForm" class="admin-login-form">
+
+        <div class="form-group">
+          <label for="adminEmail">Email</label>
+          <input type="email" id="adminEmail" name="email" autocomplete="username" required>
+        </div>
+
+        <div class="form-group">
+          <label for="adminPassword">Password</label>
+          <input type="password" id="adminPassword" name="password" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+
+        <p class="admin-login-error" id="adminLoginError" hidden></p>
+
+      </form>
+
+      <p class="admin-login-back">
+        <a href="../index.html">← Back to site</a>
+      </p>
+
+    </div>
+
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

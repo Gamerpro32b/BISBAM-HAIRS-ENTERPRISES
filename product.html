@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — Bisbam Hairs</title>
+  <meta name="description" content="View product details at Bisbam Hairs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container header-inner">
+
+      <a href="index.html" class="logo">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <a href="cart.html" class="cart-link">Cart <span class="cart-count">0</span></a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ============ BREADCRUMB ============ -->
+  <nav class="breadcrumb">
+    <div class="container">
+      <a href="index.html">Home</a> /
+      <a href="shop.html">Shop</a> /
+      <span>Product Name</span>
+    </div>
+  </nav>
+
+  <!-- ============ PRODUCT DETAIL ============ -->
+  <section class="product-detail">
+    <div class="container product-detail-layout">
+
+      <!-- Gallery -->
+      <div class="product-gallery">
+        <div class="product-gallery-main">
+          <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder" id="mainImage">
+        </div>
+        <div class="product-gallery-thumbs">
+          <img src="assets/images/products/placeholder.jpg" alt="Thumbnail 1">
+          <img src="assets/images/products/placeholder.jpg" alt="Thumbnail 2">
+          <img src="assets/images/products/placeholder.jpg" alt="Thumbnail 3">
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="product-info">
+
+        <h1 class="product-title">Product Name Here</h1>
+
+        <p class="product-price">₦0</p>
+
+        <p class="product-description">
+          Product description will appear here once added from the admin dashboard.
+        </p>
+
+        <!-- Variations (will be populated dynamically later) -->
+        <div class="product-variations">
+
+          <div class="variation-group">
+            <label for="length">Length</label>
+            <select id="length">
+              <option value="">Select length</option>
+              <option value="10">10"</option>
+              <option value="12">12"</option>
+              <option value="14">14"</option>
+              <option value="16">16"</option>
+              <option value="18">18"</option>
+              <option value="20">20"</option>
+              <option value="22">22"</option>
+              <option value="24">24"</option>
+              <option value="26">26"</option>
+              <option value="28">28"</option>
+              <option value="30">30"</option>
+            </select>
+          </div>
+
+          <div class="variation-group">
+            <label for="texture">Texture</label>
+            <select id="texture">
+              <option value="">Select texture</option>
+              <option value="bone-straight">Bone Straight</option>
+              <option value="silky-straight">Silky Straight</option>
+              <option value="body-wave">Body Wave</option>
+              <option value="loose-wave">Loose Wave</option>
+              <option value="deep-curly">Deep Curly</option>
+              <option value="kinky-curly">Kinky Curly</option>
+            </select>
+          </div>
+
+          <div class="variation-group">
+            <label for="color">Color</label>
+            <select id="color">
+              <option value="">Select color</option>
+              <option value="natural-black">Natural Black</option>
+              <option value="dark-brown">Dark Brown</option>
+              <option value="chestnut-brown">Chestnut Brown</option>
+              <option value="blonde">Blonde</option>
+              <option value="99j-burgundy">99J Burgundy</option>
+            </select>
+          </div>
+
+          <div class="variation-group">
+            <label for="density">Density</label>
+            <select id="density">
+              <option value="">Select density</option>
+              <option value="150">150%</option>
+              <option value="180">180%</option>
+              <option value="200">200%</option>
+              <option value="250">250%</option>
+              <option value="300">300%</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Quantity + Add to cart -->
+        <div class="product-actions">
+          <div class="quantity">
+            <label for="qty">Qty</label>
+            <input type="number" id="qty" value="1" min="1">
+          </div>
+          <button class="btn btn-primary" id="addToCartBtn">Add to Cart</button>
+        </div>
+
+        <!-- WhatsApp enquiry -->
+        <a href="https://wa.me/2348146108122?text=Hi%20Bisbam%20Hairs%2C%20I%27m%20interested%20in%20this%20product"
+           class="btn btn-outline whatsapp-btn">
+          Enquire on WhatsApp
+        </a>
+
+        <!-- Extra info -->
+        <div class="product-meta">
+          <p><strong>Availability:</strong> <span id="stockStatus">In stock</span></p>
+          <p><strong>Category:</strong> <span id="productCategory">—</span></p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ RELATED PRODUCTS ============ -->
+  <section class="related-products">
+    <div class="container">
+      <h2 class="section-title">You May Also Like</h2>
+
+      <div class="product-grid">
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small">View</a>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+
+      <div class="footer-brand">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+        <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
+      </div>
+
+      <div class="footer-links">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="shop.html">All Products</a></li>
+          <li><a href="shop.html?cat=wigs">Wigs</a></li>
+          <li><a href="shop.html?cat=bundles">Bundles</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h3>Info</h3>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="cart.html">Cart</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-contact">
+        <h3>Contact</h3>
+        <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
+        <p>WhatsApp: 08146108122</p>
+        <p>Open 24 hours</p>
+        <p>
+          <a href="https://instagram.com/bisbam_hairs">Instagram</a> ·
+          <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
+        </p>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

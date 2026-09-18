@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders — Bisbam Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- ============ ADMIN HEADER ============ -->
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a href="index.html" class="admin-logo">
+        <img src="../assets/logo/logo.png" alt="Bisbam Hairs">
+        <span>Admin</span>
+      </a>
+      <div class="admin-header-actions">
+        <span class="admin-user">Signed in as Admin</span>
+        <button class="btn btn-outline btn-small" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ ADMIN LAYOUT ============ -->
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <nav>
+        <ul>
+          <li><a href="index.html">Dashboard</a></li>
+          <li><a href="orders.html" class="active">Orders</a></li>
+          <li><a href="products.html">Products</a></li>
+          <li><a href="categories.html">Categories</a></li>
+          <li><a href="customers.html">Customers</a></li>
+          <li><a href="settings.html">Settings</a></li>
+        </ul>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <a href="../index.html" target="_blank">View Site ↗</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <div class="admin-page-header">
+        <h1>Orders</h1>
+        <p>Manage all customer orders.</p>
+      </div>
+
+      <!-- ============ FILTER TABS ============ -->
+      <section class="admin-tabs">
+        <button class="tab-btn active" data-status="all">All</button>
+        <button class="tab-btn" data-status="pending">Pending</button>
+        <button class="tab-btn" data-status="confirmed">Confirmed</button>
+        <button class="tab-btn" data-status="delivered">Delivered</button>
+        <button class="tab-btn" data-status="cancelled">Cancelled</button>
+      </section>
+
+      <!-- ============ SEARCH ============ -->
+      <section class="admin-toolbar">
+        <input type="search" id="orderSearch" placeholder="Search by order ID, customer name, or phone">
+      </section>
+
+      <!-- ============ ORDERS TABLE ============ -->
+      <section class="admin-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody">
+              <tr>
+                <td colspan="10" class="admin-empty">
+                  No orders yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ ORDER DETAIL MODAL ============ -->
+  <div class="admin-modal" id="orderModal" hidden>
+    <div class="admin-modal-overlay" data-close-modal></div>
+    <div class="admin-modal-content">
+      <div class="admin-modal-header">
+        <h2>Order Details</h2>
+        <button class="admin-modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="admin-modal-body" id="orderModalBody">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

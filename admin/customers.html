@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers — Bisbam Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- ============ ADMIN HEADER ============ -->
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a href="index.html" class="admin-logo">
+        <img src="../assets/logo/logo.png" alt="Bisbam Hairs">
+        <span>Admin</span>
+      </a>
+      <div class="admin-header-actions">
+        <span class="admin-user">Signed in as Admin</span>
+        <button class="btn btn-outline btn-small" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ ADMIN LAYOUT ============ -->
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <nav>
+        <ul>
+          <li><a href="index.html">Dashboard</a></li>
+          <li><a href="orders.html">Orders</a></li>
+          <li><a href="products.html">Products</a></li>
+          <li><a href="categories.html">Categories</a></li>
+          <li><a href="customers.html" class="active">Customers</a></li>
+          <li><a href="settings.html">Settings</a></li>
+        </ul>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <a href="../index.html" target="_blank">View Site ↗</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <div class="admin-page-header">
+        <h1>Customers</h1>
+        <p>Everyone who has placed an order with Bisbam Hairs.</p>
+      </div>
+
+      <!-- ============ SEARCH ============ -->
+      <section class="admin-toolbar">
+        <input type="search" id="customerSearch" placeholder="Search by name or phone">
+      </section>
+
+      <!-- ============ CUSTOMERS TABLE ============ -->
+      <section class="admin-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>City</th>
+                <th>Orders</th>
+                <th>Total Spent</th>
+                <th>Last Order</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customersBody">
+              <tr>
+                <td colspan="8" class="admin-empty">
+                  No customers yet. Customers appear here after their first order.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ CUSTOMER DETAIL MODAL ============ -->
+  <div class="admin-modal" id="customerModal" hidden>
+    <div class="admin-modal-overlay" data-close-modal></div>
+    <div class="admin-modal-content admin-modal-large">
+      <div class="admin-modal-header">
+        <h2>Customer Details</h2>
+        <button class="admin-modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="admin-modal-body" id="customerModalBody">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

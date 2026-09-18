@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — Bisbam Hairs</title>
+  <meta name="description" content="Complete your order at Bisbam Hairs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container header-inner">
+
+      <a href="index.html" class="logo">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <a href="cart.html" class="cart-link">Cart <span class="cart-count">0</span></a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ============ PAGE HEADER ============ -->
+  <section class="page-header">
+    <div class="container">
+      <h1>Checkout</h1>
+      <p>Complete your details and we'll confirm your order on WhatsApp.</p>
+    </div>
+  </section>
+
+  <!-- ============ CHECKOUT ============ -->
+  <section class="checkout-section">
+    <div class="container checkout-layout">
+
+      <!-- LEFT: Customer form -->
+      <div class="checkout-form-wrap">
+
+        <h2>Your Details</h2>
+
+        <form class="checkout-form" id="checkoutForm">
+
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" name="fullName" required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone / WhatsApp</label>
+            <input type="tel" id="phone" name="phone" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email (optional)</label>
+            <input type="email" id="email" name="email">
+          </div>
+
+          <div class="form-group">
+            <label for="address">Delivery Address</label>
+            <textarea id="address" name="address" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="city">City / Area</label>
+            <input type="text" id="city" name="city" required>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Order Notes (optional)</label>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+          </div>
+
+          <h2>Payment Method</h2>
+
+          <div class="payment-methods">
+
+            <label class="payment-option">
+              <input type="radio" name="payment" value="bank-transfer" checked>
+              <span>Bank Transfer</span>
+            </label>
+
+            <label class="payment-option">
+              <input type="radio" name="payment" value="whatsapp">
+              <span>Confirm on WhatsApp</span>
+            </label>
+
+          </div>
+
+        </form>
+
+      </div>
+
+      <!-- RIGHT: Order summary -->
+      <aside class="checkout-summary">
+
+        <h2>Order Summary</h2>
+
+        <div class="checkout-items" id="checkoutItems">
+          <!-- Items injected by js/cart.js -->
+        </div>
+
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="checkoutSubtotal">₦0</span>
+        </div>
+
+        <div class="summary-row">
+          <span>Delivery</span>
+          <span>To be confirmed</span>
+        </div>
+
+        <div class="summary-row summary-total">
+          <span>Total</span>
+          <span id="checkoutTotal">₦0</span>
+        </div>
+
+        <button type="submit" form="checkoutForm" class="btn btn-primary btn-block">
+          Place Order
+        </button>
+
+        <p class="form-note">
+          After placing your order, we'll reach out on WhatsApp to confirm
+          payment and delivery.
+        </p>
+
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+
+      <div class="footer-brand">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+        <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
+      </div>
+
+      <div class="footer-links">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="shop.html">All Products</a></li>
+          <li><a href="shop.html?cat=wigs">Wigs</a></li>
+          <li><a href="shop.html?cat=bundles">Bundles</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h3>Info</h3>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="cart.html">Cart</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-contact">
+        <h3>Contact</h3>
+        <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
+        <p>WhatsApp: 08146108122</p>
+        <p>Open 24 hours</p>
+        <p>
+          <a href="https://instagram.com/bisbam_hairs">Instagram</a> ·
+          <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
+        </p>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/cart.js"></script>
+</body>
+</html>

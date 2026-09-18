@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products — Bisbam Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- ============ ADMIN HEADER ============ -->
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a href="index.html" class="admin-logo">
+        <img src="../assets/logo/logo.png" alt="Bisbam Hairs">
+        <span>Admin</span>
+      </a>
+      <div class="admin-header-actions">
+        <span class="admin-user">Signed in as Admin</span>
+        <button class="btn btn-outline btn-small" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ ADMIN LAYOUT ============ -->
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <nav>
+        <ul>
+          <li><a href="index.html">Dashboard</a></li>
+          <li><a href="orders.html">Orders</a></li>
+          <li><a href="products.html" class="active">Products</a></li>
+          <li><a href="categories.html">Categories</a></li>
+          <li><a href="customers.html">Customers</a></li>
+          <li><a href="settings.html">Settings</a></li>
+        </ul>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <a href="../index.html" target="_blank">View Site ↗</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <div class="admin-page-header admin-page-header-flex">
+        <div>
+          <h1>Products</h1>
+          <p>Manage your product catalogue.</p>
+        </div>
+        <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+      </div>
+
+      <!-- ============ FILTERS ============ -->
+      <section class="admin-toolbar">
+        <input type="search" id="productSearch" placeholder="Search products by name">
+        <select id="productCategoryFilter">
+          <option value="">All Categories</option>
+        </select>
+        <select id="productStockFilter">
+          <option value="">All Stock Status</option>
+          <option value="in">In Stock</option>
+          <option value="low">Low Stock</option>
+          <option value="out">Out of Stock</option>
+        </select>
+      </section>
+
+      <!-- ============ PRODUCTS TABLE ============ -->
+      <section class="admin-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Retail Price</th>
+                <th>Wholesale Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsBody">
+              <tr>
+                <td colspan="8" class="admin-empty">
+                  No products yet. Click "+ Add Product" to create one.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ ADD / EDIT PRODUCT MODAL ============ -->
+  <div class="admin-modal" id="productModal" hidden>
+    <div class="admin-modal-overlay" data-close-modal></div>
+    <div class="admin-modal-content admin-modal-large">
+      <div class="admin-modal-header">
+        <h2 id="productModalTitle">Add Product</h2>
+        <button class="admin-modal-close" data-close-modal>&times;</button>
+      </div>
+
+      <div class="admin-modal-body">
+
+        <form id="productForm">
+
+          <!-- Basic info -->
+          <div class="form-section">
+            <h3>Basic Info</h3>
+
+            <div class="form-group">
+              <label for="pName">Product Name *</label>
+              <input type="text" id="pName" name="name" required>
+            </div>
+
+            <div class="form-group">
+              <label for="pDescription">Description</label>
+              <textarea id="pDescription" name="description" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="pCategory">Category *</label>
+              <select id="pCategory" name="category" required>
+                <option value="">Select category</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="pTags">Tags (comma separated)</label>
+              <input type="text" id="pTags" name="tags" placeholder="e.g. bone straight, 13x4, HD lace">
+            </div>
+          </div>
+
+          <!-- Pricing -->
+          <div class="form-section">
+            <h3>Pricing</h3>
+
+            <div class="form-group">
+              <label for="pRetailPrice">Retail Price (₦) *</label>
+              <input type="number" id="pRetailPrice" name="retailPrice" min="0" step="100" required>
+            </div>
+
+            <div class="form-group">
+              <label for="pWholesalePrice">Wholesale Price (₦)</label>
+              <input type="number" id="pWholesalePrice" name="wholesalePrice" min="0" step="100">
+            </div>
+
+            <div class="form-group">
+              <label for="pSalePrice">Sale Price (₦) — optional</label>
+              <input type="number" id="pSalePrice" name="salePrice" min="0" step="100">
+            </div>
+          </div>
+
+          <!-- Stock -->
+          <div class="form-section">
+            <h3>Stock</h3>
+
+            <div class="form-group">
+              <label for="pStock">Quantity in Stock *</label>
+              <input type="number" id="pStock" name="stock" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="pLowStockThreshold">Low Stock Alert at</label>
+              <input type="number" id="pLowStockThreshold" name="lowStockThreshold" min="0" value="3">
+            </div>
+
+            <div class="form-group">
+              <label for="pAvailability">Availability</label>
+              <select id="pAvailability" name="availability">
+                <option value="in">In Stock</option>
+                <option value="preorder">Pre-Order</option>
+                <option value="out">Out of Stock</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Variations -->
+          <div class="form-section">
+            <h3>Variations</h3>
+
+            <div class="form-group">
+              <label>Available Lengths (inches)</label>
+              <div class="checkbox-grid" id="lengthCheckboxes">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Available Textures</label>
+              <div class="checkbox-grid" id="textureCheckboxes">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Available Colors</label>
+              <div class="checkbox-grid" id="colorCheckboxes">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Available Densities</label>
+              <div class="checkbox-grid" id="densityCheckboxes">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="pLaceType">Lace Type</label>
+              <select id="pLaceType" name="laceType">
+                <option value="">Select lace type</option>
+                <option value="hd-lace">HD Lace</option>
+                <option value="transparent-lace">Transparent Lace</option>
+                <option value="swiss-lace">Swiss Lace</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="pCapSize">Cap Size</label>
+              <select id="pCapSize" name="capSize">
+                <option value="">Select cap size</option>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+                <option value="adjustable">Adjustable</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Media -->
+          <div class="form-section">
+            <h3>Media</h3>
+
+            <div class="form-group">
+              <label for="pImages">Product Images (upload multiple)</label>
+              <input type="file" id="pImages" name="images" accept="image/*" multiple>
+              <p class="form-note">Recommended: JPG/PNG, under 500KB each, square aspect ratio.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="pVideo">Product Video (optional)</label>
+              <input type="file" id="pVideo" name="video" accept="video/mp4,video/webm">
+              <p class="form-note">MP4 or WebM only. Max 30 seconds. Max 15MB.</p>
+            </div>
+          </div>
+
+          <!-- Featured -->
+          <div class="form-section">
+            <h3>Options</h3>
+
+            <label class="form-checkbox">
+              <input type="checkbox" id="pFeatured" name="featured">
+              <span>Show on homepage as Featured</span>
+            </label>
+
+            <label class="form-checkbox">
+              <input type="checkbox" id="pWholesaleAvailable" name="wholesaleAvailable">
+              <span>Available for Wholesale</span>
+            </label>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" data-close-modal>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Product</button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

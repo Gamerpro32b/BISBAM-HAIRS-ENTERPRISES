@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop — Bisbam Hairs</title>
+  <meta name="description" content="Shop premium human hair, luxury wigs and quality extensions from Bisbam Hairs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html" class="active">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="cart.html" class="cart-link">Cart <span class="cart-count">0</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ PAGE HEADER ============ -->
+  <section class="page-header">
+    <div class="container">
+      <h1>Shop All Products</h1>
+      <p>Premium human hair, luxury wigs and extensions.</p>
+    </div>
+  </section>
+
+  <!-- ============ SHOP ============ -->
+  <section class="shop">
+    <div class="container">
+
+      <!-- ============ FILTER BAR (top horizontal) ============ -->
+      <div class="filter-bar">
+
+        <div class="filter-group">
+          <label for="filterCategory">Category</label>
+          <select id="filterCategory">
+            <option value="">All</option>
+            <option value="human-hair">Human Hair</option>
+            <option value="wigs">Luxury Wigs</option>
+            <option value="extensions">Hair Extensions</option>
+            <option value="bundles">Hair Bundles</option>
+            <option value="closures">Closures</option>
+            <option value="frontals">Frontals</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filterLength">Length</label>
+          <select id="filterLength">
+            <option value="">All</option>
+            <option value="10">10"</option>
+            <option value="12">12"</option>
+            <option value="14">14"</option>
+            <option value="16">16"</option>
+            <option value="18">18"</option>
+            <option value="20">20"</option>
+            <option value="22">22"</option>
+            <option value="24">24"</option>
+            <option value="26">26"</option>
+            <option value="28">28"</option>
+            <option value="30">30"</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filterTexture">Texture</label>
+          <select id="filterTexture">
+            <option value="">All</option>
+            <option value="bone-straight">Bone Straight</option>
+            <option value="silky-straight">Silky Straight</option>
+            <option value="body-wave">Body Wave</option>
+            <option value="loose-wave">Loose Wave</option>
+            <option value="deep-curly">Deep Curly</option>
+            <option value="kinky-curly">Kinky Curly</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filterSort">Sort</label>
+          <select id="filterSort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- ============ SHOP TOOLBAR ============ -->
+      <div class="shop-toolbar">
+        <p class="shop-count">Showing 0 products</p>
+      </div>
+
+      <!-- ============ PRODUCT GRID ============ -->
+      <div class="product-grid" id="shopGrid">
+
+        <!-- Placeholder cards — JS will replace these later -->
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small btn-outline">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small btn-outline">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small btn-outline">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small btn-outline">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small btn-outline">View</a>
+        </article>
+
+        <article class="product-card">
+          <div class="product-image">
+            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
+          </div>
+          <h3 class="product-name">Product Name Here</h3>
+          <p class="product-price">₦0</p>
+          <a href="product.html" class="btn btn-small btn-outline">View</a>
+        </article>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+
+      <div class="footer-brand">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+        <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
+      </div>
+
+      <div class="footer-links">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="shop.html">All Products</a></li>
+          <li><a href="shop.html?cat=wigs">Wigs</a></li>
+          <li><a href="shop.html?cat=bundles">Bundles</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h3>Info</h3>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="cart.html">Cart</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-contact">
+        <h3>Contact</h3>
+        <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
+        <p>WhatsApp: 08146108122</p>
+        <p>Open 24 hours</p>
+        <p>
+          <a href="https://instagram.com/bisbam_hairs">Instagram</a> ·
+          <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
+        </p>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
