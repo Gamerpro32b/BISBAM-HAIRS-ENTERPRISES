@@ -1,7 +1,5 @@
 /* =========================================================
-   BISBAM HAIRS — admin.js
-   Admin + products + auth + image upload.
-   Sub-steps: 21a, 21b, 21c, 22b, 23a
+   BISBAM HAIRS — admin.js  (Part 1 of 2)
    ========================================================= */
 
 (function () {
@@ -12,6 +10,8 @@
   const localCustomers = window.BISBAM_CUSTOMERS || [];
   const localCategories = window.BISBAM_CATEGORIES || [];
 
+  let editingProductId = null;
+
   function naira(n) {
     return '₦' + Number(n || 0).toLocaleString('en-NG');
   }
@@ -21,14 +21,11 @@
     return window.BisbamDB;
   }
 
-  /* =========================================================
-     LOGIN PAGE
-     ========================================================= */
+  /* ============ LOGIN PAGE ============ */
   const loginForm = document.getElementById('adminLoginForm');
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const client = db();
       const errEl = document.getElementById('adminLoginError');
       const emailEl = document.getElementById('adminEmail');
@@ -64,9 +61,7 @@
     });
   }
 
-  /* =========================================================
-     PROTECT ADMIN PAGES
-     ========================================================= */
+  /* ============ PROTECT ADMIN PAGES ============ */
   const path = window.location.pathname.split('/').pop() || 'index.html';
   const isLoginPage = path === 'login.html';
 
@@ -80,9 +75,7 @@
     })();
   }
 
-  /* =========================================================
-     LOGOUT
-     ========================================================= */
+  /* ============ LOGOUT ============ */
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
@@ -93,11 +86,9 @@
     });
   }
 
-  /* =========================================================
-     REST OF ADMIN
-     ========================================================= */
   if (isLoginPage) return;
 
+  /* ============ FETCH ALL DATA ============ */
   async function fetchAll() {
     const client = db();
     const result = {
@@ -221,7 +212,7 @@
     });
   }
 
-  /* ============ DASHBOARD ============ */
+  /* ============ DASHBOARD RENDERS ============ */
   function renderDashboardStats(orders, products) {
     const set = (id, val) => {
       const el = document.getElementById(id);
@@ -277,7 +268,7 @@
     `).join('');
   }
 
-  /* ============ PRODUCTS PAGE ============ */
+  /* ============ PRODUCTS TABLE ============ */
   let productSearch = '';
   let productCategoryFilter = '';
   let productStockFilter = '';
@@ -313,11 +304,7 @@
     }
 
     body.innerHTML = list.map(p => {
-      // Handle both relative paths and full URLs
-      const imgSrc = p.image && p.image.startsWith('http')
-        ? p.image
-        : '../' + p.image;
-
+      const imgSrc = p.image && p.image.startsWith('http') ? p.image : '../' + p.image;
       return `
         <tr>
           <td><img src="${imgSrc}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:6px;"></td>
@@ -329,6 +316,7 @@
           <td>${p.stock === 0 ? 'Out' : 'In Stock'}</td>
           <td>
             <button class="btn btn-small btn-outline edit-product" data-id="${p.id}">Edit</button>
+            <button class="btn btn-small btn-outline delete-product" data-id="${p.id}" style="color:#b00020;border-color:#b00020;">Del</button>
           </td>
         </tr>
       `;
@@ -354,7 +342,7 @@
     });
   }
 
-  /* ============ CHECKBOX HELPERS ============ */
+  /* ============ CHECKBOXES ============ */
   function fillCheckboxes(containerId, values, name) {
     const el = document.getElementById(containerId);
     if (!el) return;
@@ -372,7 +360,84 @@
     return Array.from(el.querySelectorAll('input:checked')).map(i => i.value);
   }
 
-  /* ============ CREATE PRODUCT ============ */
+  function setChecked(containerId, values) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.querySelectorAll('input').forEach(i => {
+      i.checked = (values || []).includes(i.value);
+    });
+  }
+
+  // PART 2 continues below...
+    /* =========================================================
+     PART 2
+     ========================================================= */
+
+  /* ============ OPEN EDIT MODAL ============ */
+  function openEditModal(product) {
+    editingProductId = product.id;
+
+    const form = document.getElementById('productForm');
+    form.querySelector('#pName').value = product.name || '';
+    form.querySelector('#pDescription').value = product.description || '';
+    form.querySelector('#pCategory').value = product.category || '';
+    form.querySelector('#pTags').value = (product.tags || []).join(', ');
+
+    form.querySelector('#pRetailPrice').value = product.retail_price || 0;
+    form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
+    form.querySelector('#pSalePrice').value = product.sale_price || '';
+
+    form.querySelector('#pStock').value = product.stock || 0;
+    form.querySelector('#pLowStockThreshold').value = 3;
+    form.querySelector('#pAvailability').value = product.availability || 'in';
+
+    setChecked('lengthCheckboxes', product.lengths || []);
+    setChecked('textureCheckboxes', product.textures || []);
+    setChecked('colorCheckboxes', product.colors || []);
+    setChecked('densityCheckboxes', product.densities || []);
+
+    form.querySelector('#pLaceType').value = product.lace_type || '';
+    form.querySelector('#pCapSize').value = product.cap_size || '';
+
+    form.querySelector('#pFeatured').checked = !!product.featured;
+    form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
+
+    document.getElementById('productModalTitle').textContent = 'Edit Product';
+    openModal('productModal');
+  }
+
+  /* ============ UPLOAD HELPERS ============ */
+  async function uploadImages(client, files) {
+    const uploaded = [];
+    for (const file of files) {
+      if (file.size > 500 * 1024) throw new Error(`"${file.name}" over 500KB.`);
+      const ext = file.name.split('.').pop().toLowerCase();
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const filepath = `products/${filename}`;
+      const { error } = await client.storage.from('Product-images').upload(filepath, file, {
+        cacheControl: '31536000', upsert: false
+      });
+      if (error) throw error;
+      const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
+      if (pub && pub.publicUrl) uploaded.push(pub.publicUrl);
+    }
+    return uploaded;
+  }
+
+  async function uploadVideo(client, file) {
+    if (file.size > 15 * 1024 * 1024) throw new Error('Video is over 15MB.');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const filepath = `videos/${filename}`;
+    const { error } = await client.storage.from('Product-videos').upload(filepath, file, {
+      cacheControl: '31536000', upsert: false
+    });
+    if (error) throw error;
+    const { data: pub } = client.storage.from('Product-videos').getPublicUrl(filepath);
+    return pub ? pub.publicUrl : null;
+  }
+
+  /* ============ CREATE / UPDATE PRODUCT ============ */
   async function handleProductSubmit(e) {
     e.preventDefault();
 
@@ -383,133 +448,159 @@
     const btn = form.querySelector('button[type="submit"]');
     const originalText = btn.textContent;
 
-    const name = form.querySelector('#pName').value.trim();
-    const description = form.querySelector('#pDescription').value.trim();
-    const categorySlug = form.querySelector('#pCategory').value;
-    const tags = form.querySelector('#pTags').value
-      .split(',').map(t => t.trim()).filter(Boolean);
+    try {
+      const name = form.querySelector('#pName').value.trim();
+      const description = form.querySelector('#pDescription').value.trim();
+      const categorySlug = form.querySelector('#pCategory').value;
+      const tags = form.querySelector('#pTags').value
+        .split(',').map(t => t.trim()).filter(Boolean);
 
-    const retailPrice = Number(form.querySelector('#pRetailPrice').value) || 0;
-    const wholesalePrice = Number(form.querySelector('#pWholesalePrice').value) || null;
-    const salePrice = Number(form.querySelector('#pSalePrice').value) || null;
+      const retailPrice = Number(form.querySelector('#pRetailPrice').value) || 0;
+      const wholesalePrice = Number(form.querySelector('#pWholesalePrice').value) || null;
+      const salePrice = Number(form.querySelector('#pSalePrice').value) || null;
 
-    const stock = Number(form.querySelector('#pStock').value) || 0;
-    const lowStock = Number(form.querySelector('#pLowStockThreshold').value) || 3;
-    const availability = form.querySelector('#pAvailability').value;
+      const stock = Number(form.querySelector('#pStock').value) || 0;
+      const lowStock = Number(form.querySelector('#pLowStockThreshold').value) || 3;
+      const availability = form.querySelector('#pAvailability').value;
 
-    const lengths = getChecked('lengthCheckboxes');
-    const textures = getChecked('textureCheckboxes');
-    const colors = getChecked('colorCheckboxes');
-    const densities = getChecked('densityCheckboxes');
+      const lengths = getChecked('lengthCheckboxes');
+      const textures = getChecked('textureCheckboxes');
+      const colors = getChecked('colorCheckboxes');
+      const densities = getChecked('densityCheckboxes');
 
-    const laceType = form.querySelector('#pLaceType').value || null;
-    const capSize = form.querySelector('#pCapSize').value || null;
+      const laceType = form.querySelector('#pLaceType').value || null;
+      const capSize = form.querySelector('#pCapSize').value || null;
 
-    const featured = form.querySelector('#pFeatured').checked;
-    const wholesaleAvailable = form.querySelector('#pWholesaleAvailable').checked;
+      const featured = form.querySelector('#pFeatured').checked;
+      const wholesaleAvailable = form.querySelector('#pWholesaleAvailable').checked;
 
-    /* ===== IMAGE UPLOAD ===== */
-    const fileInput = form.querySelector('#pImages');
-    const files = fileInput ? Array.from(fileInput.files || []) : [];
-    const uploadedImages = [];
+      const fileInput = form.querySelector('#pImages');
+      const files = fileInput ? Array.from(fileInput.files || []) : [];
 
-    if (files.length > 0) {
-      const { data: userData } = await client.auth.getUser();
-      if (!userData || !userData.user) {
-        alert('You must be logged in to upload images.');
-        return;
-      }
+      const videoInput = form.querySelector('#pVideo');
+      const videoFile = videoInput && videoInput.files[0] ? videoInput.files[0] : null;
 
-      btn.textContent = 'Uploading images…';
+      const current = editingProductId
+        ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
+        : null;
+
+      let images = current && current.images && current.images.length
+        ? current.images
+        : ['assets/images/products/placeholder.jpg'];
+
+      let videoUrl = current ? current.video_url : null;
+
+      btn.textContent = 'Uploading…';
       btn.disabled = true;
 
-      for (const file of files) {
-        if (file.size > 500 * 1024) {
-          alert(`Image "${file.name}" is over 500KB. Please compress it first.`);
-          btn.textContent = originalText;
-          btn.disabled = false;
-          return;
-        }
-
-        const ext = file.name.split('.').pop().toLowerCase();
-        const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-        const filepath = `products/${filename}`;
-
-        const { error: uploadErr } = await client.storage
-          .from('Product-images')
-          .upload(filepath, file, {
-            cacheControl: '31536000',
-            upsert: false
-          });
-
-        if (uploadErr) {
-          console.error('Image upload error:', uploadErr);
-          alert('Image upload failed: ' + uploadErr.message);
-          btn.textContent = originalText;
-          btn.disabled = false;
-          return;
-        }
-
-        const { data: pub } = client.storage
-          .from('Product-images')
-          .getPublicUrl(filepath);
-
-        if (pub && pub.publicUrl) {
-          uploadedImages.push(pub.publicUrl);
-        }
+      if (files.length > 0) {
+        const uploaded = await uploadImages(client, files);
+        if (uploaded.length) images = uploaded;
       }
+
+      if (videoFile) {
+        const url = await uploadVideo(client, videoFile);
+        if (url) videoUrl = url;
+      }
+
+      btn.textContent = 'Saving…';
+
+      const payload = {
+        name, description,
+        category_slug: categorySlug,
+        tags,
+        retail_price: retailPrice,
+        wholesale_price: wholesalePrice,
+        sale_price: salePrice,
+        stock,
+        low_stock_threshold: lowStock,
+        availability,
+        lengths, textures, colors, densities,
+        lace_type: laceType,
+        cap_size: capSize,
+        images,
+        video_url: videoUrl,
+        featured,
+        wholesale_available: wholesaleAvailable
+      };
+
+      if (editingProductId) {
+        const { error } = await client
+          .from('products')
+          .update(payload)
+          .eq('id', editingProductId);
+        if (error) throw error;
+        alert('Product updated.');
+      } else {
+        payload.slug = name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
+        const { error } = await client.from('products').insert(payload);
+        if (error) throw error;
+        alert('Product added.');
+      }
+
+      form.reset();
+      editingProductId = null;
+      document.getElementById('productModalTitle').textContent = 'Add Product';
+
+      const data = await fetchAll();
+      window.BisbamAdminData = data;
+      renderProductsTable(data.products);
+      renderDashboardStats(data.orders, data.products);
+      renderLowStock(data.products);
+
+      closeModal('productModal');
+
+    } catch (err) {
+      console.error('Save error:', err);
+      alert('Error: ' + (err.message || err));
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
+  }
 
-    const images = uploadedImages.length > 0
-      ? uploadedImages
-      : ['assets/images/products/placeholder.jpg'];
+  /* ============ DELETE PRODUCT ============ */
+  async function handleDelete(productId) {
+    const data = window.BisbamAdminData || {};
+    const product = (data.products || []).find(p => String(p.id) === String(productId));
+    if (!product) return;
 
-    const slug = name.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
+    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
 
-    const payload = {
-      name, slug, description,
-      category_slug: categorySlug,
-      tags,
-      retail_price: retailPrice,
-      wholesale_price: wholesalePrice,
-      sale_price: salePrice,
-      stock,
-      low_stock_threshold: lowStock,
-      availability,
-      lengths, textures, colors, densities,
-      lace_type: laceType,
-      cap_size: capSize,
-      images,
-      featured,
-      wholesale_available: wholesaleAvailable
-    };
+    const client = db();
+    if (!client) return alert('Not connected to database.');
 
-    btn.textContent = 'Saving…';
-    btn.disabled = true;
+    try {
+      const imagesToDelete = (product.images || [])
+        .filter(u => u.includes('/Product-images/'))
+        .map(u => 'products/' + u.split('/Product-images/')[1]);
 
-    const { error } = await client.from('products').insert(payload);
+      if (imagesToDelete.length) {
+        await client.storage.from('Product-images').remove(imagesToDelete);
+      }
 
-    btn.textContent = originalText;
-    btn.disabled = false;
+      if (product.video_url && product.video_url.includes('/Product-videos/')) {
+        const videoPath = 'videos/' + product.video_url.split('/Product-videos/')[1];
+        await client.storage.from('Product-videos').remove([videoPath]);
+      }
 
-    if (error) {
-      console.error('Insert error:', error);
-      alert('Error saving product: ' + error.message);
-      return;
+      const { error } = await client.from('products').delete().eq('id', productId);
+      if (error) throw error;
+
+      alert('Product deleted.');
+
+      const data2 = await fetchAll();
+      window.BisbamAdminData = data2;
+      renderProductsTable(data2.products);
+      renderDashboardStats(data2.orders, data2.products);
+      renderLowStock(data2.products);
+
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Error deleting: ' + (err.message || err));
     }
-
-    alert('Product added successfully.');
-    form.reset();
-
-    const data = await fetchAll();
-    window.BisbamAdminData = data;
-    renderProductsTable(data.products);
-    renderDashboardStats(data.orders, data.products);
-    renderLowStock(data.products);
-
-    closeModal('productModal');
   }
 
   /* ============ INIT ============ */
@@ -537,7 +628,12 @@
 
     const addProductBtn = document.getElementById('addProductBtn');
     if (addProductBtn) {
-      addProductBtn.addEventListener('click', () => openModal('productModal'));
+      addProductBtn.addEventListener('click', () => {
+        editingProductId = null;
+        document.getElementById('productForm').reset();
+        document.getElementById('productModalTitle').textContent = 'Add Product';
+        openModal('productModal');
+      });
     }
 
     const productForm = document.getElementById('productForm');
@@ -547,34 +643,48 @@
   }
   init();
 
-  /* ============ ORDER MODAL ============ */
+  /* ============ EDIT + DELETE + ORDER CLICKS ============ */
   document.addEventListener('click', e => {
+    const editBtn = e.target.closest('.edit-product');
+    if (editBtn) {
+      const data = window.BisbamAdminData || {};
+      const product = (data.products || []).find(p => String(p.id) === editBtn.dataset.id);
+      if (product) openEditModal(product);
+      return;
+    }
+
+    const delBtn = e.target.closest('.delete-product');
+    if (delBtn) {
+      handleDelete(delBtn.dataset.id);
+      return;
+    }
+
     const viewBtn = e.target.closest('.view-order');
-    if (!viewBtn) return;
+    if (viewBtn) {
+      const data = window.BisbamAdminData || {};
+      const order = (data.orders || []).find(o => String(o.id) === viewBtn.dataset.id);
+      if (!order) return;
 
-    const data = window.BisbamAdminData || {};
-    const order = (data.orders || []).find(o => String(o.id) === viewBtn.dataset.id);
-    if (!order) return;
+      const body = document.getElementById('orderModalBody');
+      if (!body) return;
 
-    const body = document.getElementById('orderModalBody');
-    if (!body) return;
-
-    body.innerHTML = `
-      <p><strong>Order:</strong> ${order.id}</p>
-      <p><strong>Customer:</strong> ${order.customer}</p>
-      <p><strong>Phone:</strong> ${order.phone}</p>
-      <p><strong>Address:</strong> ${order.address}, ${order.city}</p>
-      <p><strong>Payment:</strong> ${order.payment}</p>
-      <p><strong>Status:</strong> ${order.status}</p>
-      <p><strong>Date:</strong> ${order.date}</p>
-      <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
-      <p><strong>Items:</strong></p>
-      ${(order.items || []).map(i => `<p>${i.name} × ${i.qty} — ${naira(i.price * i.qty)}</p>`).join('')}
-      <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
-      <p><strong>Total:</strong> ${naira(order.total)}</p>
-    `;
-
-    openModal('orderModal');
+      body.innerHTML = `
+        <p><strong>Order:</strong> ${order.id}</p>
+        <p><strong>Customer:</strong> ${order.customer}</p>
+        <p><strong>Phone:</strong> ${order.phone}</p>
+        <p><strong>Address:</strong> ${order.address}, ${order.city}</p>
+        <p><strong>Payment:</strong> ${order.payment}</p>
+        <p><strong>Status:</strong> ${order.status}</p>
+        <p><strong>Date:</strong> ${order.date}</p>
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+        <p><strong>Items:</strong></p>
+        ${(order.items || []).map(i => `<p>${i.name} × ${i.qty} — ${naira(i.price * i.qty)}</p>`).join('')}
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+        <p><strong>Total:</strong> ${naira(order.total)}</p>
+      `;
+      openModal('orderModal');
+      return;
+    }
   });
 
   /* ============ CATEGORIES PAGE ============ */
