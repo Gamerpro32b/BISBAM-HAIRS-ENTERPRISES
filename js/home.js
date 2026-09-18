@@ -1,7 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — home.js
    Homepage: categories + featured products from Supabase.
-   Shows loading skeletons while fetching.
    ========================================================= */
 
 (function () {
@@ -45,14 +44,14 @@
       return;
     }
 
-    const imageFor = (slug) => {
-      if (slug === 'wigs' || slug === 'human-hair') return 'assets/images/banners/hero.jpg';
+    const imageFor = (cat) => {
+      if (cat && cat.image_url) return cat.image_url;
       return 'assets/images/banners/about.jpg';
     };
 
     categoryGrid.innerHTML = cats.slice(0, 4).map(c => `
       <a href="shop.html?cat=${c.slug}" class="category-card">
-        <img src="${imageFor(c.slug)}" alt="${c.name}" loading="lazy">
+        <img src="${imageFor(c)}" alt="${c.name}" loading="lazy">
         <h3>${c.name}</h3>
       </a>
     `).join('');
@@ -89,7 +88,6 @@
 
   /* ============ INIT ============ */
   async function init() {
-    // Kick off both fetches in parallel, with skeletons while waiting
     showCategorySkeletons(4);
     showFeaturedSkeletons(4);
 

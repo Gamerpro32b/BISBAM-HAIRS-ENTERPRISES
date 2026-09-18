@@ -1,6 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — product.js
-   Product detail page. Fetches from Supabase, loads images + video.
+   Product detail page. Fetches from Supabase.
+   Gallery: images + video thumbnail. Tap to switch.
    ========================================================= */
 
 (function () {
@@ -9,7 +10,6 @@
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('id');
 
-  /* ============ HELPERS ============ */
   function naira(n) {
     return '₦' + Number(n || 0).toLocaleString('en-NG');
   }
@@ -19,18 +19,12 @@
     return window.BisbamDB;
   }
 
-  /* ============ LOAD PRODUCT ============ */
+  /* ============ LOAD ============ */
   async function loadProduct() {
-    if (!productId) {
-      showNotFound('No product selected.');
-      return;
-    }
+    if (!productId) return showNotFound('No product selected.');
 
     const client = db();
-    if (!client) {
-      showNotFound('Not connected.');
-      return;
-    }
+    if (!client) return showNotFound('Not connected.');
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId);
 
@@ -42,8 +36,7 @@
 
     if (error || !data) {
       console.warn('Product fetch error:', error);
-      showNotFound('Product not found.');
-      return;
+      return showNotFound('Product not found.');
     }
 
     renderProduct(data);
@@ -56,7 +49,8 @@
     const price = document.querySelector('.product-info .product-price');
     const desc = document.querySelector('.product-description');
     const mainImage = document.getElementById('mainImage');
-    const thumbs = document.querySelector('.product-gallery-thumbs');
+    const videoEl = document.getElementById('productVideo');
+    const thumbs = document.getElementById('galleryThumbs');
     const breadcrumbName = document.querySelector('.breadcrumb span');
     const stockStatus = document.getElementById('stockStatus');
     const categoryEl = document.getElementById('productCategory');
@@ -75,44 +69,57 @@
       else stockStatus.textContent = 'In stock';
     }
 
-    /* ===== IMAGES ===== */
+    /* ===== IMAGES + VIDEO URL ===== */
     const images = (p.images && p.images.length)
       ? p.images
       : ['assets/images/products/placeholder.jpg'];
 
-    if (mainImage) {
-      mainImage.src = images[0];
-      mainImage.alt = p.name;
+    const videoUrl = p.video_url || null;
+
+    /* ===== SET MAIN ===== */
+    function showImage(src) {
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.hidden = true;
+      }
+      if (mainImage) {
+        mainImage.src = src;
+        mainImage.style.display = '';
+      }
     }
 
+    function showVideo() {
+      if (!videoEl) return;
+      if (mainImage) mainImage.style.display = 'none';
+      videoEl.hidden = false;
+      videoEl.src = videoUrl;
+      videoEl.load();
+    }
+
+    showImage(images[0]);
+
+    /* ===== BUILD THUMBS ===== */
     if (thumbs) {
-      thumbs.innerHTML = images.slice(0, 6).map((src, i) => `
-        <img src="${src}" alt="${p.name} view ${i + 1}" data-src="${src}">
+      let html = images.slice(0, 5).map((src, i) => `
+        <img src="${src}" alt="View ${i + 1}" data-src="${src}" class="image-thumb">
       `).join('');
 
-      thumbs.querySelectorAll('img').forEach(t => {
-        t.addEventListener('click', () => {
-          if (mainImage) {
-            mainImage.src = t.dataset.src;
-            mainImage.style.display = '';
-          }
-          const videoEl = document.getElementById('productVideo');
-          if (videoEl) videoEl.pause();
-        });
-      });
-    }
-
-    /* ===== VIDEO ===== */
-    const videoEl = document.getElementById('productVideo');
-    if (videoEl) {
-      if (p.video_url) {
-        videoEl.src = p.video_url;
-        videoEl.hidden = false;
-        // Show video alongside image (both visible)
-      } else {
-        videoEl.hidden = true;
-        videoEl.removeAttribute('src');
+      if (videoUrl) {
+        html += `
+          <div class="thumb-video-wrap" id="videoThumb">
+            <img src="${images[0]}" alt="Video">
+          </div>
+        `;
       }
+
+      thumbs.innerHTML = html;
+
+      thumbs.querySelectorAll('img.image-thumb').forEach(t => {
+        t.addEventListener('click', () => showImage(t.dataset.src));
+      });
+
+      const vt = document.getElementById('videoThumb');
+      if (vt) vt.addEventListener('click', showVideo);
     }
 
     /* ===== VARIATIONS ===== */
@@ -120,14 +127,6 @@
     fillVariation('texture', p.textures);
     fillVariation('color', p.colors);
     fillVariation('density', p.densities);
-
-    /* ===== STORE PRODUCT FOR CART ===== */
-    window.BISBAM_CURRENT_PRODUCT = {
-      id: p.slug || p.id,
-      name: p.name,
-      price: p.sale_price || p.retail_price || 0,
-      image: images[0]
-    };
 
     /* ===== ADD TO CART ===== */
     const addBtn = document.getElementById('addToCartBtn');
@@ -172,7 +171,7 @@
       });
     }
 
-    /* ===== WHATSAPP ENQUIRY ===== */
+    /* ===== WHATSAPP ===== */
     const waBtn = document.querySelector('.whatsapp-btn');
     if (waBtn) {
       const text = `Hi Bisbam Hairs, I'm interested in: ${p.name}`;
@@ -194,7 +193,7 @@
     });
   }
 
-  /* ============ RELATED PRODUCTS ============ */
+  /* ============ RELATED ============ */
   async function loadRelated(current) {
     const grid = document.getElementById('relatedGrid');
     if (!grid) return;
@@ -232,11 +231,8 @@
   function showNotFound(msg) {
     const title = document.querySelector('.product-title');
     if (title) title.textContent = msg || 'Product not found';
-    const main = document.querySelector('.product-gallery-main img');
-    if (main) main.src = 'assets/images/products/placeholder.jpg';
   }
 
-  /* ============ INIT ============ */
   loadProduct();
 
 })();

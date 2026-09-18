@@ -62,12 +62,12 @@
                 <th>Image</th>
                 <th>Name</th>
                 <th>Slug</th>
-                <th>Products</th>
+                <th>Description</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="categoriesBody">
-              <tr><td colspan="5" class="admin-empty">No categories yet. Click "+ Add Category" to create one.</td></tr>
+              <tr><td colspan="5" class="admin-empty">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -95,7 +95,7 @@
           <div class="form-group">
             <label for="cSlug">Slug (URL-friendly) *</label>
             <input type="text" id="cSlug" name="slug" placeholder="e.g. luxury-wigs" required>
-            <p class="form-note">Used in URLs like shop.html?cat=luxury-wigs</p>
+            <p class="form-note">Auto-fills from name — you can edit.</p>
           </div>
 
           <div class="form-group">
@@ -104,8 +104,14 @@
           </div>
 
           <div class="form-group">
-            <label for="cImage">Category Image</label>
-            <input type="file" id="cImage" name="image" accept="image/*">
+            <label>Category Image</label>
+            <input type="file" id="cImage" accept="image/*" style="display:none;">
+            <div class="image-picker-row">
+              <button type="button" class="btn btn-outline btn-small" id="addCategoryImageBtn">+ Add Image</button>
+              <span class="form-note" id="categoryImageNote">No image selected</span>
+            </div>
+            <div id="categoryImagePreview" class="image-preview-grid"></div>
+            <p class="form-note">JPG/PNG, under 500KB.</p>
           </div>
 
           <div class="form-actions">

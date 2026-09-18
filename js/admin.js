@@ -1,5 +1,5 @@
 /* =========================================================
-   BISBAM HAIRS — admin.js  (Part 1 of 2)
+   BISBAM HAIRS — admin.js (Part 1 of 2)
    ========================================================= */
 
 (function () {
@@ -11,7 +11,9 @@
   const localCategories = window.BISBAM_CATEGORIES || [];
 
   let editingProductId = null;
+  let editingCategoryId = null;
   window.BISBAM_PENDING_IMAGES = [];
+  window.BISBAM_PENDING_CATEGORY_IMAGE = null;
 
   function naira(n) {
     return '₦' + Number(n || 0).toLocaleString('en-NG');
@@ -22,7 +24,7 @@
     return window.BisbamDB;
   }
 
-  /* ============ LOGIN PAGE ============ */
+  /* ============ LOGIN ============ */
   const loginForm = document.getElementById('adminLoginForm');
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
@@ -62,7 +64,7 @@
     });
   }
 
-  /* ============ PROTECT ADMIN PAGES ============ */
+  /* ============ PROTECT ADMIN ============ */
   const path = window.location.pathname.split('/').pop() || 'index.html';
   const isLoginPage = path === 'login.html';
 
@@ -89,7 +91,7 @@
 
   if (isLoginPage) return;
 
-  /* ============ FETCH ALL DATA ============ */
+  /* ============ FETCH ALL ============ */
   async function fetchAll() {
     const client = db();
     const result = {
@@ -111,56 +113,34 @@
 
       if (!p.error && p.data && p.data.length) {
         result.products = p.data.map(x => ({
-          id: x.id,
-          name: x.name,
-          slug: x.slug,
-          description: x.description,
-          category: x.category_slug,
-          tags: x.tags || [],
+          id: x.id, name: x.name, slug: x.slug, description: x.description,
+          category: x.category_slug, tags: x.tags || [],
           price: x.sale_price || x.retail_price || 0,
-          retail_price: x.retail_price,
-          wholesale_price: x.wholesale_price,
-          sale_price: x.sale_price,
-          stock: x.stock,
-          availability: x.availability,
-          lengths: x.lengths || [],
-          textures: x.textures || [],
-          colors: x.colors || [],
-          densities: x.densities || [],
-          lace_type: x.lace_type,
-          cap_size: x.cap_size,
+          retail_price: x.retail_price, wholesale_price: x.wholesale_price,
+          sale_price: x.sale_price, stock: x.stock, availability: x.availability,
+          lengths: x.lengths || [], textures: x.textures || [],
+          colors: x.colors || [], densities: x.densities || [],
+          lace_type: x.lace_type, cap_size: x.cap_size,
           image: (x.images && x.images[0]) || 'assets/images/products/placeholder.jpg',
-          images: x.images || [],
-          video_url: x.video_url,
-          featured: x.featured,
-          wholesale_available: x.wholesale_available
+          images: x.images || [], video_url: x.video_url,
+          featured: x.featured, wholesale_available: x.wholesale_available
         }));
       }
 
       if (!o.error && o.data) {
         result.orders = o.data.map(x => ({
-          id: x.order_number || x.id,
-          customer: x.customer_name,
-          phone: x.customer_phone,
-          address: x.delivery_address,
-          city: x.city,
-          items: x.items || [],
-          total: x.total,
-          payment: x.payment_method,
-          status: x.status,
-          date: (x.created_at || '').split('T')[0],
-          notes: x.notes
+          id: x.order_number || x.id, customer: x.customer_name,
+          phone: x.customer_phone, address: x.delivery_address,
+          city: x.city, items: x.items || [], total: x.total,
+          payment: x.payment_method, status: x.status,
+          date: (x.created_at || '').split('T')[0], notes: x.notes
         }));
       }
 
       if (!c.error && c.data) {
         result.customers = c.data.map(x => ({
-          id: x.id,
-          name: x.name,
-          phone: x.phone,
-          email: x.email,
-          city: x.city,
-          orders: x.total_orders || 0,
+          id: x.id, name: x.name, phone: x.phone, email: x.email,
+          city: x.city, orders: x.total_orders || 0,
           totalSpent: x.total_spent || 0,
           lastOrder: x.last_order_at ? x.last_order_at.split('T')[0] : '—'
         }));
@@ -196,10 +176,13 @@
     el.addEventListener('click', () => {
       const modal = el.closest('.admin-modal');
       if (modal) modal.hidden = true;
-      // Reset image picker if closing product modal
       if (modal && modal.id === 'productModal') {
         window.BISBAM_PENDING_IMAGES = [];
         renderImagePreviews();
+      }
+      if (modal && modal.id === 'categoryModal') {
+        window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+        renderCategoryImagePreview();
       }
     });
   });
@@ -288,7 +271,6 @@
     if (productCategoryFilter) {
       list = list.filter(p => (p.category || '') === productCategoryFilter);
     }
-
     if (productStockFilter) {
       list = list.filter(p => {
         const stock = p.stock || 0;
@@ -298,7 +280,6 @@
         return true;
       });
     }
-
     if (productSearch) {
       const q = productSearch.toLowerCase();
       list = list.filter(p => (p.name || '').toLowerCase().includes(q));
@@ -374,7 +355,7 @@
     });
   }
 
-  /* ============ IMAGE PICKER ============ */
+  /* ============ IMAGE PICKER (PRODUCT) ============ */
   function renderImagePreviews() {
     const grid = document.getElementById('imagePreviewGrid');
     const note = document.getElementById('imageCountNote');
@@ -409,16 +390,78 @@
     imageInput.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-
       if (file.size > 500 * 1024) {
         alert('"' + file.name + '" is over 500KB. Please compress it first.');
         imageInput.value = '';
         return;
       }
-
       window.BISBAM_PENDING_IMAGES.push(file);
       imageInput.value = '';
       renderImagePreviews();
+    });
+  }
+
+  /* ============ IMAGE PICKER (CATEGORY) ============ */
+  function renderCategoryImagePreview() {
+    const grid = document.getElementById('categoryImagePreview');
+    const note = document.getElementById('categoryImageNote');
+    if (!grid) return;
+
+    const file = window.BISBAM_PENDING_CATEGORY_IMAGE;
+
+    if (!file) {
+      grid.innerHTML = '';
+      if (note) note.textContent = 'No image selected';
+      return;
+    }
+
+    grid.innerHTML = `
+      <div class="image-preview-item">
+        <img src="${URL.createObjectURL(file)}" alt="Category preview">
+        <button type="button" class="image-preview-remove" id="removeCategoryImage">×</button>
+      </div>
+    `;
+
+    if (note) note.textContent = '1 image selected';
+
+    const removeBtn = document.getElementById('removeCategoryImage');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+        renderCategoryImagePreview();
+      });
+    }
+  }
+
+  const addCategoryImageBtn = document.getElementById('addCategoryImageBtn');
+  const categoryImageInput = document.getElementById('cImage');
+
+  if (addCategoryImageBtn && categoryImageInput) {
+    addCategoryImageBtn.addEventListener('click', () => categoryImageInput.click());
+    categoryImageInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 500 * 1024) {
+        alert('"' + file.name + '" is over 500KB. Please compress it first.');
+        categoryImageInput.value = '';
+        return;
+      }
+      window.BISBAM_PENDING_CATEGORY_IMAGE = file;
+      categoryImageInput.value = '';
+      renderCategoryImagePreview();
+    });
+  }
+
+  /* ============ AUTO-SLUG ============ */
+  const cNameInput = document.getElementById('cName');
+  const cSlugInput = document.getElementById('cSlug');
+  if (cNameInput && cSlugInput) {
+    cNameInput.addEventListener('input', () => {
+      if (!editingCategoryId) {
+        cSlugInput.value = cNameInput.value.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
     });
   }
 
@@ -426,42 +469,6 @@
     /* =========================================================
      PART 2
      ========================================================= */
-
-  /* ============ OPEN EDIT MODAL ============ */
-  function openEditModal(product) {
-    editingProductId = product.id;
-    window.BISBAM_PENDING_IMAGES = [];
-
-    const form = document.getElementById('productForm');
-    form.querySelector('#pName').value = product.name || '';
-    form.querySelector('#pDescription').value = product.description || '';
-    form.querySelector('#pCategory').value = product.category || '';
-    form.querySelector('#pTags').value = (product.tags || []).join(', ');
-
-    form.querySelector('#pRetailPrice').value = product.retail_price || 0;
-    form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
-    form.querySelector('#pSalePrice').value = product.sale_price || '';
-
-    form.querySelector('#pStock').value = product.stock || 0;
-    form.querySelector('#pLowStockThreshold').value = 3;
-    form.querySelector('#pAvailability').value = product.availability || 'in';
-
-    setChecked('lengthCheckboxes', product.lengths || []);
-    setChecked('textureCheckboxes', product.textures || []);
-    setChecked('colorCheckboxes', product.colors || []);
-    setChecked('densityCheckboxes', product.densities || []);
-
-    form.querySelector('#pLaceType').value = product.lace_type || '';
-    form.querySelector('#pCapSize').value = product.cap_size || '';
-
-    form.querySelector('#pFeatured').checked = !!product.featured;
-    form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
-
-    renderImagePreviews();
-
-    document.getElementById('productModalTitle').textContent = 'Edit Product';
-    openModal('productModal');
-  }
 
   /* ============ UPLOAD HELPERS ============ */
   async function uploadImages(client, files) {
@@ -494,10 +501,22 @@
     return pub ? pub.publicUrl : null;
   }
 
-  /* ============ CREATE / UPDATE PRODUCT ============ */
+  async function uploadCategoryImage(client, file) {
+    if (file.size > 500 * 1024) throw new Error('Image over 500KB.');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const filepath = `categories/${filename}`;
+    const { error } = await client.storage.from('Product-images').upload(filepath, file, {
+      cacheControl: '31536000', upsert: false
+    });
+    if (error) throw error;
+    const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
+    return pub ? pub.publicUrl : null;
+  }
+
+  /* ============ PRODUCT SAVE ============ */
   async function handleProductSubmit(e) {
     e.preventDefault();
-
     const form = e.target;
     const client = db();
     if (!client) return alert('Not connected to database.');
@@ -562,35 +581,20 @@
       btn.textContent = 'Saving…';
 
       const payload = {
-        name, description,
-        category_slug: categorySlug,
-        tags,
-        retail_price: retailPrice,
-        wholesale_price: wholesalePrice,
-        sale_price: salePrice,
-        stock,
-        low_stock_threshold: lowStock,
-        availability,
-        lengths, textures, colors, densities,
-        lace_type: laceType,
-        cap_size: capSize,
-        images,
-        video_url: videoUrl,
-        featured,
-        wholesale_available: wholesaleAvailable
+        name, description, category_slug: categorySlug, tags,
+        retail_price: retailPrice, wholesale_price: wholesalePrice,
+        sale_price: salePrice, stock, low_stock_threshold: lowStock,
+        availability, lengths, textures, colors, densities,
+        lace_type: laceType, cap_size: capSize, images,
+        video_url: videoUrl, featured, wholesale_available: wholesaleAvailable
       };
 
       if (editingProductId) {
-        const { error } = await client
-          .from('products')
-          .update(payload)
-          .eq('id', editingProductId);
+        const { error } = await client.from('products').update(payload).eq('id', editingProductId);
         if (error) throw error;
         alert('Product updated.');
       } else {
-        payload.slug = name.toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
+        payload.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
         const { error } = await client.from('products').insert(payload);
         if (error) throw error;
         alert('Product added.');
@@ -609,7 +613,6 @@
       renderLowStock(data.products);
 
       closeModal('productModal');
-
     } catch (err) {
       console.error('Save error:', err);
       alert('Error: ' + (err.message || err));
@@ -619,26 +622,55 @@
     }
   }
 
-  /* ============ DELETE PRODUCT ============ */
+  /* ============ PRODUCT EDIT ============ */
+  function openEditModal(product) {
+    editingProductId = product.id;
+    window.BISBAM_PENDING_IMAGES = [];
+
+    const form = document.getElementById('productForm');
+    form.querySelector('#pName').value = product.name || '';
+    form.querySelector('#pDescription').value = product.description || '';
+    form.querySelector('#pCategory').value = product.category || '';
+    form.querySelector('#pTags').value = (product.tags || []).join(', ');
+    form.querySelector('#pRetailPrice').value = product.retail_price || 0;
+    form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
+    form.querySelector('#pSalePrice').value = product.sale_price || '';
+    form.querySelector('#pStock').value = product.stock || 0;
+    form.querySelector('#pLowStockThreshold').value = 3;
+    form.querySelector('#pAvailability').value = product.availability || 'in';
+
+    setChecked('lengthCheckboxes', product.lengths || []);
+    setChecked('textureCheckboxes', product.textures || []);
+    setChecked('colorCheckboxes', product.colors || []);
+    setChecked('densityCheckboxes', product.densities || []);
+
+    form.querySelector('#pLaceType').value = product.lace_type || '';
+    form.querySelector('#pCapSize').value = product.cap_size || '';
+    form.querySelector('#pFeatured').checked = !!product.featured;
+    form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
+
+    renderImagePreviews();
+    document.getElementById('productModalTitle').textContent = 'Edit Product';
+    openModal('productModal');
+  }
+
+  /* ============ PRODUCT DELETE ============ */
   async function handleDelete(productId) {
     const data = window.BisbamAdminData || {};
     const product = (data.products || []).find(p => String(p.id) === String(productId));
     if (!product) return;
-
-    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${product.name}"?`)) return;
 
     const client = db();
-    if (!client) return alert('Not connected to database.');
+    if (!client) return alert('Not connected.');
 
     try {
       const imagesToDelete = (product.images || [])
         .filter(u => u.includes('/Product-images/'))
         .map(u => 'products/' + u.split('/Product-images/')[1]);
-
       if (imagesToDelete.length) {
         await client.storage.from('Product-images').remove(imagesToDelete);
       }
-
       if (product.video_url && product.video_url.includes('/Product-videos/')) {
         const videoPath = 'videos/' + product.video_url.split('/Product-videos/')[1];
         await client.storage.from('Product-videos').remove([videoPath]);
@@ -648,16 +680,153 @@
       if (error) throw error;
 
       alert('Product deleted.');
-
       const data2 = await fetchAll();
       window.BisbamAdminData = data2;
       renderProductsTable(data2.products);
       renderDashboardStats(data2.orders, data2.products);
       renderLowStock(data2.products);
-
     } catch (err) {
       console.error('Delete error:', err);
       alert('Error deleting: ' + (err.message || err));
+    }
+  }
+
+  /* ============ CATEGORIES TABLE ============ */
+  function renderCategoriesTable(categories) {
+    const body = document.getElementById('categoriesBody');
+    if (!body) return;
+
+    if (!categories || categories.length === 0) {
+      body.innerHTML = `<tr><td colspan="5" class="admin-empty">No categories yet.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = categories.map(c => {
+      const imgSrc = c.image_url
+        ? (c.image_url.startsWith('http') ? c.image_url : '../' + c.image_url)
+        : '../assets/images/products/placeholder.jpg';
+      return `
+        <tr>
+          <td><img src="${imgSrc}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;"></td>
+          <td>${c.name}</td>
+          <td>${c.slug}</td>
+          <td>${c.description || '—'}</td>
+          <td>
+            <button class="btn btn-small btn-outline edit-category" data-id="${c.id}">Edit</button>
+            <button class="btn btn-small btn-outline delete-category" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /* ============ CATEGORY SAVE ============ */
+  async function handleCategorySubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const client = db();
+    if (!client) return alert('Not connected.');
+
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+
+    try {
+      const name = form.querySelector('#cName').value.trim();
+      const slug = form.querySelector('#cSlug').value.trim();
+      const description = form.querySelector('#cDescription').value.trim();
+
+      const imageFile = window.BISBAM_PENDING_CATEGORY_IMAGE;
+
+      const current = editingCategoryId
+        ? ((window.BisbamAdminData || {}).categories || []).find(c => c.id === editingCategoryId)
+        : null;
+
+      let imageUrl = current ? current.image_url : null;
+
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+
+      if (imageFile) {
+        imageUrl = await uploadCategoryImage(client, imageFile);
+      }
+
+      const payload = { name, slug, description, image_url: imageUrl };
+
+      if (editingCategoryId) {
+        const { error } = await client.from('categories').update(payload).eq('id', editingCategoryId);
+        if (error) throw error;
+        alert('Category updated.');
+      } else {
+        const { error } = await client.from('categories').insert(payload);
+        if (error) throw error;
+        alert('Category added.');
+      }
+
+      form.reset();
+      window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+      renderCategoryImagePreview();
+      editingCategoryId = null;
+      document.getElementById('categoryModalTitle').textContent = 'Add Category';
+
+      const data = await fetchAll();
+      window.BisbamAdminData = data;
+      renderCategoriesTable(data.categories);
+      fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
+      fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
+
+      closeModal('categoryModal');
+    } catch (err) {
+      console.error('Category save error:', err);
+      alert('Error: ' + (err.message || err));
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  /* ============ CATEGORY EDIT ============ */
+  function openEditCategoryModal(category) {
+    editingCategoryId = category.id;
+    window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+
+    const form = document.getElementById('categoryForm');
+    form.querySelector('#cName').value = category.name || '';
+    form.querySelector('#cSlug').value = category.slug || '';
+    form.querySelector('#cDescription').value = category.description || '';
+
+    renderCategoryImagePreview();
+    document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+    openModal('categoryModal');
+  }
+
+  /* ============ CATEGORY DELETE ============ */
+  async function handleDeleteCategory(categoryId) {
+    const data = window.BisbamAdminData || {};
+    const category = (data.categories || []).find(c => String(c.id) === String(categoryId));
+    if (!category) return;
+    if (!confirm(`Delete category "${category.name}"?`)) return;
+
+    const client = db();
+    if (!client) return alert('Not connected.');
+
+    try {
+      if (category.image_url && category.image_url.includes('/Product-images/')) {
+        const path = 'categories/' + category.image_url.split('/Product-images/')[1];
+        await client.storage.from('Product-images').remove([path]);
+      }
+
+      const { error } = await client.from('categories').delete().eq('id', categoryId);
+      if (error) throw error;
+
+      alert('Category deleted.');
+      const data2 = await fetchAll();
+      window.BisbamAdminData = data2;
+      renderCategoriesTable(data2.categories);
+      fillCategoryDropdown(document.getElementById('pCategory'), data2.categories);
+      fillCategoryDropdown(document.getElementById('productCategoryFilter'), data2.categories);
+    } catch (err) {
+      console.error('Delete category error:', err);
+      alert('Error: ' + (err.message || err));
     }
   }
 
@@ -682,8 +851,10 @@
     renderRecentOrders(data.orders);
     renderLowStock(data.products);
     renderProductsTable(data.products);
+    renderCategoriesTable(data.categories);
     wireProductsPageFilters();
     renderImagePreviews();
+    renderCategoryImagePreview();
 
     const addProductBtn = document.getElementById('addProductBtn');
     if (addProductBtn) {
@@ -698,32 +869,59 @@
     }
 
     const productForm = document.getElementById('productForm');
-    if (productForm) {
-      productForm.addEventListener('submit', handleProductSubmit);
+    if (productForm) productForm.addEventListener('submit', handleProductSubmit);
+
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
+    if (addCategoryBtn) {
+      addCategoryBtn.addEventListener('click', () => {
+        editingCategoryId = null;
+        window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+        document.getElementById('categoryForm').reset();
+        document.getElementById('categoryModalTitle').textContent = 'Add Category';
+        renderCategoryImagePreview();
+        openModal('categoryModal');
+      });
     }
+
+    const categoryForm = document.getElementById('categoryForm');
+    if (categoryForm) categoryForm.addEventListener('submit', handleCategorySubmit);
   }
   init();
 
-  /* ============ EDIT / DELETE / ORDER CLICKS ============ */
+  /* ============ GLOBAL CLICKS ============ */
   document.addEventListener('click', e => {
-    const editBtn = e.target.closest('.edit-product');
-    if (editBtn) {
+    const editProduct = e.target.closest('.edit-product');
+    if (editProduct) {
       const data = window.BisbamAdminData || {};
-      const product = (data.products || []).find(p => String(p.id) === editBtn.dataset.id);
+      const product = (data.products || []).find(p => String(p.id) === editProduct.dataset.id);
       if (product) openEditModal(product);
       return;
     }
 
-    const delBtn = e.target.closest('.delete-product');
-    if (delBtn) {
-      handleDelete(delBtn.dataset.id);
+    const delProduct = e.target.closest('.delete-product');
+    if (delProduct) {
+      handleDelete(delProduct.dataset.id);
       return;
     }
 
-    const viewBtn = e.target.closest('.view-order');
-    if (viewBtn) {
+    const editCategory = e.target.closest('.edit-category');
+    if (editCategory) {
       const data = window.BisbamAdminData || {};
-      const order = (data.orders || []).find(o => String(o.id) === viewBtn.dataset.id);
+      const category = (data.categories || []).find(c => String(c.id) === editCategory.dataset.id);
+      if (category) openEditCategoryModal(category);
+      return;
+    }
+
+    const delCategory = e.target.closest('.delete-category');
+    if (delCategory) {
+      handleDeleteCategory(delCategory.dataset.id);
+      return;
+    }
+
+    const viewOrder = e.target.closest('.view-order');
+    if (viewOrder) {
+      const data = window.BisbamAdminData || {};
+      const order = (data.orders || []).find(o => String(o.id) === viewOrder.dataset.id);
       if (!order) return;
 
       const body = document.getElementById('orderModalBody');
@@ -747,11 +945,5 @@
       return;
     }
   });
-
-  /* ============ CATEGORIES PAGE ============ */
-  const addCategoryBtn = document.getElementById('addCategoryBtn');
-  if (addCategoryBtn) {
-    addCategoryBtn.addEventListener('click', () => openModal('categoryModal'));
-  }
 
 })();
