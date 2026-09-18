@@ -203,11 +203,18 @@
 
           <div class="form-section">
             <h3>Media</h3>
+
             <div class="form-group">
-              <label for="pImages">Product Images (upload multiple)</label>
-              <input type="file" id="pImages" name="images" accept="image/*" multiple>
-              <p class="form-note">Recommended: JPG/PNG, under 500KB each, square aspect ratio.</p>
+              <label>Product Images</label>
+              <input type="file" id="pImages" accept="image/*" style="display:none;">
+              <div class="image-picker-row">
+                <button type="button" class="btn btn-outline btn-small" id="addImageBtn">+ Add Image</button>
+                <span class="form-note" id="imageCountNote">0 images selected</span>
+              </div>
+              <div id="imagePreviewGrid" class="image-preview-grid"></div>
+              <p class="form-note">JPG/PNG, under 500KB each. Tap "+ Add Image" for each photo.</p>
             </div>
+
             <div class="form-group">
               <label for="pVideo">Product Video (optional)</label>
               <input type="file" id="pVideo" name="video" accept="video/mp4,video/webm">

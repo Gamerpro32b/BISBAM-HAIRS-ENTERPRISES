@@ -11,6 +11,7 @@
   const localCategories = window.BISBAM_CATEGORIES || [];
 
   let editingProductId = null;
+  window.BISBAM_PENDING_IMAGES = [];
 
   function naira(n) {
     return '₦' + Number(n || 0).toLocaleString('en-NG');
@@ -195,6 +196,11 @@
     el.addEventListener('click', () => {
       const modal = el.closest('.admin-modal');
       if (modal) modal.hidden = true;
+      // Reset image picker if closing product modal
+      if (modal && modal.id === 'productModal') {
+        window.BISBAM_PENDING_IMAGES = [];
+        renderImagePreviews();
+      }
     });
   });
 
@@ -212,7 +218,7 @@
     });
   }
 
-  /* ============ DASHBOARD RENDERS ============ */
+  /* ============ DASHBOARD ============ */
   function renderDashboardStats(orders, products) {
     const set = (id, val) => {
       const el = document.getElementById(id);
@@ -368,6 +374,54 @@
     });
   }
 
+  /* ============ IMAGE PICKER ============ */
+  function renderImagePreviews() {
+    const grid = document.getElementById('imagePreviewGrid');
+    const note = document.getElementById('imageCountNote');
+    if (!grid) return;
+
+    grid.innerHTML = (window.BISBAM_PENDING_IMAGES || []).map((file, i) => `
+      <div class="image-preview-item">
+        <img src="${URL.createObjectURL(file)}" alt="Preview ${i + 1}">
+        <button type="button" class="image-preview-remove" data-index="${i}">×</button>
+      </div>
+    `).join('');
+
+    if (note) {
+      const n = window.BISBAM_PENDING_IMAGES.length;
+      note.textContent = n + ' image' + (n === 1 ? '' : 's') + ' selected';
+    }
+
+    grid.querySelectorAll('.image-preview-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.index, 10);
+        window.BISBAM_PENDING_IMAGES.splice(i, 1);
+        renderImagePreviews();
+      });
+    });
+  }
+
+  const addImageBtn = document.getElementById('addImageBtn');
+  const imageInput = document.getElementById('pImages');
+
+  if (addImageBtn && imageInput) {
+    addImageBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 500 * 1024) {
+        alert('"' + file.name + '" is over 500KB. Please compress it first.');
+        imageInput.value = '';
+        return;
+      }
+
+      window.BISBAM_PENDING_IMAGES.push(file);
+      imageInput.value = '';
+      renderImagePreviews();
+    });
+  }
+
   // PART 2 continues below...
     /* =========================================================
      PART 2
@@ -376,6 +430,7 @@
   /* ============ OPEN EDIT MODAL ============ */
   function openEditModal(product) {
     editingProductId = product.id;
+    window.BISBAM_PENDING_IMAGES = [];
 
     const form = document.getElementById('productForm');
     form.querySelector('#pName').value = product.name || '';
@@ -401,6 +456,8 @@
 
     form.querySelector('#pFeatured').checked = !!product.featured;
     form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
+
+    renderImagePreviews();
 
     document.getElementById('productModalTitle').textContent = 'Edit Product';
     openModal('productModal');
@@ -474,8 +531,7 @@
       const featured = form.querySelector('#pFeatured').checked;
       const wholesaleAvailable = form.querySelector('#pWholesaleAvailable').checked;
 
-      const fileInput = form.querySelector('#pImages');
-      const files = fileInput ? Array.from(fileInput.files || []) : [];
+      const files = window.BISBAM_PENDING_IMAGES || [];
 
       const videoInput = form.querySelector('#pVideo');
       const videoFile = videoInput && videoInput.files[0] ? videoInput.files[0] : null;
@@ -541,6 +597,8 @@
       }
 
       form.reset();
+      window.BISBAM_PENDING_IMAGES = [];
+      renderImagePreviews();
       editingProductId = null;
       document.getElementById('productModalTitle').textContent = 'Add Product';
 
@@ -625,13 +683,16 @@
     renderLowStock(data.products);
     renderProductsTable(data.products);
     wireProductsPageFilters();
+    renderImagePreviews();
 
     const addProductBtn = document.getElementById('addProductBtn');
     if (addProductBtn) {
       addProductBtn.addEventListener('click', () => {
         editingProductId = null;
+        window.BISBAM_PENDING_IMAGES = [];
         document.getElementById('productForm').reset();
         document.getElementById('productModalTitle').textContent = 'Add Product';
+        renderImagePreviews();
         openModal('productModal');
       });
     }
@@ -643,7 +704,7 @@
   }
   init();
 
-  /* ============ EDIT + DELETE + ORDER CLICKS ============ */
+  /* ============ EDIT / DELETE / ORDER CLICKS ============ */
   document.addEventListener('click', e => {
     const editBtn = e.target.closest('.edit-product');
     if (editBtn) {

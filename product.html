@@ -45,17 +45,18 @@
   <section class="product-detail">
     <div class="container product-detail-layout">
 
+      <!-- Gallery -->
       <div class="product-gallery">
         <div class="product-gallery-main">
           <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder" id="mainImage">
+          <video id="productVideo" class="product-video" controls preload="metadata" playsinline hidden></video>
         </div>
         <div class="product-gallery-thumbs">
           <img src="assets/images/products/placeholder.jpg" alt="Thumbnail 1">
-          <img src="assets/images/products/placeholder.jpg" alt="Thumbnail 2">
-          <img src="assets/images/products/placeholder.jpg" alt="Thumbnail 3">
         </div>
       </div>
 
+      <!-- Info -->
       <div class="product-info">
 
         <h1 class="product-title">Product Name Here</h1>
@@ -66,23 +67,13 @@
           Product description will appear here once added from the admin dashboard.
         </p>
 
+        <!-- Variations -->
         <div class="product-variations">
 
           <div class="variation-group">
             <label for="length">Length</label>
             <select id="length">
               <option value="">Select length</option>
-              <option value="10">10"</option>
-              <option value="12">12"</option>
-              <option value="14">14"</option>
-              <option value="16">16"</option>
-              <option value="18">18"</option>
-              <option value="20">20"</option>
-              <option value="22">22"</option>
-              <option value="24">24"</option>
-              <option value="26">26"</option>
-              <option value="28">28"</option>
-              <option value="30">30"</option>
             </select>
           </div>
 
@@ -90,12 +81,6 @@
             <label for="texture">Texture</label>
             <select id="texture">
               <option value="">Select texture</option>
-              <option value="bone-straight">Bone Straight</option>
-              <option value="silky-straight">Silky Straight</option>
-              <option value="body-wave">Body Wave</option>
-              <option value="loose-wave">Loose Wave</option>
-              <option value="deep-curly">Deep Curly</option>
-              <option value="kinky-curly">Kinky Curly</option>
             </select>
           </div>
 
@@ -103,11 +88,6 @@
             <label for="color">Color</label>
             <select id="color">
               <option value="">Select color</option>
-              <option value="natural-black">Natural Black</option>
-              <option value="dark-brown">Dark Brown</option>
-              <option value="chestnut-brown">Chestnut Brown</option>
-              <option value="blonde">Blonde</option>
-              <option value="99j-burgundy">99J Burgundy</option>
             </select>
           </div>
 
@@ -115,16 +95,12 @@
             <label for="density">Density</label>
             <select id="density">
               <option value="">Select density</option>
-              <option value="150">150%</option>
-              <option value="180">180%</option>
-              <option value="200">200%</option>
-              <option value="250">250%</option>
-              <option value="300">300%</option>
             </select>
           </div>
 
         </div>
 
+        <!-- Quantity + Add to cart -->
         <div class="product-actions">
           <div class="quantity">
             <label for="qty">Qty</label>
@@ -133,11 +109,13 @@
           <button class="btn btn-primary" id="addToCartBtn">Add to Cart</button>
         </div>
 
+        <!-- WhatsApp enquiry -->
         <a href="https://wa.me/2348146108122?text=Hi%20Bisbam%20Hairs%2C%20I%27m%20interested%20in%20this%20product"
            class="btn btn-outline whatsapp-btn">
           Enquire on WhatsApp
         </a>
 
+        <!-- Extra info -->
         <div class="product-meta">
           <p><strong>Availability:</strong> <span id="stockStatus">In stock</span></p>
           <p><strong>Category:</strong> <span id="productCategory">—</span></p>
@@ -153,7 +131,7 @@
     <div class="container">
       <h2 class="section-title">You May Also Like</h2>
       <div class="product-grid" id="relatedGrid">
-        <!-- Rendered by JS later -->
+        <!-- Rendered by product.js -->
       </div>
     </div>
   </section>
@@ -197,7 +175,7 @@
     </div>
   </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
   <script src="js/products.js"></script>
   <script src="js/main.js"></script>

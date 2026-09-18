@@ -1,6 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — product.js
-   Product detail page. Fetches product from Supabase by id/slug.
+   Product detail page. Fetches from Supabase, loads images + video.
    ========================================================= */
 
 (function () {
@@ -67,7 +67,6 @@
     if (breadcrumbName) breadcrumbName.textContent = p.name;
     if (price) price.textContent = naira(p.sale_price || p.retail_price || 0);
     if (desc) desc.textContent = p.description || 'No description yet.';
-
     if (categoryEl) categoryEl.textContent = p.category_slug || '—';
 
     if (stockStatus) {
@@ -87,15 +86,33 @@
     }
 
     if (thumbs) {
-      thumbs.innerHTML = images.slice(0, 4).map((src, i) => `
+      thumbs.innerHTML = images.slice(0, 6).map((src, i) => `
         <img src="${src}" alt="${p.name} view ${i + 1}" data-src="${src}">
       `).join('');
 
       thumbs.querySelectorAll('img').forEach(t => {
         t.addEventListener('click', () => {
-          if (mainImage) mainImage.src = t.dataset.src;
+          if (mainImage) {
+            mainImage.src = t.dataset.src;
+            mainImage.style.display = '';
+          }
+          const videoEl = document.getElementById('productVideo');
+          if (videoEl) videoEl.pause();
         });
       });
+    }
+
+    /* ===== VIDEO ===== */
+    const videoEl = document.getElementById('productVideo');
+    if (videoEl) {
+      if (p.video_url) {
+        videoEl.src = p.video_url;
+        videoEl.hidden = false;
+        // Show video alongside image (both visible)
+      } else {
+        videoEl.hidden = true;
+        videoEl.removeAttribute('src');
+      }
     }
 
     /* ===== VARIATIONS ===== */
@@ -112,10 +129,9 @@
       image: images[0]
     };
 
-    /* ===== ADD TO CART WIRING ===== */
+    /* ===== ADD TO CART ===== */
     const addBtn = document.getElementById('addToCartBtn');
     if (addBtn) {
-      // Remove any previous listeners by cloning
       const fresh = addBtn.cloneNode(true);
       addBtn.parentNode.replaceChild(fresh, addBtn);
 
