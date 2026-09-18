@@ -56,23 +56,8 @@
   <section class="categories">
     <div class="container">
       <h2 class="section-title">Shop by Category</h2>
-      <div class="category-grid">
-        <a href="shop.html?cat=human-hair" class="category-card">
-          <img src="assets/images/banners/hero.jpg" alt="Human Hair">
-          <h3>Human Hair</h3>
-        </a>
-        <a href="shop.html?cat=wigs" class="category-card">
-          <img src="assets/images/banners/hero.jpg" alt="Luxury Wigs">
-          <h3>Luxury Wigs</h3>
-        </a>
-        <a href="shop.html?cat=extensions" class="category-card">
-          <img src="assets/images/banners/about.jpg" alt="Hair Extensions">
-          <h3>Hair Extensions</h3>
-        </a>
-        <a href="shop.html?cat=bundles" class="category-card">
-          <img src="assets/images/banners/about.jpg" alt="Hair Bundles">
-          <h3>Hair Bundles</h3>
-        </a>
+      <div class="category-grid" id="categoryGrid">
+        <!-- Rendered by JS -->
       </div>
     </div>
   </section>
@@ -82,7 +67,7 @@
     <div class="container">
       <h2 class="section-title">Featured</h2>
       <div class="product-grid" id="featuredGrid">
-        <!-- Rendered by JS from products.js -->
+        <!-- Rendered by JS -->
       </div>
     </div>
   </section>
@@ -163,6 +148,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
   <script src="js/products.js"></script>
+  <script src="js/db.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/home.js"></script>
 </body>
 </html>

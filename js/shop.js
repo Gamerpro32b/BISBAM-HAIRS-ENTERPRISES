@@ -1,7 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — shop.js
-   Shop page: render products from data, filter, sort.
-   Data comes from js/products.js (placeholders for now).
+   Reads products from Supabase (via db.js).
+   Falls back to local placeholders if DB is empty.
    ========================================================= */
 
 (function () {
@@ -16,11 +16,11 @@
 
   if (!grid) return;
 
-  /* ============ RENDER PRODUCTS FROM DATA ============ */
-  function renderProducts() {
-    const products = window.BISBAM_PRODUCTS || [];
+  let allProducts = [];
 
-    if (products.length === 0) {
+  /* ============ RENDER PRODUCTS ============ */
+  function renderProducts(products) {
+    if (!products || products.length === 0) {
       grid.innerHTML = `
         <p style="grid-column:1/-1;text-align:center;color:var(--grey);padding:var(--space-xl) 0;">
           No products yet. Products will appear here once added from the admin dashboard.
@@ -34,25 +34,23 @@
         <article class="product-card"
                  data-id="${p.id}"
                  data-category="${p.category || ''}"
-                 data-texture="${p.texture || ''}"
-                 data-length="${p.length || ''}"
+                 data-texture="${(p.textures && p.textures[0]) || ''}"
+                 data-length="${(p.lengths && p.lengths[0]) || ''}"
                  data-price="${p.price || 0}"
                  data-date="${p.date || 0}"
                  data-popularity="${p.stock || 0}">
           <div class="product-image">
-            <img src="${p.image}" alt="${p.name}">
+            <img src="${p.image}" alt="${p.name}" loading="lazy">
           </div>
           <h3 class="product-name">${p.name}</h3>
           <p class="product-price">${price}</p>
-          <a href="product.html?id=${p.id}" class="btn btn-small btn-outline">View</a>
+          <a href="product.html?id=${p.slug || p.id}" class="btn btn-small btn-outline">View</a>
         </article>
       `;
     }).join('');
   }
 
-  renderProducts();
-
-  /* ============ COLLECT PRODUCT CARDS ============ */
+  /* ============ COLLECT CARDS ============ */
   function getCards() {
     return Array.from(grid.querySelectorAll('.product-card'));
   }
@@ -66,7 +64,6 @@
 
     let cards = getCards();
 
-    // Filter
     cards.forEach(card => {
       const cardCat = (card.dataset.category || '').toLowerCase();
       const cardLen = (card.dataset.length || '').toLowerCase();
@@ -76,14 +73,9 @@
       const matchesLen = !length || cardLen === length;
       const matchesTex = !texture || cardTex === texture;
 
-      if (matchesCat && matchesLen && matchesTex) {
-        card.style.display = '';
-      } else {
-        card.style.display = 'none';
-      }
+      card.style.display = (matchesCat && matchesLen && matchesTex) ? '' : 'none';
     });
 
-    // Sort (visible cards only)
     const visible = cards.filter(c => c.style.display !== 'none');
 
     visible.sort((a, b) => {
@@ -97,12 +89,11 @@
       if (sort === 'price-asc') return priceA - priceB;
       if (sort === 'price-desc') return priceB - priceA;
       if (sort === 'popular') return popB - popA;
-      return dateB - dateA; // newest first
+      return dateB - dateA;
     });
 
     visible.forEach(card => grid.appendChild(card));
 
-    // Update count
     if (countEl) {
       countEl.textContent = `Showing ${visible.length} product${visible.length === 1 ? '' : 's'}`;
     }
@@ -121,12 +112,15 @@
   }
 
   /* ============ INIT ============ */
-  applyFilters();
+  async function init() {
+    await new Promise(r => setTimeout(r, 100));
+    allProducts = await window.BisbamDB2.getProducts();
+    renderProducts(allProducts);
+    applyFilters();
+  }
+  init();
 
-  /* ============ EXPOSE FOR OTHER SCRIPTS ============ */
-  window.BisbamShop = {
-    applyFilters,
-    renderProducts
-  };
+  /* ============ EXPOSE ============ */
+  window.BisbamShop = { applyFilters, renderProducts };
 
 })();
