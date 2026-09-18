@@ -6,14 +6,13 @@
   <title>Settings — Bisbam Admin</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-body">
 
-  <!-- ============ ADMIN HEADER ============ -->
   <header class="admin-header">
     <div class="admin-header-inner">
       <a href="index.html" class="admin-logo">
@@ -27,10 +26,8 @@
     </div>
   </header>
 
-  <!-- ============ ADMIN LAYOUT ============ -->
   <div class="admin-layout">
 
-    <!-- Sidebar -->
     <aside class="admin-sidebar">
       <nav>
         <ul>
@@ -47,7 +44,6 @@
       </div>
     </aside>
 
-    <!-- Main -->
     <main class="admin-main">
 
       <div class="admin-page-header">
@@ -57,113 +53,91 @@
 
       <form id="settingsForm">
 
-        <!-- Business Info -->
         <section class="admin-panel">
           <h2>Business Info</h2>
-
           <div class="form-group">
             <label for="sBrandName">Brand Name</label>
             <input type="text" id="sBrandName" name="brandName" value="Bisbam Hairs Enterprises">
           </div>
-
           <div class="form-group">
             <label for="sTagline">Tagline</label>
             <input type="text" id="sTagline" name="tagline" value="Good Hairs Attract Goodluck — Invest In Your Hair Today.">
           </div>
-
           <div class="form-group">
             <label for="sDescription">Brand Description</label>
             <textarea id="sDescription" name="description" rows="4">Bisbam Hairs specializes in premium human hair, luxury wigs, and quality hair extensions — offering carefully sourced textures and beautifully crafted units for both personal use and wholesale.</textarea>
           </div>
         </section>
 
-        <!-- Contact -->
         <section class="admin-panel">
           <h2>Contact</h2>
-
           <div class="form-group">
             <label for="sWhatsApp">WhatsApp Number (with country code, digits only)</label>
             <input type="tel" id="sWhatsApp" name="whatsapp" value="2348146108122">
             <p class="form-note">Format: 2348146108122 (Nigeria country code + number, no spaces or +)</p>
           </div>
-
           <div class="form-group">
             <label for="sAddress">Address</label>
             <textarea id="sAddress" name="address" rows="2">44 Nnobi Street, Kilo Bus Stop, Surulere, Lagos</textarea>
           </div>
-
           <div class="form-group">
             <label for="sHours">Business Hours</label>
             <input type="text" id="sHours" name="hours" value="Open 24 hours">
           </div>
         </section>
 
-        <!-- Social -->
         <section class="admin-panel">
           <h2>Social Media</h2>
-
           <div class="form-group">
             <label for="sInstagram">Instagram URL</label>
             <input type="url" id="sInstagram" name="instagram" value="https://instagram.com/bisbam_hairs">
           </div>
-
           <div class="form-group">
             <label for="sTikTok">TikTok URL</label>
             <input type="url" id="sTikTok" name="tiktok" value="https://tiktok.com/@bisbam_hairs">
           </div>
         </section>
 
-        <!-- Payment -->
         <section class="admin-panel">
           <h2>Payment</h2>
-
           <div class="form-group">
             <label for="sBankName">Bank Name</label>
             <input type="text" id="sBankName" name="bankName" placeholder="e.g. GTBank">
           </div>
-
           <div class="form-group">
             <label for="sAccountName">Account Name</label>
             <input type="text" id="sAccountName" name="accountName" placeholder="Bisbam Hairs Enterprises">
           </div>
-
           <div class="form-group">
             <label for="sAccountNumber">Account Number</label>
             <input type="text" id="sAccountNumber" name="accountNumber" placeholder="0123456789">
           </div>
         </section>
 
-        <!-- Delivery -->
         <section class="admin-panel">
           <h2>Delivery</h2>
-
           <div class="form-group">
             <label for="sDeliveryInfo">Delivery Information</label>
             <textarea id="sDeliveryInfo" name="deliveryInfo" rows="3" placeholder="e.g. Delivery within Lagos 1–2 working days. Nationwide 3–5 working days."></textarea>
           </div>
-
           <div class="form-group">
             <label for="sDeliveryFee">Delivery Fee (₦)</label>
             <input type="number" id="sDeliveryFee" name="deliveryFee" min="0" step="100" placeholder="0">
           </div>
         </section>
 
-        <!-- Notifications -->
         <section class="admin-panel">
           <h2>Notifications</h2>
-
           <label class="form-checkbox">
             <input type="checkbox" id="sNotifyEmail" name="notifyEmail">
             <span>Email me on new orders</span>
           </label>
-
           <label class="form-checkbox">
             <input type="checkbox" id="sNotifyWhatsApp" name="notifyWhatsApp" checked>
             <span>WhatsApp me on new orders</span>
           </label>
         </section>
 
-        <!-- Actions -->
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save Settings</button>
         </div>
@@ -173,6 +147,8 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
 </body>

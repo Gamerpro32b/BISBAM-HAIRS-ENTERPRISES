@@ -6,8 +6,8 @@
   <title>Product — Bisbam Hairs</title>
   <meta name="description" content="View product details at Bisbam Hairs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,11 +15,9 @@
   <!-- ============ HEADER ============ -->
   <header class="site-header">
     <div class="container header-inner">
-
       <a href="index.html" class="logo">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
       </a>
-
       <nav class="main-nav">
         <ul>
           <li><a href="index.html">Home</a></li>
@@ -28,11 +26,9 @@
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </nav>
-
       <div class="header-actions">
         <a href="cart.html" class="cart-link">Cart <span class="cart-count">0</span></a>
       </div>
-
     </div>
   </header>
 
@@ -49,7 +45,6 @@
   <section class="product-detail">
     <div class="container product-detail-layout">
 
-      <!-- Gallery -->
       <div class="product-gallery">
         <div class="product-gallery-main">
           <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder" id="mainImage">
@@ -61,7 +56,6 @@
         </div>
       </div>
 
-      <!-- Info -->
       <div class="product-info">
 
         <h1 class="product-title">Product Name Here</h1>
@@ -72,7 +66,6 @@
           Product description will appear here once added from the admin dashboard.
         </p>
 
-        <!-- Variations (will be populated dynamically later) -->
         <div class="product-variations">
 
           <div class="variation-group">
@@ -132,7 +125,6 @@
 
         </div>
 
-        <!-- Quantity + Add to cart -->
         <div class="product-actions">
           <div class="quantity">
             <label for="qty">Qty</label>
@@ -141,13 +133,11 @@
           <button class="btn btn-primary" id="addToCartBtn">Add to Cart</button>
         </div>
 
-        <!-- WhatsApp enquiry -->
         <a href="https://wa.me/2348146108122?text=Hi%20Bisbam%20Hairs%2C%20I%27m%20interested%20in%20this%20product"
            class="btn btn-outline whatsapp-btn">
           Enquire on WhatsApp
         </a>
 
-        <!-- Extra info -->
         <div class="product-meta">
           <p><strong>Availability:</strong> <span id="stockStatus">In stock</span></p>
           <p><strong>Category:</strong> <span id="productCategory">—</span></p>
@@ -162,45 +152,8 @@
   <section class="related-products">
     <div class="container">
       <h2 class="section-title">You May Also Like</h2>
-
-      <div class="product-grid">
-
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
+      <div class="product-grid" id="relatedGrid">
+        <!-- Rendered by JS later -->
       </div>
     </div>
   </section>
@@ -208,12 +161,10 @@
   <!-- ============ FOOTER ============ -->
   <footer class="site-footer">
     <div class="container footer-inner">
-
       <div class="footer-brand">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
         <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
       </div>
-
       <div class="footer-links">
         <h3>Shop</h3>
         <ul>
@@ -222,7 +173,6 @@
           <li><a href="shop.html?cat=bundles">Bundles</a></li>
         </ul>
       </div>
-
       <div class="footer-links">
         <h3>Info</h3>
         <ul>
@@ -231,7 +181,6 @@
           <li><a href="cart.html">Cart</a></li>
         </ul>
       </div>
-
       <div class="footer-contact">
         <h3>Contact</h3>
         <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
@@ -242,14 +191,15 @@
           <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
         </p>
       </div>
-
     </div>
-
     <div class="footer-bottom">
       <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/products.js"></script>
   <script src="js/main.js"></script>
   <script src="js/cart.js"></script>
 </body>

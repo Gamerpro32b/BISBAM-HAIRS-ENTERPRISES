@@ -6,8 +6,8 @@
   <title>Cart — Bisbam Hairs</title>
   <meta name="description" content="Your shopping cart at Bisbam Hairs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,11 +15,9 @@
   <!-- ============ HEADER ============ -->
   <header class="site-header">
     <div class="container header-inner">
-
       <a href="index.html" class="logo">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
       </a>
-
       <nav class="main-nav">
         <ul>
           <li><a href="index.html">Home</a></li>
@@ -28,11 +26,9 @@
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </nav>
-
       <div class="header-actions">
         <a href="cart.html" class="cart-link active">Cart <span class="cart-count">0</span></a>
       </div>
-
     </div>
   </header>
 
@@ -47,23 +43,18 @@
   <section class="cart-section">
     <div class="container">
 
-      <!-- Empty state (shown when cart is empty) -->
       <div class="cart-empty" id="cartEmpty">
         <p>Your cart is empty.</p>
         <a href="shop.html" class="btn btn-primary">Start Shopping</a>
       </div>
 
-      <!-- Filled state (hidden by default; JS will show when items exist) -->
       <div class="cart-filled" id="cartFilled" style="display:none;">
-
         <div class="cart-layout">
 
-          <!-- Items list -->
           <div class="cart-items" id="cartItems">
-            <!-- Items will be injected by js/cart.js -->
+            <!-- Filled by cart.js -->
           </div>
 
-          <!-- Summary -->
           <aside class="cart-summary">
             <h2>Order Summary</h2>
 
@@ -87,7 +78,6 @@
           </aside>
 
         </div>
-
       </div>
 
     </div>
@@ -96,12 +86,10 @@
   <!-- ============ FOOTER ============ -->
   <footer class="site-footer">
     <div class="container footer-inner">
-
       <div class="footer-brand">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
         <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
       </div>
-
       <div class="footer-links">
         <h3>Shop</h3>
         <ul>
@@ -110,7 +98,6 @@
           <li><a href="shop.html?cat=bundles">Bundles</a></li>
         </ul>
       </div>
-
       <div class="footer-links">
         <h3>Info</h3>
         <ul>
@@ -119,7 +106,6 @@
           <li><a href="cart.html">Cart</a></li>
         </ul>
       </div>
-
       <div class="footer-contact">
         <h3>Contact</h3>
         <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
@@ -130,14 +116,15 @@
           <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
         </p>
       </div>
-
     </div>
-
     <div class="footer-bottom">
       <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/products.js"></script>
   <script src="js/main.js"></script>
   <script src="js/cart.js"></script>
 </body>

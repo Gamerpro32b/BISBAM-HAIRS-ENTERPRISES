@@ -6,8 +6,8 @@
   <title>Contact — Bisbam Hairs</title>
   <meta name="description" content="Contact Bisbam Hairs — WhatsApp, Instagram, TikTok, and our Lagos address.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,11 +15,9 @@
   <!-- ============ HEADER ============ -->
   <header class="site-header">
     <div class="container header-inner">
-
       <a href="index.html" class="logo">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
       </a>
-
       <nav class="main-nav">
         <ul>
           <li><a href="index.html">Home</a></li>
@@ -28,11 +26,9 @@
           <li><a href="contact.html" class="active">Contact</a></li>
         </ul>
       </nav>
-
       <div class="header-actions">
         <a href="cart.html" class="cart-link">Cart <span class="cart-count">0</span></a>
       </div>
-
     </div>
   </header>
 
@@ -44,13 +40,11 @@
     </div>
   </section>
 
-  <!-- ============ CONTACT GRID ============ -->
+  <!-- ============ CONTACT ============ -->
   <section class="contact">
     <div class="container contact-layout">
 
-      <!-- LEFT: Info -->
       <div class="contact-info">
-
         <h2>Contact Details</h2>
 
         <div class="contact-block">
@@ -75,16 +69,12 @@
             <a href="https://tiktok.com/@bisbam_hairs" target="_blank" rel="noopener">TikTok</a>
           </p>
         </div>
-
       </div>
 
-      <!-- RIGHT: Form -->
       <div class="contact-form-wrap">
-
         <h2>Send a Message</h2>
 
         <form class="contact-form" id="contactForm">
-
           <div class="form-group">
             <label for="name">Your Name</label>
             <input type="text" id="name" name="name" required>
@@ -102,15 +92,13 @@
 
           <button type="submit" class="btn btn-primary">Send via WhatsApp</button>
           <p class="form-note">This will open WhatsApp with your message pre-filled.</p>
-
         </form>
-
       </div>
 
     </div>
   </section>
 
-  <!-- ============ MAP PLACEHOLDER ============ -->
+  <!-- ============ MAP ============ -->
   <section class="map-section">
     <div class="container">
       <h2 class="section-title">Find Us</h2>
@@ -123,12 +111,10 @@
   <!-- ============ FOOTER ============ -->
   <footer class="site-footer">
     <div class="container footer-inner">
-
       <div class="footer-brand">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
         <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
       </div>
-
       <div class="footer-links">
         <h3>Shop</h3>
         <ul>
@@ -137,7 +123,6 @@
           <li><a href="shop.html?cat=bundles">Bundles</a></li>
         </ul>
       </div>
-
       <div class="footer-links">
         <h3>Info</h3>
         <ul>
@@ -146,7 +131,6 @@
           <li><a href="cart.html">Cart</a></li>
         </ul>
       </div>
-
       <div class="footer-contact">
         <h3>Contact</h3>
         <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
@@ -157,14 +141,15 @@
           <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
         </p>
       </div>
-
     </div>
-
     <div class="footer-bottom">
       <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/products.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

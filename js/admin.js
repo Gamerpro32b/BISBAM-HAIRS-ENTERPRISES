@@ -10,6 +10,7 @@
   const products = window.BISBAM_PRODUCTS || [];
   const orders = window.BISBAM_ORDERS || [];
   const customers = window.BISBAM_CUSTOMERS || [];
+  const categories = window.BISBAM_CATEGORIES || [];
 
   function naira(n) {
     return '₦' + Number(n || 0).toLocaleString('en-NG');
@@ -34,13 +35,34 @@
     if (modal) modal.hidden = true;
   }
 
-  // Wire all close buttons + overlays
   document.querySelectorAll('[data-close-modal]').forEach(el => {
     el.addEventListener('click', () => {
       const modal = el.closest('.admin-modal');
       if (modal) modal.hidden = true;
     });
   });
+
+  /* ============ POPULATE CATEGORY DROPDOWNS ============ */
+  function fillCategoryDropdown(selectEl) {
+    if (!selectEl) return;
+
+    const firstOption = selectEl.querySelector('option');
+    selectEl.innerHTML = '';
+    if (firstOption) selectEl.appendChild(firstOption);
+
+    categories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.slug;
+      opt.textContent = c.name;
+      selectEl.appendChild(opt);
+    });
+  }
+
+  // Product modal — category field
+  fillCategoryDropdown(document.getElementById('pCategory'));
+
+  // Products page filter
+  fillCategoryDropdown(document.getElementById('productCategoryFilter'));
 
   /* ============ DASHBOARD STATS ============ */
   function renderDashboardStats() {
@@ -144,7 +166,6 @@
     }
     renderOrders();
 
-    // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -154,7 +175,6 @@
       });
     });
 
-    // Search
     const orderSearch = document.getElementById('orderSearch');
     if (orderSearch) {
       orderSearch.addEventListener('input', e => {
@@ -200,7 +220,7 @@
       ? `<tr><td colspan="8" class="admin-empty">No products yet.</td></tr>`
       : products.map(p => `
         <tr>
-      <td><img src="../${p.image}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:6px;"></td>
+          <td><img src="../${p.image}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:6px;"></td>
           <td>${p.name}</td>
           <td>${p.category}</td>
           <td>${naira(p.price)}</td>
@@ -248,7 +268,6 @@
     loginForm.addEventListener('submit', e => {
       e.preventDefault();
       const errEl = document.getElementById('adminLoginError');
-      // Placeholder — real auth comes with Supabase
       if (errEl) {
         errEl.hidden = false;
         errEl.textContent = 'Login will be enabled once Supabase is connected.';

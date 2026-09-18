@@ -6,14 +6,13 @@
   <title>Customers — Bisbam Admin</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-body">
 
-  <!-- ============ ADMIN HEADER ============ -->
   <header class="admin-header">
     <div class="admin-header-inner">
       <a href="index.html" class="admin-logo">
@@ -27,10 +26,8 @@
     </div>
   </header>
 
-  <!-- ============ ADMIN LAYOUT ============ -->
   <div class="admin-layout">
 
-    <!-- Sidebar -->
     <aside class="admin-sidebar">
       <nav>
         <ul>
@@ -47,7 +44,6 @@
       </div>
     </aside>
 
-    <!-- Main -->
     <main class="admin-main">
 
       <div class="admin-page-header">
@@ -55,12 +51,10 @@
         <p>Everyone who has placed an order with Bisbam Hairs.</p>
       </div>
 
-      <!-- ============ SEARCH ============ -->
       <section class="admin-toolbar">
         <input type="search" id="customerSearch" placeholder="Search by name or phone">
       </section>
 
-      <!-- ============ CUSTOMERS TABLE ============ -->
       <section class="admin-panel">
         <div class="admin-table-wrap">
           <table class="admin-table">
@@ -77,11 +71,7 @@
               </tr>
             </thead>
             <tbody id="customersBody">
-              <tr>
-                <td colspan="8" class="admin-empty">
-                  No customers yet. Customers appear here after their first order.
-                </td>
-              </tr>
+              <tr><td colspan="8" class="admin-empty">No customers yet. Customers appear here after their first order.</td></tr>
             </tbody>
           </table>
         </div>
@@ -90,7 +80,6 @@
     </main>
   </div>
 
-  <!-- ============ CUSTOMER DETAIL MODAL ============ -->
   <div class="admin-modal" id="customerModal" hidden>
     <div class="admin-modal-overlay" data-close-modal></div>
     <div class="admin-modal-content admin-modal-large">
@@ -104,10 +93,13 @@
     </div>
   </div>
 
-   <script src="../js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
   <script src="../js/products.js"></script>
   <script src="../js/orders.js"></script>
   <script src="../js/customers.js"></script>
+  <script src="../js/categories.js"></script>
+  <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
 </body>
 </html>

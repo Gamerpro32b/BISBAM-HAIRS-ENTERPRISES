@@ -6,8 +6,8 @@
   <title>Admin Dashboard — Bisbam Hairs</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
@@ -16,24 +16,20 @@
   <!-- ============ ADMIN HEADER ============ -->
   <header class="admin-header">
     <div class="admin-header-inner">
-
       <a href="index.html" class="admin-logo">
         <img src="../assets/logo/logo.png" alt="Bisbam Hairs">
         <span>Admin</span>
       </a>
-
       <div class="admin-header-actions">
         <span class="admin-user">Signed in as Admin</span>
         <button class="btn btn-outline btn-small" id="logoutBtn">Logout</button>
       </div>
-
     </div>
   </header>
 
   <!-- ============ ADMIN LAYOUT ============ -->
   <div class="admin-layout">
 
-    <!-- Sidebar -->
     <aside class="admin-sidebar">
       <nav>
         <ul>
@@ -50,7 +46,6 @@
       </div>
     </aside>
 
-    <!-- Main content -->
     <main class="admin-main">
 
       <div class="admin-page-header">
@@ -58,59 +53,22 @@
         <p>Overview of your store activity.</p>
       </div>
 
-      <!-- ============ STAT CARDS ============ -->
       <section class="admin-stats">
-
-        <div class="stat-card">
-          <h3>Total Orders</h3>
-          <p class="stat-value" id="statTotalOrders">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Pending Orders</h3>
-          <p class="stat-value" id="statPendingOrders">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Confirmed Orders</h3>
-          <p class="stat-value" id="statConfirmedOrders">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Delivered Orders</h3>
-          <p class="stat-value" id="statDeliveredOrders">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Total Products</h3>
-          <p class="stat-value" id="statTotalProducts">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Out of Stock</h3>
-          <p class="stat-value" id="statOutOfStock">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Total Revenue</h3>
-          <p class="stat-value" id="statRevenue">₦0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>This Week</h3>
-          <p class="stat-value" id="statWeekOrders">0 orders</p>
-        </div>
-
+        <div class="stat-card"><h3>Total Orders</h3><p class="stat-value" id="statTotalOrders">0</p></div>
+        <div class="stat-card"><h3>Pending Orders</h3><p class="stat-value" id="statPendingOrders">0</p></div>
+        <div class="stat-card"><h3>Confirmed Orders</h3><p class="stat-value" id="statConfirmedOrders">0</p></div>
+        <div class="stat-card"><h3>Delivered Orders</h3><p class="stat-value" id="statDeliveredOrders">0</p></div>
+        <div class="stat-card"><h3>Total Products</h3><p class="stat-value" id="statTotalProducts">0</p></div>
+        <div class="stat-card"><h3>Out of Stock</h3><p class="stat-value" id="statOutOfStock">0</p></div>
+        <div class="stat-card"><h3>Total Revenue</h3><p class="stat-value" id="statRevenue">₦0</p></div>
+        <div class="stat-card"><h3>This Week</h3><p class="stat-value" id="statWeekOrders">0 orders</p></div>
       </section>
 
-      <!-- ============ RECENT ORDERS ============ -->
       <section class="admin-panel">
-
         <div class="admin-panel-header">
           <h2>Recent Orders</h2>
           <a href="orders.html" class="btn btn-outline btn-small">View All</a>
         </div>
-
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
@@ -126,25 +84,17 @@
               </tr>
             </thead>
             <tbody id="recentOrdersBody">
-              <tr>
-                <td colspan="8" class="admin-empty">
-                  No orders yet. Orders will appear here.
-                </td>
-              </tr>
+              <tr><td colspan="8" class="admin-empty">No orders yet.</td></tr>
             </tbody>
           </table>
         </div>
-
       </section>
 
-      <!-- ============ LOW STOCK ============ -->
       <section class="admin-panel">
-
         <div class="admin-panel-header">
           <h2>Low Stock Products</h2>
           <a href="products.html" class="btn btn-outline btn-small">Manage Products</a>
         </div>
-
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
@@ -157,23 +107,16 @@
               </tr>
             </thead>
             <tbody id="lowStockBody">
-              <tr>
-                <td colspan="5" class="admin-empty">
-                  No low-stock products.
-                </td>
-              </tr>
+              <tr><td colspan="5" class="admin-empty">No low-stock products.</td></tr>
             </tbody>
           </table>
         </div>
-
       </section>
 
-      <!-- ============ QUICK ACTIONS ============ -->
       <section class="admin-panel">
         <div class="admin-panel-header">
           <h2>Quick Actions</h2>
         </div>
-
         <div class="admin-quick-actions">
           <a href="products.html?action=new" class="btn btn-primary">+ Add Product</a>
           <a href="orders.html?filter=pending" class="btn btn-outline">View Pending Orders</a>
@@ -185,10 +128,13 @@
     </main>
   </div>
 
-  <script src="../js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
   <script src="../js/products.js"></script>
   <script src="../js/orders.js"></script>
   <script src="../js/customers.js"></script>
+  <script src="../js/categories.js"></script>
+  <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
 </body>
 </html>

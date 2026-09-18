@@ -6,8 +6,8 @@
   <title>Bisbam Hairs — Premium Human Hair, Luxury Wigs & Extensions</title>
   <meta name="description" content="Bisbam Hairs — premium human hair, luxury wigs and quality hair extensions in Lagos. Retail and wholesale.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,31 +15,26 @@
   <!-- ============ HEADER ============ -->
   <header class="site-header">
     <div class="container header-inner">
-
       <a href="index.html" class="logo">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
       </a>
-
       <nav class="main-nav">
         <ul>
-          <li><a href="index.html">Home</a></li>
+          <li><a href="index.html" class="active">Home</a></li>
           <li><a href="shop.html">Shop</a></li>
           <li><a href="about.html">About</a></li>
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </nav>
-
       <div class="header-actions">
         <a href="cart.html" class="cart-link">Cart <span class="cart-count">0</span></a>
       </div>
-
     </div>
   </header>
 
   <!-- ============ HERO ============ -->
   <section class="hero">
     <div class="container hero-inner">
-
       <div class="hero-text">
         <p class="hero-eyebrow">Premium Human Hair · Lagos</p>
         <h1>Luxury Hair, Elevated Beauty</h1>
@@ -51,11 +46,9 @@
           <a href="contact.html" class="btn btn-outline">Wholesale Enquiry</a>
         </div>
       </div>
-
       <div class="hero-image">
         <img src="assets/images/banners/hero.jpg" alt="Bisbam Hairs premium wig">
       </div>
-
     </div>
   </section>
 
@@ -63,73 +56,33 @@
   <section class="categories">
     <div class="container">
       <h2 class="section-title">Shop by Category</h2>
-
       <div class="category-grid">
         <a href="shop.html?cat=human-hair" class="category-card">
-          <img src="assets/images/categories/human-hair.jpg" alt="Human Hair">
+          <img src="assets/images/banners/hero.jpg" alt="Human Hair">
           <h3>Human Hair</h3>
         </a>
         <a href="shop.html?cat=wigs" class="category-card">
-          <img src="assets/images/categories/wigs.jpg" alt="Luxury Wigs">
+          <img src="assets/images/banners/hero.jpg" alt="Luxury Wigs">
           <h3>Luxury Wigs</h3>
         </a>
         <a href="shop.html?cat=extensions" class="category-card">
-          <img src="assets/images/categories/extensions.jpg" alt="Hair Extensions">
+          <img src="assets/images/banners/about.jpg" alt="Hair Extensions">
           <h3>Hair Extensions</h3>
         </a>
         <a href="shop.html?cat=bundles" class="category-card">
-          <img src="assets/images/categories/bundles.jpg" alt="Hair Bundles">
+          <img src="assets/images/banners/about.jpg" alt="Hair Bundles">
           <h3>Hair Bundles</h3>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- ============ FEATURED PRODUCTS ============ -->
+  <!-- ============ FEATURED ============ -->
   <section class="featured">
     <div class="container">
       <h2 class="section-title">Featured</h2>
-
-      <div class="product-grid">
-        <!-- Placeholder product card 1 -->
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
-        <!-- Placeholder product card 2 -->
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
-        <!-- Placeholder product card 3 -->
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
-
-        <!-- Placeholder product card 4 -->
-        <article class="product-card">
-          <div class="product-image">
-            <img src="assets/images/products/placeholder.jpg" alt="Product image placeholder">
-          </div>
-          <h3 class="product-name">Product Name Here</h3>
-          <p class="product-price">₦0</p>
-          <a href="product.html" class="btn btn-small">View</a>
-        </article>
+      <div class="product-grid" id="featuredGrid">
+        <!-- Rendered by JS from products.js -->
       </div>
     </div>
   </section>
@@ -138,7 +91,6 @@
   <section class="why">
     <div class="container">
       <h2 class="section-title">Why Bisbam</h2>
-
       <div class="why-grid">
         <div class="why-item">
           <h3>100% Human Hair</h3>
@@ -172,12 +124,10 @@
   <!-- ============ FOOTER ============ -->
   <footer class="site-footer">
     <div class="container footer-inner">
-
       <div class="footer-brand">
         <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
         <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
       </div>
-
       <div class="footer-links">
         <h3>Shop</h3>
         <ul>
@@ -186,7 +136,6 @@
           <li><a href="shop.html?cat=bundles">Bundles</a></li>
         </ul>
       </div>
-
       <div class="footer-links">
         <h3>Info</h3>
         <ul>
@@ -195,7 +144,6 @@
           <li><a href="cart.html">Cart</a></li>
         </ul>
       </div>
-
       <div class="footer-contact">
         <h3>Contact</h3>
         <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
@@ -206,14 +154,14 @@
           <a href="https://tiktok.com/@bisbam_hairs">TikTok</a>
         </p>
       </div>
-
     </div>
-
     <div class="footer-bottom">
       <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
   <script src="js/products.js"></script>
   <script src="js/main.js"></script>
 </body>
