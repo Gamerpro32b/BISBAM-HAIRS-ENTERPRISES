@@ -3,7 +3,7 @@
    Supabase client setup.
    ========================================================= */
 
-const SUPABASE_URL = 'https://tqcwmgxxzzsdfuxskayl.supabase.co';
+const SUPABASE_URL = 'https://tqcwmqqxzzsdfuxskayl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxY3dtcXF4enpzZGZ1eHNrYXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MzM0MDUsImV4cCI6MjEwNTMwOTQwNX0.K9dyvS3PAXrD6biR6ffT7yP3MoIH7MD6HEPmxvo84-M';
 
 window.BisbamDB = null;
