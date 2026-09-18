@@ -1825,3 +1825,159 @@ table {
     padding: var(--space-md);
   }
 }
+
+/* =========================================================
+   MOBILE HEADER + NAV
+   ========================================================= */
+
+/* Nav toggle button (hamburger) */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 26px;
+  height: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 200;
+  order: 1;
+}
+
+.nav-toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--black);
+  border-radius: var(--radius-pill);
+  transition: transform var(--transition), opacity var(--transition);
+}
+
+.nav-toggle.is-active span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.nav-toggle.is-active span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle.is-active span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Mobile behaviour */
+@media (max-width: 768px) {
+
+  .header-inner {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    position: relative;
+  }
+
+  /* Order on mobile: hamburger (1), logo (2), cart (3) */
+  .nav-toggle {
+    display: flex;
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    order: 2;
+    flex-shrink: 0;
+  }
+
+  .logo img {
+    height: 38px;
+  }
+
+  .header-actions {
+    order: 3;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .cart-link {
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+  }
+
+  .cart-count {
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    font-size: 0.68rem;
+  }
+
+  /* Nav drawer */
+  .main-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 78%;
+    max-width: 320px;
+    height: 100vh;
+    background: var(--white);
+    box-shadow: -8px 0 32px rgba(20, 20, 20, 0.12);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 90px var(--space-lg) var(--space-lg);
+    z-index: 150;
+    overflow-y: auto;
+  }
+
+  .main-nav.is-open {
+    transform: translateX(0);
+  }
+
+  .main-nav ul {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .main-nav li {
+    border-bottom: 1px solid var(--pink-border);
+  }
+
+  .main-nav li:last-child {
+    border-bottom: none;
+  }
+
+  .main-nav a {
+    display: block;
+    padding: var(--space-md) 0;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+  }
+
+  .main-nav a.active::after {
+    display: none;
+  }
+
+  /* Overlay behind drawer */
+  .nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 20, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+    z-index: 140;
+  }
+
+  .nav-overlay.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* On desktop, hide hamburger + overlay always */
+@media (min-width: 769px) {
+  .nav-toggle {
+    display: none !important;
+  }
+  .nav-overlay {
+    display: none !important;
+  }
+}
