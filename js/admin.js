@@ -1,5 +1,5 @@
 /* =========================================================
-   BISBAM HAIRS — admin.js (Part 1 of 2)
+   BISBAM HAIRS — admin.js (Part 1 of 3)
    ========================================================= */
 
 (function () {
@@ -14,6 +14,7 @@
   let editingCategoryId = null;
   window.BISBAM_PENDING_IMAGES = [];
   window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+  window.BISBAM_SEEN_ORDERS = JSON.parse(localStorage.getItem('bisbam_seen_orders') || '[]');
 
   function naira(n) {
     return '₦' + Number(n || 0).toLocaleString('en-NG');
@@ -129,20 +130,33 @@
 
       if (!o.error && o.data) {
         result.orders = o.data.map(x => ({
-          id: x.order_number || x.id, customer: x.customer_name,
-          phone: x.customer_phone, address: x.delivery_address,
-          city: x.city, items: x.items || [], total: x.total,
-          payment: x.payment_method, status: x.status,
-          date: (x.created_at || '').split('T')[0], notes: x.notes
+          id: x.id,
+          orderNumber: x.order_number || x.id,
+          customer: x.customer_name,
+          phone: x.customer_phone,
+          email: x.customer_email,
+          address: x.delivery_address,
+          city: x.city,
+          items: x.items || [],
+          subtotal: x.subtotal,
+          deliveryFee: x.delivery_fee,
+          total: x.total,
+          payment: x.payment_method,
+          status: x.status,
+          date: (x.created_at || '').split('T')[0],
+          createdAt: x.created_at,
+          notes: x.notes
         }));
       }
 
       if (!c.error && c.data) {
         result.customers = c.data.map(x => ({
           id: x.id, name: x.name, phone: x.phone, email: x.email,
-          city: x.city, orders: x.total_orders || 0,
+          city: x.city, address: x.address,
+          orders: x.total_orders || 0,
           totalSpent: x.total_spent || 0,
-          lastOrder: x.last_order_at ? x.last_order_at.split('T')[0] : '—'
+          lastOrder: x.last_order_at ? x.last_order_at.split('T')[0] : '—',
+          lastOrderFull: x.last_order_at
         }));
       }
 
@@ -226,7 +240,7 @@
     }
     body.innerHTML = orders.slice(0, 5).map(o => `
       <tr>
-        <td>${o.id}</td>
+        <td>${o.orderNumber}</td>
         <td>${o.customer}</td>
         <td>${o.phone}</td>
         <td>${(o.items || []).length}</td>
@@ -466,367 +480,484 @@
   }
 
   // PART 2 continues below...
-    /* =========================================================
-     PART 2
-     ========================================================= */
+  /* =========================================================
+   PART 2
+   ========================================================= */
 
-  /* ============ UPLOAD HELPERS ============ */
-  async function uploadImages(client, files) {
-    const uploaded = [];
-    for (const file of files) {
-      if (file.size > 500 * 1024) throw new Error(`"${file.name}" over 500KB.`);
-      const ext = file.name.split('.').pop().toLowerCase();
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const filepath = `products/${filename}`;
-      const { error } = await client.storage.from('Product-images').upload(filepath, file, {
-        cacheControl: '31536000', upsert: false
-      });
-      if (error) throw error;
-      const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
-      if (pub && pub.publicUrl) uploaded.push(pub.publicUrl);
-    }
-    return uploaded;
-  }
-
-  async function uploadVideo(client, file) {
-    if (file.size > 15 * 1024 * 1024) throw new Error('Video is over 15MB.');
+/* ============ UPLOAD HELPERS ============ */
+async function uploadImages(client, files) {
+  const uploaded = [];
+  for (const file of files) {
+    if (file.size > 500 * 1024) throw new Error(`"${file.name}" over 500KB.`);
     const ext = file.name.split('.').pop().toLowerCase();
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-    const filepath = `videos/${filename}`;
-    const { error } = await client.storage.from('Product-videos').upload(filepath, file, {
-      cacheControl: '31536000', upsert: false
-    });
-    if (error) throw error;
-    const { data: pub } = client.storage.from('Product-videos').getPublicUrl(filepath);
-    return pub ? pub.publicUrl : null;
-  }
-
-  async function uploadCategoryImage(client, file) {
-    if (file.size > 500 * 1024) throw new Error('Image over 500KB.');
-    const ext = file.name.split('.').pop().toLowerCase();
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-    const filepath = `categories/${filename}`;
+    const filepath = `products/${filename}`;
     const { error } = await client.storage.from('Product-images').upload(filepath, file, {
       cacheControl: '31536000', upsert: false
     });
     if (error) throw error;
     const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
-    return pub ? pub.publicUrl : null;
+    if (pub && pub.publicUrl) uploaded.push(pub.publicUrl);
   }
+  return uploaded;
+}
 
-  /* ============ PRODUCT SAVE ============ */
-  async function handleProductSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const client = db();
-    if (!client) return alert('Not connected to database.');
+async function uploadVideo(client, file) {
+  if (file.size > 15 * 1024 * 1024) throw new Error('Video is over 15MB.');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const filepath = `videos/${filename}`;
+  const { error } = await client.storage.from('Product-videos').upload(filepath, file, {
+    cacheControl: '31536000', upsert: false
+  });
+  if (error) throw error;
+  const { data: pub } = client.storage.from('Product-videos').getPublicUrl(filepath);
+  return pub ? pub.publicUrl : null;
+}
 
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
+async function uploadCategoryImage(client, file) {
+  if (file.size > 500 * 1024) throw new Error('Image over 500KB.');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const filepath = `categories/${filename}`;
+  const { error } = await client.storage.from('Product-images').upload(filepath, file, {
+    cacheControl: '31536000', upsert: false
+  });
+  if (error) throw error;
+  const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
+  return pub ? pub.publicUrl : null;
+}
 
-    try {
-      const name = form.querySelector('#pName').value.trim();
-      const description = form.querySelector('#pDescription').value.trim();
-      const categorySlug = form.querySelector('#pCategory').value;
-      const tags = form.querySelector('#pTags').value
-        .split(',').map(t => t.trim()).filter(Boolean);
+/* ============ PRODUCT SAVE ============ */
+async function handleProductSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const client = db();
+  if (!client) return alert('Not connected to database.');
 
-      const retailPrice = Number(form.querySelector('#pRetailPrice').value) || 0;
-      const wholesalePrice = Number(form.querySelector('#pWholesalePrice').value) || null;
-      const salePrice = Number(form.querySelector('#pSalePrice').value) || null;
+  const btn = form.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
 
-      const stock = Number(form.querySelector('#pStock').value) || 0;
-      const lowStock = Number(form.querySelector('#pLowStockThreshold').value) || 3;
-      const availability = form.querySelector('#pAvailability').value;
+  try {
+    const name = form.querySelector('#pName').value.trim();
+    const description = form.querySelector('#pDescription').value.trim();
+    const categorySlug = form.querySelector('#pCategory').value;
+    const tags = form.querySelector('#pTags').value
+      .split(',').map(t => t.trim()).filter(Boolean);
 
-      const lengths = getChecked('lengthCheckboxes');
-      const textures = getChecked('textureCheckboxes');
-      const colors = getChecked('colorCheckboxes');
-      const densities = getChecked('densityCheckboxes');
+    const retailPrice = Number(form.querySelector('#pRetailPrice').value) || 0;
+    const wholesalePrice = Number(form.querySelector('#pWholesalePrice').value) || null;
+    const salePrice = Number(form.querySelector('#pSalePrice').value) || null;
 
-      const laceType = form.querySelector('#pLaceType').value || null;
-      const capSize = form.querySelector('#pCapSize').value || null;
+    const stock = Number(form.querySelector('#pStock').value) || 0;
+    const lowStock = Number(form.querySelector('#pLowStockThreshold').value) || 3;
+    const availability = form.querySelector('#pAvailability').value;
 
-      const featured = form.querySelector('#pFeatured').checked;
-      const wholesaleAvailable = form.querySelector('#pWholesaleAvailable').checked;
+    const lengths = getChecked('lengthCheckboxes');
+    const textures = getChecked('textureCheckboxes');
+    const colors = getChecked('colorCheckboxes');
+    const densities = getChecked('densityCheckboxes');
 
-      const files = window.BISBAM_PENDING_IMAGES || [];
+    const laceType = form.querySelector('#pLaceType').value || null;
+    const capSize = form.querySelector('#pCapSize').value || null;
 
-      const videoInput = form.querySelector('#pVideo');
-      const videoFile = videoInput && videoInput.files[0] ? videoInput.files[0] : null;
+    const featured = form.querySelector('#pFeatured').checked;
+    const wholesaleAvailable = form.querySelector('#pWholesaleAvailable').checked;
 
-      const current = editingProductId
-        ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
-        : null;
+    const files = window.BISBAM_PENDING_IMAGES || [];
 
-      let images = current && current.images && current.images.length
-        ? current.images
-        : ['assets/images/products/placeholder.jpg'];
+    const videoInput = form.querySelector('#pVideo');
+    const videoFile = videoInput && videoInput.files[0] ? videoInput.files[0] : null;
 
-      let videoUrl = current ? current.video_url : null;
+    const current = editingProductId
+      ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
+      : null;
 
-      btn.textContent = 'Uploading…';
-      btn.disabled = true;
+    let images = current && current.images && current.images.length
+      ? current.images
+      : ['assets/images/products/placeholder.jpg'];
 
-      if (files.length > 0) {
-        const uploaded = await uploadImages(client, files);
-        if (uploaded.length) images = uploaded;
-      }
+    let videoUrl = current ? current.video_url : null;
 
-      if (videoFile) {
-        const url = await uploadVideo(client, videoFile);
-        if (url) videoUrl = url;
-      }
+    btn.textContent = 'Uploading…';
+    btn.disabled = true;
 
-      btn.textContent = 'Saving…';
-
-      const payload = {
-        name, description, category_slug: categorySlug, tags,
-        retail_price: retailPrice, wholesale_price: wholesalePrice,
-        sale_price: salePrice, stock, low_stock_threshold: lowStock,
-        availability, lengths, textures, colors, densities,
-        lace_type: laceType, cap_size: capSize, images,
-        video_url: videoUrl, featured, wholesale_available: wholesaleAvailable
-      };
-
-      if (editingProductId) {
-        const { error } = await client.from('products').update(payload).eq('id', editingProductId);
-        if (error) throw error;
-        alert('Product updated.');
-      } else {
-        payload.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
-        const { error } = await client.from('products').insert(payload);
-        if (error) throw error;
-        alert('Product added.');
-      }
-
-      form.reset();
-      window.BISBAM_PENDING_IMAGES = [];
-      renderImagePreviews();
-      editingProductId = null;
-      document.getElementById('productModalTitle').textContent = 'Add Product';
-
-      const data = await fetchAll();
-      window.BisbamAdminData = data;
-      renderProductsTable(data.products);
-      renderDashboardStats(data.orders, data.products);
-      renderLowStock(data.products);
-
-      closeModal('productModal');
-    } catch (err) {
-      console.error('Save error:', err);
-      alert('Error: ' + (err.message || err));
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
+    if (files.length > 0) {
+      const uploaded = await uploadImages(client, files);
+      if (uploaded.length) images = uploaded;
     }
-  }
 
-  /* ============ PRODUCT EDIT ============ */
-  function openEditModal(product) {
-    editingProductId = product.id;
-    window.BISBAM_PENDING_IMAGES = [];
+    if (videoFile) {
+      const url = await uploadVideo(client, videoFile);
+      if (url) videoUrl = url;
+    }
 
-    const form = document.getElementById('productForm');
-    form.querySelector('#pName').value = product.name || '';
-    form.querySelector('#pDescription').value = product.description || '';
-    form.querySelector('#pCategory').value = product.category || '';
-    form.querySelector('#pTags').value = (product.tags || []).join(', ');
-    form.querySelector('#pRetailPrice').value = product.retail_price || 0;
-    form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
-    form.querySelector('#pSalePrice').value = product.sale_price || '';
-    form.querySelector('#pStock').value = product.stock || 0;
-    form.querySelector('#pLowStockThreshold').value = 3;
-    form.querySelector('#pAvailability').value = product.availability || 'in';
+    btn.textContent = 'Saving…';
 
-    setChecked('lengthCheckboxes', product.lengths || []);
-    setChecked('textureCheckboxes', product.textures || []);
-    setChecked('colorCheckboxes', product.colors || []);
-    setChecked('densityCheckboxes', product.densities || []);
+    const payload = {
+      name, description, category_slug: categorySlug, tags,
+      retail_price: retailPrice, wholesale_price: wholesalePrice,
+      sale_price: salePrice, stock, low_stock_threshold: lowStock,
+      availability, lengths, textures, colors, densities,
+      lace_type: laceType, cap_size: capSize, images,
+      video_url: videoUrl, featured, wholesale_available: wholesaleAvailable
+    };
 
-    form.querySelector('#pLaceType').value = product.lace_type || '';
-    form.querySelector('#pCapSize').value = product.cap_size || '';
-    form.querySelector('#pFeatured').checked = !!product.featured;
-    form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
-
-    renderImagePreviews();
-    document.getElementById('productModalTitle').textContent = 'Edit Product';
-    openModal('productModal');
-  }
-
-  /* ============ PRODUCT DELETE ============ */
-  async function handleDelete(productId) {
-    const data = window.BisbamAdminData || {};
-    const product = (data.products || []).find(p => String(p.id) === String(productId));
-    if (!product) return;
-    if (!confirm(`Delete "${product.name}"?`)) return;
-
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    try {
-      const imagesToDelete = (product.images || [])
-        .filter(u => u.includes('/Product-images/'))
-        .map(u => 'products/' + u.split('/Product-images/')[1]);
-      if (imagesToDelete.length) {
-        await client.storage.from('Product-images').remove(imagesToDelete);
-      }
-      if (product.video_url && product.video_url.includes('/Product-videos/')) {
-        const videoPath = 'videos/' + product.video_url.split('/Product-videos/')[1];
-        await client.storage.from('Product-videos').remove([videoPath]);
-      }
-
-      const { error } = await client.from('products').delete().eq('id', productId);
+    if (editingProductId) {
+      const { error } = await client.from('products').update(payload).eq('id', editingProductId);
       if (error) throw error;
-
-      alert('Product deleted.');
-      const data2 = await fetchAll();
-      window.BisbamAdminData = data2;
-      renderProductsTable(data2.products);
-      renderDashboardStats(data2.orders, data2.products);
-      renderLowStock(data2.products);
-    } catch (err) {
-      console.error('Delete error:', err);
-      alert('Error deleting: ' + (err.message || err));
+      alert('Product updated.');
+    } else {
+      payload.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '-' + Date.now().toString(36);
+      const { error } = await client.from('products').insert(payload);
+      if (error) throw error;
+      alert('Product added.');
     }
+
+    form.reset();
+    window.BISBAM_PENDING_IMAGES = [];
+    renderImagePreviews();
+    editingProductId = null;
+    document.getElementById('productModalTitle').textContent = 'Add Product';
+
+    const data = await fetchAll();
+    window.BisbamAdminData = data;
+    renderProductsTable(data.products);
+    renderDashboardStats(data.orders, data.products);
+    renderLowStock(data.products);
+
+    closeModal('productModal');
+  } catch (err) {
+    console.error('Save error:', err);
+    alert('Error: ' + (err.message || err));
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+/* ============ PRODUCT EDIT ============ */
+function openEditModal(product) {
+  editingProductId = product.id;
+  window.BISBAM_PENDING_IMAGES = [];
+
+  const form = document.getElementById('productForm');
+  form.querySelector('#pName').value = product.name || '';
+  form.querySelector('#pDescription').value = product.description || '';
+  form.querySelector('#pCategory').value = product.category || '';
+  form.querySelector('#pTags').value = (product.tags || []).join(', ');
+  form.querySelector('#pRetailPrice').value = product.retail_price || 0;
+  form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
+  form.querySelector('#pSalePrice').value = product.sale_price || '';
+  form.querySelector('#pStock').value = product.stock || 0;
+  form.querySelector('#pLowStockThreshold').value = 3;
+  form.querySelector('#pAvailability').value = product.availability || 'in';
+
+  setChecked('lengthCheckboxes', product.lengths || []);
+  setChecked('textureCheckboxes', product.textures || []);
+  setChecked('colorCheckboxes', product.colors || []);
+  setChecked('densityCheckboxes', product.densities || []);
+
+  form.querySelector('#pLaceType').value = product.lace_type || '';
+  form.querySelector('#pCapSize').value = product.cap_size || '';
+  form.querySelector('#pFeatured').checked = !!product.featured;
+  form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
+
+  renderImagePreviews();
+  document.getElementById('productModalTitle').textContent = 'Edit Product';
+  openModal('productModal');
+}
+
+/* ============ PRODUCT DELETE ============ */
+async function handleDelete(productId) {
+  const data = window.BisbamAdminData || {};
+  const product = (data.products || []).find(p => String(p.id) === String(productId));
+  if (!product) return;
+  if (!confirm(`Delete "${product.name}"?`)) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    const imagesToDelete = (product.images || [])
+      .filter(u => u.includes('/Product-images/'))
+      .map(u => 'products/' + u.split('/Product-images/')[1]);
+    if (imagesToDelete.length) {
+      await client.storage.from('Product-images').remove(imagesToDelete);
+    }
+    if (product.video_url && product.video_url.includes('/Product-videos/')) {
+      const videoPath = 'videos/' + product.video_url.split('/Product-videos/')[1];
+      await client.storage.from('Product-videos').remove([videoPath]);
+    }
+
+    const { error } = await client.from('products').delete().eq('id', productId);
+    if (error) throw error;
+
+    alert('Product deleted.');
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderProductsTable(data2.products);
+    renderDashboardStats(data2.orders, data2.products);
+    renderLowStock(data2.products);
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Error deleting: ' + (err.message || err));
+  }
+}
+
+/* ============ CATEGORIES TABLE ============ */
+function renderCategoriesTable(categories) {
+  const body = document.getElementById('categoriesBody');
+  if (!body) return;
+
+  if (!categories || categories.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" class="admin-empty">No categories yet.</td></tr>`;
+    return;
   }
 
-  /* ============ CATEGORIES TABLE ============ */
-  function renderCategoriesTable(categories) {
-    const body = document.getElementById('categoriesBody');
+  body.innerHTML = categories.map(c => {
+    const imgSrc = c.image_url
+      ? (c.image_url.startsWith('http') ? c.image_url : '../' + c.image_url)
+      : '../assets/images/products/placeholder.jpg';
+    return `
+      <tr>
+        <td><img src="${imgSrc}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;"></td>
+        <td>${c.name}</td>
+        <td>${c.slug}</td>
+        <td>${c.description || '—'}</td>
+        <td>
+          <button class="btn btn-small btn-outline edit-category" data-id="${c.id}">Edit</button>
+          <button class="btn btn-small btn-outline delete-category" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ============ CATEGORY SAVE ============ */
+async function handleCategorySubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  const btn = form.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+
+  try {
+    const name = form.querySelector('#cName').value.trim();
+    const slug = form.querySelector('#cSlug').value.trim();
+    const description = form.querySelector('#cDescription').value.trim();
+
+    const imageFile = window.BISBAM_PENDING_CATEGORY_IMAGE;
+
+    const current = editingCategoryId
+      ? ((window.BisbamAdminData || {}).categories || []).find(c => c.id === editingCategoryId)
+      : null;
+
+    let imageUrl = current ? current.image_url : null;
+
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+
+    if (imageFile) {
+      imageUrl = await uploadCategoryImage(client, imageFile);
+    }
+
+    const payload = { name, slug, description, image_url: imageUrl };
+
+    if (editingCategoryId) {
+      const { error } = await client.from('categories').update(payload).eq('id', editingCategoryId);
+      if (error) throw error;
+      alert('Category updated.');
+    } else {
+      const { error } = await client.from('categories').insert(payload);
+      if (error) throw error;
+      alert('Category added.');
+    }
+
+    form.reset();
+    window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+    renderCategoryImagePreview();
+    editingCategoryId = null;
+    document.getElementById('categoryModalTitle').textContent = 'Add Category';
+
+    const data = await fetchAll();
+    window.BisbamAdminData = data;
+    renderCategoriesTable(data.categories);
+    fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
+    fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
+
+    closeModal('categoryModal');
+  } catch (err) {
+    console.error('Category save error:', err);
+    alert('Error: ' + (err.message || err));
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+/* ============ CATEGORY EDIT ============ */
+function openEditCategoryModal(category) {
+  editingCategoryId = category.id;
+  window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+
+  const form = document.getElementById('categoryForm');
+  form.querySelector('#cName').value = category.name || '';
+  form.querySelector('#cSlug').value = category.slug || '';
+  form.querySelector('#cDescription').value = category.description || '';
+
+  renderCategoryImagePreview();
+  document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+  openModal('categoryModal');
+}
+
+/* ============ CATEGORY DELETE ============ */
+async function handleDeleteCategory(categoryId) {
+  const data = window.BisbamAdminData || {};
+  const category = (data.categories || []).find(c => String(c.id) === String(categoryId));
+  if (!category) return;
+  if (!confirm(`Delete category "${category.name}"?`)) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    if (category.image_url && category.image_url.includes('/Product-images/')) {
+      const path = 'categories/' + category.image_url.split('/Product-images/')[1];
+      await client.storage.from('Product-images').remove([path]);
+    }
+
+    const { error } = await client.from('categories').delete().eq('id', categoryId);
+    if (error) throw error;
+
+    alert('Category deleted.');
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderCategoriesTable(data2.categories);
+    fillCategoryDropdown(document.getElementById('pCategory'), data2.categories);
+    fillCategoryDropdown(document.getElementById('productCategoryFilter'), data2.categories);
+  } catch (err) {
+    console.error('Delete category error:', err);
+    alert('Error: ' + (err.message || err));
+  }
+}
+
+// PART 3 continues below...
+  /* =========================================================
+     PART 3 — ORDERS, CUSTOMERS, REALTIME, SETTINGS, INIT
+     ========================================================= */
+
+  /* ============ ORDERS PAGE ============ */
+  let activeOrderStatus = 'all';
+  let orderSearchTerm = '';
+
+  function renderOrdersTable(orders) {
+    const body = document.getElementById('ordersBody');
     if (!body) return;
 
-    if (!categories || categories.length === 0) {
-      body.innerHTML = `<tr><td colspan="5" class="admin-empty">No categories yet.</td></tr>`;
+    let list = orders.slice();
+
+    if (activeOrderStatus !== 'all') {
+      list = list.filter(o => o.status === activeOrderStatus);
+    }
+
+    if (orderSearchTerm) {
+      const q = orderSearchTerm.toLowerCase();
+      list = list.filter(o =>
+        (o.orderNumber || '').toLowerCase().includes(q) ||
+        (o.customer || '').toLowerCase().includes(q) ||
+        (o.phone || '').includes(q)
+      );
+    }
+
+    if (list.length === 0) {
+      body.innerHTML = `<tr><td colspan="10" class="admin-empty">No orders match.</td></tr>`;
       return;
     }
 
-    body.innerHTML = categories.map(c => {
-      const imgSrc = c.image_url
-        ? (c.image_url.startsWith('http') ? c.image_url : '../' + c.image_url)
-        : '../assets/images/products/placeholder.jpg';
-      return `
-        <tr>
-          <td><img src="${imgSrc}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;"></td>
-          <td>${c.name}</td>
-          <td>${c.slug}</td>
-          <td>${c.description || '—'}</td>
-          <td>
-            <button class="btn btn-small btn-outline edit-category" data-id="${c.id}">Edit</button>
-            <button class="btn btn-small btn-outline delete-category" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    body.innerHTML = list.map(o => `
+      <tr>
+        <td>${o.orderNumber}</td>
+        <td>${o.customer}</td>
+        <td>${o.phone}</td>
+        <td>${o.address}, ${o.city}</td>
+        <td>${(o.items || []).length}</td>
+        <td>${naira(o.total)}</td>
+        <td>${o.payment}</td>
+        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+        <td>${o.date}</td>
+        <td><button class="btn btn-small btn-outline view-order" data-id="${o.id}">View</button></td>
+      </tr>
+    `).join('');
   }
 
-  /* ============ CATEGORY SAVE ============ */
-  async function handleCategorySubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const client = db();
-    if (!client) return alert('Not connected.');
+  function wireOrdersPage() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    if (tabs.length) {
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeOrderStatus = btn.dataset.status || 'all';
+          renderOrdersTable((window.BisbamAdminData || {}).orders || []);
+        });
+      });
+    }
 
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-
-    try {
-      const name = form.querySelector('#cName').value.trim();
-      const slug = form.querySelector('#cSlug').value.trim();
-      const description = form.querySelector('#cDescription').value.trim();
-
-      const imageFile = window.BISBAM_PENDING_CATEGORY_IMAGE;
-
-      const current = editingCategoryId
-        ? ((window.BisbamAdminData || {}).categories || []).find(c => c.id === editingCategoryId)
-        : null;
-
-      let imageUrl = current ? current.image_url : null;
-
-      btn.textContent = 'Saving…';
-      btn.disabled = true;
-
-      if (imageFile) {
-        imageUrl = await uploadCategoryImage(client, imageFile);
-      }
-
-      const payload = { name, slug, description, image_url: imageUrl };
-
-      if (editingCategoryId) {
-        const { error } = await client.from('categories').update(payload).eq('id', editingCategoryId);
-        if (error) throw error;
-        alert('Category updated.');
-      } else {
-        const { error } = await client.from('categories').insert(payload);
-        if (error) throw error;
-        alert('Category added.');
-      }
-
-      form.reset();
-      window.BISBAM_PENDING_CATEGORY_IMAGE = null;
-      renderCategoryImagePreview();
-      editingCategoryId = null;
-      document.getElementById('categoryModalTitle').textContent = 'Add Category';
-
-      const data = await fetchAll();
-      window.BisbamAdminData = data;
-      renderCategoriesTable(data.categories);
-      fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
-      fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
-
-      closeModal('categoryModal');
-    } catch (err) {
-      console.error('Category save error:', err);
-      alert('Error: ' + (err.message || err));
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
+    const search = document.getElementById('orderSearch');
+    if (search) {
+      search.addEventListener('input', e => {
+        orderSearchTerm = e.target.value.trim();
+        renderOrdersTable((window.BisbamAdminData || {}).orders || []);
+      });
     }
   }
 
-  /* ============ CATEGORY EDIT ============ */
-  function openEditCategoryModal(category) {
-    editingCategoryId = category.id;
-    window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+  /* ============ CUSTOMERS PAGE ============ */
+  let customerSearchTerm = '';
 
-    const form = document.getElementById('categoryForm');
-    form.querySelector('#cName').value = category.name || '';
-    form.querySelector('#cSlug').value = category.slug || '';
-    form.querySelector('#cDescription').value = category.description || '';
+  function renderCustomersTable(customers) {
+    const body = document.getElementById('customersBody');
+    if (!body) return;
 
-    renderCategoryImagePreview();
-    document.getElementById('categoryModalTitle').textContent = 'Edit Category';
-    openModal('categoryModal');
+    let list = customers.slice();
+
+    if (customerSearchTerm) {
+      const q = customerSearchTerm.toLowerCase();
+      list = list.filter(c =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.phone || '').includes(q)
+      );
+    }
+
+    if (list.length === 0) {
+      body.innerHTML = `<tr><td colspan="8" class="admin-empty">No customers match.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = list.map(c => `
+      <tr>
+        <td>${c.name}</td>
+        <td>${c.phone}</td>
+        <td>${c.email || '—'}</td>
+        <td>${c.city || '—'}</td>
+        <td>${c.orders}</td>
+        <td>${naira(c.totalSpent)}</td>
+        <td>${c.lastOrder}</td>
+        <td><button class="btn btn-small btn-outline view-customer" data-id="${c.id}">View</button></td>
+      </tr>
+    `).join('');
   }
 
-  /* ============ CATEGORY DELETE ============ */
-  async function handleDeleteCategory(categoryId) {
-    const data = window.BisbamAdminData || {};
-    const category = (data.categories || []).find(c => String(c.id) === String(categoryId));
-    if (!category) return;
-    if (!confirm(`Delete category "${category.name}"?`)) return;
-
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    try {
-      if (category.image_url && category.image_url.includes('/Product-images/')) {
-        const path = 'categories/' + category.image_url.split('/Product-images/')[1];
-        await client.storage.from('Product-images').remove([path]);
-      }
-
-      const { error } = await client.from('categories').delete().eq('id', categoryId);
-      if (error) throw error;
-
-      alert('Category deleted.');
-      const data2 = await fetchAll();
-      window.BisbamAdminData = data2;
-      renderCategoriesTable(data2.categories);
-      fillCategoryDropdown(document.getElementById('pCategory'), data2.categories);
-      fillCategoryDropdown(document.getElementById('productCategoryFilter'), data2.categories);
-    } catch (err) {
-      console.error('Delete category error:', err);
-      alert('Error: ' + (err.message || err));
+  function wireCustomersPage() {
+    const search = document.getElementById('customerSearch');
+    if (search) {
+      search.addEventListener('input', e => {
+        customerSearchTerm = e.target.value.trim();
+        renderCustomersTable((window.BisbamAdminData || {}).customers || []);
+      });
     }
   }
 
@@ -912,7 +1043,6 @@
         .upsert({ id: 1, ...payload }, { onConflict: 'id' });
 
       if (error) throw error;
-
       alert('Settings saved.');
     } catch (err) {
       console.error('Settings save error:', err);
@@ -921,6 +1051,144 @@
       btn.textContent = originalText;
       btn.disabled = false;
     }
+  }
+
+  /* =========================================================
+     NOTIFICATIONS — BELL + TOAST + REALTIME
+     ========================================================= */
+
+  function injectBell() {
+    const headerActions = document.querySelector('.admin-header-actions');
+    if (!headerActions) return;
+    if (document.getElementById('adminBellWrap')) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'admin-bell-wrap';
+    wrap.id = 'adminBellWrap';
+    wrap.innerHTML = `
+      <button type="button" class="admin-bell" id="adminBellBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span class="admin-bell-count" id="adminBellCount">0</span>
+      </button>
+      <div class="admin-bell-panel" id="adminBellPanel" hidden>
+        <div class="admin-bell-panel-header">
+          New Orders
+          <span id="adminBellMarkSeen" style="cursor:pointer;text-decoration:underline;">Mark all read</span>
+        </div>
+        <div class="admin-bell-panel-body" id="adminBellBody">
+          <div class="admin-bell-empty">No new orders.</div>
+        </div>
+      </div>
+    `;
+    headerActions.insertBefore(wrap, headerActions.firstChild);
+
+    const btn = document.getElementById('adminBellBtn');
+    const panel = document.getElementById('adminBellPanel');
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.hidden = !panel.hidden;
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) panel.hidden = true;
+    });
+
+    const markSeen = document.getElementById('adminBellMarkSeen');
+    if (markSeen) {
+      markSeen.addEventListener('click', () => {
+        const orders = (window.BisbamAdminData || {}).orders || [];
+        window.BISBAM_SEEN_ORDERS = orders.map(o => o.id);
+        localStorage.setItem('bisbam_seen_orders', JSON.stringify(window.BISBAM_SEEN_ORDERS));
+        renderBell();
+      });
+    }
+  }
+
+  function renderBell() {
+    const orders = (window.BisbamAdminData || {}).orders || [];
+    const unseen = orders.filter(o => !window.BISBAM_SEEN_ORDERS.includes(o.id));
+
+    const countEl = document.getElementById('adminBellCount');
+    const bodyEl = document.getElementById('adminBellBody');
+
+    if (countEl) {
+      countEl.textContent = unseen.length;
+      if (unseen.length > 0) countEl.classList.add('is-visible');
+      else countEl.classList.remove('is-visible');
+    }
+
+    if (bodyEl) {
+      if (unseen.length === 0) {
+        bodyEl.innerHTML = `<div class="admin-bell-empty">No new orders.</div>`;
+      } else {
+        bodyEl.innerHTML = unseen.slice(0, 10).map(o => `
+          <a class="admin-bell-item" href="orders.html">
+            <div class="admin-bell-item-title">${o.orderNumber}</div>
+            <div class="admin-bell-item-meta">${o.customer} · ${naira(o.total)} · ${o.date}</div>
+          </a>
+        `).join('');
+      }
+    }
+  }
+
+  function showToast(order) {
+    const old = document.getElementById('adminToast');
+    if (old) old.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'admin-toast';
+    toast.id = 'adminToast';
+    toast.innerHTML = `
+      <div class="admin-toast-title">🔔 New Order</div>
+      <div class="admin-toast-body">${order.customer} — ${naira(order.total)}</div>
+      <div class="admin-toast-meta">${order.orderNumber}</div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('is-visible'), 50);
+
+    toast.addEventListener('click', () => {
+      window.location.href = 'orders.html';
+    });
+
+    setTimeout(() => {
+      toast.classList.remove('is-visible');
+      setTimeout(() => toast.remove(), 400);
+    }, 8000);
+  }
+
+  function startRealtime() {
+    const client = db();
+    if (!client) return;
+
+    client
+      .channel('public:orders')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        async (payload) => {
+          console.log('New order received:', payload);
+
+          const data = await fetchAll();
+          window.BisbamAdminData = data;
+
+          renderDashboardStats(data.orders, data.products);
+          renderRecentOrders(data.orders);
+          renderOrdersTable(data.orders);
+          renderCustomersTable(data.customers);
+          renderBell();
+
+          showToast({
+            customer: payload.new.customer_name || 'Customer',
+            total: payload.new.total || 0,
+            orderNumber: payload.new.order_number || 'New order'
+          });
+        }
+      )
+      .subscribe();
   }
 
   /* ============ INIT ============ */
@@ -945,11 +1213,19 @@
     renderLowStock(data.products);
     renderProductsTable(data.products);
     renderCategoriesTable(data.categories);
+    renderOrdersTable(data.orders);
+    renderCustomersTable(data.customers);
     wireProductsPageFilters();
+    wireOrdersPage();
+    wireCustomersPage();
     renderImagePreviews();
     renderCategoryImagePreview();
 
+    injectBell();
+    renderBell();
+
     await loadSettings();
+    startRealtime();
 
     const addProductBtn = document.getElementById('addProductBtn');
     if (addProductBtn) {
@@ -986,7 +1262,6 @@
   }
   init();
 
- 
   /* ============ GLOBAL CLICKS ============ */
   document.addEventListener('click', e => {
     const editProduct = e.target.closest('.edit-product');
@@ -1026,21 +1301,88 @@
       const body = document.getElementById('orderModalBody');
       if (!body) return;
 
+      const itemLines = (order.items || []).map(i => {
+        const variant = [i.length && `${i.length}"`, i.texture, i.color, i.density]
+          .filter(Boolean).join(' · ');
+        return `<p>${i.name}${variant ? ` (${variant})` : ''} × ${i.qty} — ${naira(i.price * i.qty)}</p>`;
+      }).join('');
+
       body.innerHTML = `
-        <p><strong>Order:</strong> ${order.id}</p>
+        <p><strong>Order:</strong> ${order.orderNumber}</p>
         <p><strong>Customer:</strong> ${order.customer}</p>
         <p><strong>Phone:</strong> ${order.phone}</p>
+        ${order.email ? `<p><strong>Email:</strong> ${order.email}</p>` : ''}
         <p><strong>Address:</strong> ${order.address}, ${order.city}</p>
         <p><strong>Payment:</strong> ${order.payment}</p>
         <p><strong>Status:</strong> ${order.status}</p>
         <p><strong>Date:</strong> ${order.date}</p>
         <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
         <p><strong>Items:</strong></p>
-        ${(order.items || []).map(i => `<p>${i.name} × ${i.qty} — ${naira(i.price * i.qty)}</p>`).join('')}
+        ${itemLines}
         <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+        <p><strong>Subtotal:</strong> ${naira(order.subtotal || 0)}</p>
+        ${order.deliveryFee ? `<p><strong>Delivery:</strong> ${naira(order.deliveryFee)}</p>` : ''}
         <p><strong>Total:</strong> ${naira(order.total)}</p>
+        ${order.notes ? `<hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);"><p><strong>Notes:</strong> ${order.notes}</p>` : ''}
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+        <p><strong>Change Status:</strong></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="btn btn-small btn-outline update-order-status" data-id="${order.id}" data-status="pending">Pending</button>
+          <button class="btn btn-small btn-outline update-order-status" data-id="${order.id}" data-status="confirmed">Confirmed</button>
+          <button class="btn btn-small btn-outline update-order-status" data-id="${order.id}" data-status="delivered">Delivered</button>
+          <button class="btn btn-small btn-outline update-order-status" data-id="${order.id}" data-status="cancelled">Cancelled</button>
+        </div>
       `;
       openModal('orderModal');
+      return;
+    }
+
+    const viewCustomer = e.target.closest('.view-customer');
+    if (viewCustomer) {
+      const data = window.BisbamAdminData || {};
+      const c = (data.customers || []).find(x => String(x.id) === viewCustomer.dataset.id);
+      if (!c) return;
+
+      const body = document.getElementById('customerModalBody');
+      if (!body) return;
+
+      body.innerHTML = `
+        <p><strong>Name:</strong> ${c.name}</p>
+        <p><strong>Phone:</strong> ${c.phone}</p>
+        ${c.email ? `<p><strong>Email:</strong> ${c.email}</p>` : ''}
+        ${c.city ? `<p><strong>City:</strong> ${c.city}</p>` : ''}
+        ${c.address ? `<p><strong>Address:</strong> ${c.address}</p>` : ''}
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+        <p><strong>Total Orders:</strong> ${c.orders}</p>
+        <p><strong>Total Spent:</strong> ${naira(c.totalSpent)}</p>
+        <p><strong>Last Order:</strong> ${c.lastOrder}</p>
+      `;
+      openModal('customerModal');
+      return;
+    }
+
+    const updateStatus = e.target.closest('.update-order-status');
+    if (updateStatus) {
+      const id = updateStatus.dataset.id;
+      const status = updateStatus.dataset.status;
+      const client = db();
+      if (!client) return;
+
+      (async () => {
+        const { error } = await client.from('orders').update({ status }).eq('id', id);
+        if (error) {
+          alert('Error: ' + error.message);
+          return;
+        }
+        alert('Order marked as ' + status + '.');
+
+        const data = await fetchAll();
+        window.BisbamAdminData = data;
+        renderOrdersTable(data.orders);
+        renderRecentOrders(data.orders);
+        renderDashboardStats(data.orders, data.products);
+        closeModal('orderModal');
+      })();
       return;
     }
   });
