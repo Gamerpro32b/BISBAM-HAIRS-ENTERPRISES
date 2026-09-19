@@ -1,6 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — cart.js
-   Cart engine + checkout that saves orders to Supabase.
+   Cart engine + checkout. Supports card (Korapay) + manual (WhatsApp).
    ========================================================= */
 
 (function () {
@@ -59,7 +59,7 @@
     }
   }
 
-  /* ============ PRODUCT PAGE — Add to Cart ============ */
+  /* ============ PRODUCT PAGE ============ */
   const addBtn = document.getElementById('addToCartBtn');
   if (addBtn) {
     addBtn.addEventListener('click', function () {
@@ -147,7 +147,7 @@
   }
   renderCartPage();
 
-  /* ============ CHECKOUT PAGE — Render summary ============ */
+  /* ============ CHECKOUT PAGE ============ */
   async function renderCheckoutPage() {
     const itemsEl = document.getElementById('checkoutItems');
     const subtotalEl = document.getElementById('checkoutSubtotal');
@@ -179,7 +179,6 @@
     const subtotal = cartTotal(cart);
     if (subtotalEl) subtotalEl.textContent = formatNaira(subtotal);
 
-    // Load delivery fee from settings
     let deliveryFee = 0;
     const client = db();
     if (client) {
@@ -197,7 +196,7 @@
   }
   renderCheckoutPage();
 
-  /* ============ ORDER NUMBER GENERATOR ============ */
+  /* ============ ORDER NUMBER ============ */
   function generateOrderNumber() {
     const d = new Date();
     const y = String(d.getFullYear()).slice(-2);
@@ -225,7 +224,7 @@
       const address = document.getElementById('address')?.value.trim() || '';
       const city = document.getElementById('city')?.value.trim() || '';
       const notes = document.getElementById('notes')?.value.trim() || '';
-      const payment = document.querySelector('input[name="payment"]:checked')?.value || 'bank-transfer';
+      const payment = document.querySelector('input[name="payment"]:checked')?.value || 'card';
 
       if (!name || !phone || !address || !city) {
         alert('Please fill in all required fields.');
@@ -245,7 +244,6 @@
       const subtotal = cartTotal(cart);
       let deliveryFee = 0;
 
-      // Load delivery fee
       if (client) {
         try {
           const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
@@ -255,10 +253,10 @@
 
       const total = subtotal + deliveryFee;
 
-      // Save to Supabase (order + customer)
+      // ============ SAVE ORDER TO SUPABASE ============
+      let savedOrderId = null;
       if (client) {
         try {
-          // 1. Upsert customer by phone
           let customerId = null;
           const { data: existingCust } = await client
             .from('customers')
@@ -292,7 +290,6 @@
             if (newCust) customerId = newCust.id;
           }
 
-          // 2. Save order
           const orderPayload = {
             order_number: orderNumber,
             customer_id: customerId,
@@ -319,16 +316,66 @@
             status: 'pending'
           };
 
-          const { error: orderErr } = await client.from('orders').insert(orderPayload);
+          const { data: inserted, error: orderErr } = await client
+            .from('orders')
+            .insert(orderPayload)
+            .select('id')
+            .single();
+
           if (orderErr) throw orderErr;
+          if (inserted) savedOrderId = inserted.id;
 
         } catch (err) {
           console.error('Order save error:', err);
           alert('Could not save order: ' + (err.message || err) + '\n\nWe will still open WhatsApp so you can send the order.');
+          if (btn) { btn.textContent = originalText; btn.disabled = false; }
+          return;
         }
       }
 
-      // Build WhatsApp message
+      // ============ CARD PAYMENT FLOW ============
+      if (payment === 'card') {
+        if (btn) btn.textContent = 'Redirecting to payment…';
+
+        try {
+          const res = await fetch(
+            'https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/korapay-init',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_number: orderNumber,
+                order_id: savedOrderId,
+                amount: total,
+                customer_name: name,
+                customer_email: email || 'customer@example.com',
+                customer_phone: phone
+              })
+            }
+          );
+
+          const data = await res.json();
+
+          if (!res.ok || !data.success || !data.checkout_url) {
+            throw new Error(data.error || 'Could not initiate payment');
+          }
+
+          // Clear cart before leaving
+          localStorage.removeItem('bisbam_cart');
+          window.dispatchEvent(new Event('cart-updated'));
+
+          // Redirect to Korapay
+          window.location.href = data.checkout_url;
+          return;
+
+        } catch (err) {
+          console.error('Korapay init error:', err);
+          alert('Could not start card payment: ' + (err.message || err) + '\n\nWe will open WhatsApp so you can complete the order manually.');
+          // Fall through to WhatsApp flow below
+        }
+      }
+
+      // ============ WHATSAPP FLOW (bank-transfer / whatsapp / card fallback) ============
       let message = `*NEW ORDER — Bisbam Hairs*%0A`;
       message += `*Order #:* ${orderNumber}%0A%0A`;
       message += `*Name:* ${encodeURIComponent(name)}%0A`;
@@ -352,11 +399,9 @@
 
       if (notes) message += `%0A%0A*Notes:* ${encodeURIComponent(notes)}`;
 
-      // Clear cart
       localStorage.removeItem('bisbam_cart');
       window.dispatchEvent(new Event('cart-updated'));
 
-      // Redirect to WhatsApp
       window.location.href = `https://wa.me/2348146108122?text=${message}`;
 
       if (btn) {

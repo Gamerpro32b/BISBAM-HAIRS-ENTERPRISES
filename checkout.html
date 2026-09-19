@@ -36,7 +36,7 @@
   <section class="page-header">
     <div class="container">
       <h1>Checkout</h1>
-      <p>Complete your details and we'll confirm your order on WhatsApp.</p>
+      <p>Complete your details and choose how you'd like to pay.</p>
     </div>
   </section>
 
@@ -83,7 +83,11 @@
 
           <div class="payment-methods">
             <label class="payment-option">
-              <input type="radio" name="payment" value="bank-transfer" checked>
+              <input type="radio" name="payment" value="card" checked>
+              <span>💳 Pay with Card — Fast &amp; Secure</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="bank-transfer">
               <span>Bank Transfer</span>
             </label>
             <label class="payment-option">
@@ -122,8 +126,8 @@
         </button>
 
         <p class="form-note">
-          After placing your order, we'll reach out on WhatsApp to confirm
-          payment and delivery.
+          Pay with card for instant confirmation. Bank transfer and WhatsApp
+          options require manual confirmation.
         </p>
       </aside>
 

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Placed — Bisbam Hairs</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ============ PAGE-SPECIFIC ============ */
+    .success-body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #FDF5F9 0%, #FFFFFF 45%, #FDF5F9 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl) var(--space-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Soft pink glow behind card */
+    .success-body::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 700px;
+      height: 700px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(233, 30, 140, 0.12) 0%, transparent 65%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Floating decorative hearts */
+    .success-heart {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.35;
+      color: var(--pink);
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+      user-select: none;
+    }
+    .success-heart:nth-child(1) { top: 12%; left: 8%; animation-delay: 0s; }
+    .success-heart:nth-child(2) { top: 22%; right: 12%; animation-delay: 1.5s; font-size: 30px; }
+    .success-heart:nth-child(3) { bottom: 18%; left: 14%; animation-delay: 3s; font-size: 18px; }
+    .success-heart:nth-child(4) { bottom: 26%; right: 8%; animation-delay: 4.5s; }
+    .success-heart:nth-child(5) { top: 42%; left: 4%; animation-delay: 2s; font-size: 14px; }
+    .success-heart:nth-child(6) { top: 60%; right: 5%; animation-delay: 5.5s; font-size: 16px; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-6deg); }
+      50% { transform: translateY(-22px) rotate(8deg); }
+    }
+
+    /* Main card */
+    .success-card {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 560px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--pink-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-2xl) var(--space-xl);
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(233, 30, 140, 0.12);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: cardIn 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+    }
+
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .success-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: var(--space-md);
+    }
+
+    .success-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      color: var(--black);
+      margin-bottom: var(--space-sm);
+      line-height: 1.1;
+    }
+
+    .success-script {
+      font-family: var(--font-accent);
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      color: var(--pink);
+      line-height: 1.2;
+      margin-bottom: var(--space-lg);
+    }
+
+    .success-divider {
+      width: 60px;
+      height: 2px;
+      background: var(--gradient-pink);
+      margin: var(--space-md) auto var(--space-lg);
+      border-radius: var(--radius-pill);
+    }
+
+    .success-order-box {
+      display: inline-block;
+      padding: 12px 22px;
+      border: 1px dashed var(--pink);
+      border-radius: var(--radius-sm);
+      background: var(--pink-soft);
+      margin-bottom: var(--space-lg);
+    }
+
+    .success-order-label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-bottom: 4px;
+    }
+
+    .success-order-number {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--pink-deep);
+      letter-spacing: 0.04em;
+    }
+
+    .success-message {
+      font-size: 0.98rem;
+      line-height: 1.7;
+      color: var(--grey);
+      margin-bottom: var(--space-lg);
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .success-message strong {
+      color: var(--black);
+      font-weight: 600;
+    }
+
+    .success-steps {
+      text-align: left;
+      background: var(--pink-soft);
+      border-radius: var(--radius-sm);
+      padding: var(--space-md) var(--space-lg);
+      margin-bottom: var(--space-lg);
+      list-style: none;
+    }
+
+    .success-steps li {
+      position: relative;
+      padding-left: 26px;
+      font-size: 0.9rem;
+      color: var(--black);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .success-steps li:last-child {
+      margin-bottom: 0;
+    }
+
+    .success-steps li::before {
+      content: '✦';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--pink);
+      font-size: 0.9rem;
+    }
+
+    .success-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+
+    .success-actions .btn {
+      width: 100%;
+    }
+
+    .success-footer-note {
+      margin-top: var(--space-lg);
+      font-family: var(--font-accent);
+      font-size: 1.25rem;
+      color: var(--pink);
+    }
+
+    .success-paid-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: #ECFDF5;
+      color: #16A34A;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      margin-bottom: var(--space-md);
+    }
+
+    .success-paid-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: #16A34A;
+      border-radius: 50%;
+      animation: pulse-dot 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+  </style>
+</head>
+<body class="success-body">
+
+  <!-- Decorative floating hearts -->
+  <span class="success-heart">♥</span>
+  <span class="success-heart">♥</span>
+  <span class="success-heart">♥</span>
+  <span class="success-heart">♥</span>
+  <span class="success-heart">♥</span>
+  <span class="success-heart">♥</span>
+
+  <div class="success-card">
+
+    <!-- Optional Paid Badge -->
+    <div class="success-paid-badge" id="paidBadge" hidden>
+      <span class="dot"></span>
+      Payment Received
+    </div>
+
+    <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
+
+    <h1 class="success-title" id="successTitle">Order Placed</h1>
+
+    <p class="success-script" id="successScript">Thank you, Bam Babe ♥</p>
+
+    <div class="success-divider"></div>
+
+    <div class="success-order-box" id="orderBox" hidden>
+      <span class="success-order-label">Order Number</span>
+      <span class="success-order-number" id="orderNumber">—</span>
+    </div>
+
+    <p class="success-message">
+      We've received your order. A member of our team will reach out shortly to
+      <strong>confirm delivery and payment details</strong>. Thank you for trusting Bisbam Hairs.
+    </p>
+
+    <ul class="success-steps">
+      <li>We'll send you a WhatsApp confirmation.</li>
+      <li>Delivery timeline depends on your location.</li>
+      <li>Keep your phone reachable for updates.</li>
+    </ul>
+
+    <div class="success-actions">
+      <a href="shop.html" class="btn btn-primary">Continue Shopping</a>
+      <a href="https://wa.me/2348146108122?text=Hi%20Bisbam%20Hairs%2C%20I%20just%20placed%20an%20order"
+         class="btn btn-outline" target="_blank" rel="noopener">
+        Message Us on WhatsApp
+      </a>
+    </div>
+
+    <p class="success-footer-note">Good Hairs Attract Goodluck</p>
+
+  </div>
+
+  <script>
+    // Read URL params
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    const order = params.get('order');
+
+    // Show order number if present
+    if (order) {
+      const box = document.getElementById('orderBox');
+      const num = document.getElementById('orderNumber');
+      if (box && num) {
+        num.textContent = order;
+        box.hidden = false;
+      }
+    }
+
+    // If `ref` present → assume payment flow → show "Payment Received"
+    if (ref) {
+      const badge = document.getElementById('paidBadge');
+      const title = document.getElementById('successTitle');
+      const script = document.getElementById('successScript');
+      if (badge) badge.hidden = false;
+      if (title) title.textContent = 'Payment Received';
+      if (script) script.textContent = 'Thank you, Bam Babe ♥';
+    }
+  </script>
+
+</body>
+</html>
