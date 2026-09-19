@@ -6,6 +6,8 @@
 (function () {
   'use strict';
 
+  const KORAPAY_INIT_URL = 'https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/Korapay-init-';
+
   function getCart() {
     return JSON.parse(localStorage.getItem('bisbam_cart') || '[]');
   }
@@ -334,27 +336,23 @@
       }
 
       /* ============ KORAPAY PAYMENT FLOW ============ */
-      /* Both card AND bank-transfer go through Korapay */
       if (payment === 'card' || payment === 'bank-transfer') {
         if (btn) btn.textContent = 'Redirecting to payment…';
 
         try {
-          const res = await fetch(
-            'https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/korapay-init',
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                order_number: orderNumber,
-                order_id: savedOrderId,
-                amount: total,
-                customer_name: name,
-                customer_email: email || 'customer@example.com',
-                customer_phone: phone,
-                payment_method: payment
-              })
-            }
-          );
+          const res = await fetch(KORAPAY_INIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_number: orderNumber,
+              order_id: savedOrderId,
+              amount: total,
+              customer_name: name,
+              customer_email: email || 'customer@example.com',
+              customer_phone: phone,
+              payment_method: payment
+            })
+          });
 
           const data = await res.json();
 
@@ -374,7 +372,7 @@
         }
       }
 
-      /* ============ WHATSAPP FALLBACK (only for "whatsapp" method or failures) ============ */
+      /* ============ WHATSAPP FALLBACK ============ */
       let message = `*NEW ORDER — Bisbam Hairs*%0A`;
       message += `*Order #:* ${orderNumber}%0A%0A`;
       message += `*Name:* ${encodeURIComponent(name)}%0A`;
