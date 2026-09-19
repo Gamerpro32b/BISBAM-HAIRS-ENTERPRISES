@@ -1,6 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — cart.js
-   Cart engine + checkout. Supports card (Korapay) + manual (WhatsApp).
+   Cart engine + checkout. Card + bank transfer via Korapay.
    ========================================================= */
 
 (function () {
@@ -253,7 +253,7 @@
 
       const total = subtotal + deliveryFee;
 
-      // ============ SAVE ORDER TO SUPABASE ============
+      /* ============ SAVE ORDER TO SUPABASE ============ */
       let savedOrderId = null;
       if (client) {
         try {
@@ -327,14 +327,15 @@
 
         } catch (err) {
           console.error('Order save error:', err);
-          alert('Could not save order: ' + (err.message || err) + '\n\nWe will still open WhatsApp so you can send the order.');
+          alert('Could not save order: ' + (err.message || err));
           if (btn) { btn.textContent = originalText; btn.disabled = false; }
           return;
         }
       }
 
-      // ============ CARD PAYMENT FLOW ============
-      if (payment === 'card') {
+      /* ============ KORAPAY PAYMENT FLOW ============ */
+      /* Both card AND bank-transfer go through Korapay */
+      if (payment === 'card' || payment === 'bank-transfer') {
         if (btn) btn.textContent = 'Redirecting to payment…';
 
         try {
@@ -349,7 +350,8 @@
                 amount: total,
                 customer_name: name,
                 customer_email: email || 'customer@example.com',
-                customer_phone: phone
+                customer_phone: phone,
+                payment_method: payment
               })
             }
           );
@@ -360,22 +362,19 @@
             throw new Error(data.error || 'Could not initiate payment');
           }
 
-          // Clear cart before leaving
           localStorage.removeItem('bisbam_cart');
           window.dispatchEvent(new Event('cart-updated'));
 
-          // Redirect to Korapay
           window.location.href = data.checkout_url;
           return;
 
         } catch (err) {
           console.error('Korapay init error:', err);
-          alert('Could not start card payment: ' + (err.message || err) + '\n\nWe will open WhatsApp so you can complete the order manually.');
-          // Fall through to WhatsApp flow below
+          alert('Could not start payment: ' + (err.message || err) + '\n\nWe will open WhatsApp so you can complete the order manually.');
         }
       }
 
-      // ============ WHATSAPP FLOW (bank-transfer / whatsapp / card fallback) ============
+      /* ============ WHATSAPP FALLBACK (only for "whatsapp" method or failures) ============ */
       let message = `*NEW ORDER — Bisbam Hairs*%0A`;
       message += `*Order #:* ${orderNumber}%0A%0A`;
       message += `*Name:* ${encodeURIComponent(name)}%0A`;
