@@ -256,10 +256,11 @@
       const total = subtotal + deliveryFee;
 
       /* ============ SAVE ORDER TO SUPABASE ============ */
-      let savedOrderId = null;
       if (client) {
         try {
           let customerId = null;
+
+          // Upsert customer (no returning id — anon can't read)
           const { data: existingCust } = await client
             .from('customers')
             .select('id, total_orders, total_spent')
@@ -278,7 +279,8 @@
               last_order_at: new Date().toISOString()
             }).eq('id', customerId);
           } else {
-            const { data: newCust } = await client.from('customers').insert({
+            // Try insert without returning data
+            await client.from('customers').insert({
               name,
               phone,
               email: email || null,
@@ -287,9 +289,8 @@
               total_orders: 1,
               total_spent: total,
               last_order_at: new Date().toISOString()
-            }).select('id').single();
-
-            if (newCust) customerId = newCust.id;
+            });
+            // We won't get the customer ID back — that's fine
           }
 
           const orderPayload = {
@@ -318,14 +319,12 @@
             status: 'pending'
           };
 
-          const { data: inserted, error: orderErr } = await client
+          // Insert WITHOUT .select() — anon has no SELECT permission
+          const { error: orderErr } = await client
             .from('orders')
-            .insert(orderPayload)
-            .select('id')
-            .single();
+            .insert(orderPayload);
 
           if (orderErr) throw orderErr;
-          if (inserted) savedOrderId = inserted.id;
 
         } catch (err) {
           console.error('Order save error:', err);
@@ -345,7 +344,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               order_number: orderNumber,
-              order_id: savedOrderId,
+              order_id: orderNumber,
               amount: total,
               customer_name: name,
               customer_email: email || 'customer@example.com',
