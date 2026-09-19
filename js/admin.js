@@ -830,6 +830,99 @@
     }
   }
 
+  /* ============ SETTINGS LOAD ============ */
+  async function loadSettings() {
+    const form = document.getElementById('settingsForm');
+    if (!form) return;
+
+    const client = db();
+    if (!client) return;
+
+    const { data, error } = await client
+      .from('settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (error || !data) {
+      console.warn('Settings load error:', error);
+      return;
+    }
+
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== null && val !== undefined) el.value = val;
+    };
+
+    set('sBrandName', data.brand_name);
+    set('sTagline', data.tagline);
+    set('sDescription', data.description);
+    set('sWhatsApp', data.whatsapp);
+    set('sAddress', data.address);
+    set('sHours', data.hours);
+    set('sInstagram', data.instagram);
+    set('sTikTok', data.tiktok);
+    set('sBankName', data.bank_name);
+    set('sAccountName', data.account_name);
+    set('sAccountNumber', data.account_number);
+    set('sDeliveryInfo', data.delivery_info);
+    set('sDeliveryFee', data.delivery_fee);
+
+    const notifyEmail = document.getElementById('sNotifyEmail');
+    const notifyWA = document.getElementById('sNotifyWhatsApp');
+    if (notifyEmail) notifyEmail.checked = !!data.notify_email;
+    if (notifyWA) notifyWA.checked = !!data.notify_whatsapp;
+  }
+
+  /* ============ SETTINGS SAVE ============ */
+  async function handleSettingsSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const client = db();
+    if (!client) return alert('Not connected.');
+
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+
+    const get = (id) => (document.getElementById(id)?.value || '').trim();
+
+    const payload = {
+      brand_name: get('sBrandName'),
+      tagline: get('sTagline'),
+      description: get('sDescription'),
+      whatsapp: get('sWhatsApp'),
+      address: get('sAddress'),
+      hours: get('sHours'),
+      instagram: get('sInstagram'),
+      tiktok: get('sTikTok'),
+      bank_name: get('sBankName'),
+      account_name: get('sAccountName'),
+      account_number: get('sAccountNumber'),
+      delivery_info: get('sDeliveryInfo'),
+      delivery_fee: Number(get('sDeliveryFee')) || 0,
+      notify_email: document.getElementById('sNotifyEmail')?.checked || false,
+      notify_whatsapp: document.getElementById('sNotifyWhatsApp')?.checked || false
+    };
+
+    try {
+      const { error } = await client
+        .from('settings')
+        .upsert({ id: 1, ...payload }, { onConflict: 'id' });
+
+      if (error) throw error;
+
+      alert('Settings saved.');
+    } catch (err) {
+      console.error('Settings save error:', err);
+      alert('Error: ' + (err.message || err));
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
   /* ============ INIT ============ */
   async function init() {
     const data = await fetchAll();
@@ -855,6 +948,8 @@
     wireProductsPageFilters();
     renderImagePreviews();
     renderCategoryImagePreview();
+
+    await loadSettings();
 
     const addProductBtn = document.getElementById('addProductBtn');
     if (addProductBtn) {
@@ -885,9 +980,13 @@
 
     const categoryForm = document.getElementById('categoryForm');
     if (categoryForm) categoryForm.addEventListener('submit', handleCategorySubmit);
+
+    const settingsForm = document.getElementById('settingsForm');
+    if (settingsForm) settingsForm.addEventListener('submit', handleSettingsSubmit);
   }
   init();
 
+ 
   /* ============ GLOBAL CLICKS ============ */
   document.addEventListener('click', e => {
     const editProduct = e.target.closest('.edit-product');

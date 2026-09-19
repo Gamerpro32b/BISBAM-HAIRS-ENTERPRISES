@@ -1,13 +1,11 @@
 /* =========================================================
    BISBAM HAIRS — cart.js
-   Cart engine: add, remove, update qty, render, checkout.
-   Uses localStorage key 'bisbam_cart'.
+   Cart engine + checkout that saves orders to Supabase.
    ========================================================= */
 
 (function () {
   'use strict';
 
-  /* ============ HELPERS ============ */
   function getCart() {
     return JSON.parse(localStorage.getItem('bisbam_cart') || '[]');
   }
@@ -25,19 +23,15 @@
     return cart.reduce((sum, item) => sum + item.price * (item.qty || 1), 0);
   }
 
+  function db() {
+    if (!window.BisbamDB && window.initSupabase) window.initSupabase();
+    return window.BisbamDB;
+  }
+
   /* ============ ADD TO CART ============ */
   function addToCart(item) {
     const cart = getCart();
-
-    // Unique key: id + selected variations
-    const key = [
-      item.id,
-      item.length || '',
-      item.texture || '',
-      item.color || '',
-      item.density || ''
-    ].join('|');
-
+    const key = [item.id, item.length || '', item.texture || '', item.color || '', item.density || ''].join('|');
     const existing = cart.find(i => i.key === key);
 
     if (existing) {
@@ -45,11 +39,9 @@
     } else {
       cart.push({ ...item, key, qty: item.qty || 1 });
     }
-
     saveCart(cart);
   }
 
-  /* ============ REMOVE ============ */
   function removeFromCart(key) {
     let cart = getCart();
     cart = cart.filter(i => i.key !== key);
@@ -57,7 +49,6 @@
     renderCartPage();
   }
 
-  /* ============ UPDATE QTY ============ */
   function updateQty(key, qty) {
     const cart = getCart();
     const item = cart.find(i => i.key === key);
@@ -78,26 +69,14 @@
       const density = document.getElementById('density')?.value || '';
       const qty = parseInt(document.getElementById('qty')?.value || '1', 10);
 
-      // Read product info from the page (placeholder for now — will be data-driven later)
       const name = document.querySelector('.product-title')?.textContent.trim() || 'Product';
       const priceText = document.querySelector('.product-info .product-price')?.textContent || '₦0';
       const price = parseInt(priceText.replace(/[^\d]/g, ''), 10) || 0;
       const image = document.querySelector('.product-gallery-main img')?.getAttribute('src') || '';
       const id = name.toLowerCase().replace(/\s+/g, '-');
 
-      addToCart({
-        id,
-        name,
-        price,
-        image,
-        length,
-        texture,
-        color,
-        density,
-        qty
-      });
+      addToCart({ id, name, price, image, length, texture, color, density, qty });
 
-      // Feedback
       addBtn.textContent = 'Added ✓';
       addBtn.disabled = true;
       setTimeout(() => {
@@ -107,7 +86,7 @@
     });
   }
 
-  /* ============ CART PAGE — Render items ============ */
+  /* ============ CART PAGE ============ */
   function renderCartPage() {
     const cartEmpty = document.getElementById('cartEmpty');
     const cartFilled = document.getElementById('cartFilled');
@@ -130,8 +109,7 @@
 
     cartItemsEl.innerHTML = cart.map(item => {
       const variant = [item.length && `${item.length}"`, item.texture, item.color, item.density]
-        .filter(Boolean)
-        .join(' · ');
+        .filter(Boolean).join(' · ');
 
       return `
         <div class="cart-item" data-key="${item.key}">
@@ -155,14 +133,12 @@
     if (subtotalEl) subtotalEl.textContent = formatNaira(subtotal);
     if (totalEl) totalEl.textContent = formatNaira(subtotal);
 
-    // Qty change
     cartItemsEl.querySelectorAll('.cart-qty-input').forEach(input => {
       input.addEventListener('change', e => {
         updateQty(e.target.dataset.key, e.target.value);
       });
     });
 
-    // Remove
     cartItemsEl.querySelectorAll('.cart-item-remove').forEach(btn => {
       btn.addEventListener('click', e => {
         removeFromCart(e.target.dataset.key);
@@ -171,11 +147,12 @@
   }
   renderCartPage();
 
-  /* ============ CHECKOUT PAGE — Render summary + WhatsApp order ============ */
-  function renderCheckoutPage() {
+  /* ============ CHECKOUT PAGE — Render summary ============ */
+  async function renderCheckoutPage() {
     const itemsEl = document.getElementById('checkoutItems');
     const subtotalEl = document.getElementById('checkoutSubtotal');
     const totalEl = document.getElementById('checkoutTotal');
+    const deliveryEl = document.getElementById('checkoutDelivery');
 
     if (!itemsEl) return;
 
@@ -190,8 +167,7 @@
 
     itemsEl.innerHTML = cart.map(item => {
       const variant = [item.length && `${item.length}"`, item.texture, item.color]
-        .filter(Boolean)
-        .join(' · ');
+        .filter(Boolean).join(' · ');
       return `
         <div class="checkout-item">
           <span>${item.name} ${variant ? `(${variant})` : ''} × ${item.qty}</span>
@@ -202,14 +178,39 @@
 
     const subtotal = cartTotal(cart);
     if (subtotalEl) subtotalEl.textContent = formatNaira(subtotal);
-    if (totalEl) totalEl.textContent = formatNaira(subtotal);
+
+    // Load delivery fee from settings
+    let deliveryFee = 0;
+    const client = db();
+    if (client) {
+      try {
+        const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
+        if (data && data.delivery_fee) deliveryFee = Number(data.delivery_fee) || 0;
+      } catch (err) { /* ignore */ }
+    }
+
+    if (deliveryEl) {
+      deliveryEl.textContent = deliveryFee > 0 ? formatNaira(deliveryFee) : 'Calculated at checkout';
+    }
+
+    if (totalEl) totalEl.textContent = formatNaira(subtotal + deliveryFee);
   }
   renderCheckoutPage();
 
-  /* ============ CHECKOUT FORM → WHATSAPP ORDER ============ */
+  /* ============ ORDER NUMBER GENERATOR ============ */
+  function generateOrderNumber() {
+    const d = new Date();
+    const y = String(d.getFullYear()).slice(-2);
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const rand = String(Math.floor(Math.random() * 9000) + 1000);
+    return `ORD-${y}${m}${day}-${rand}`;
+  }
+
+  /* ============ CHECKOUT SUBMIT ============ */
   const checkoutForm = document.getElementById('checkoutForm');
   if (checkoutForm) {
-    checkoutForm.addEventListener('submit', e => {
+    checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const cart = getCart();
@@ -224,15 +225,113 @@
       const address = document.getElementById('address')?.value.trim() || '';
       const city = document.getElementById('city')?.value.trim() || '';
       const notes = document.getElementById('notes')?.value.trim() || '';
-      const payment = document.querySelector('input[name="payment"]:checked')?.value || '';
+      const payment = document.querySelector('input[name="payment"]:checked')?.value || 'bank-transfer';
 
       if (!name || !phone || !address || !city) {
         alert('Please fill in all required fields.');
         return;
       }
 
-      let message = `*NEW ORDER — Bisbam Hairs*%0A%0A`;
-      message += `*Customer:* ${encodeURIComponent(name)}%0A`;
+      const btn = document.getElementById('placeOrderBtn');
+      const originalText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.textContent = 'Placing order…';
+        btn.disabled = true;
+      }
+
+      const client = db();
+      const orderNumber = generateOrderNumber();
+
+      const subtotal = cartTotal(cart);
+      let deliveryFee = 0;
+
+      // Load delivery fee
+      if (client) {
+        try {
+          const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
+          if (data && data.delivery_fee) deliveryFee = Number(data.delivery_fee) || 0;
+        } catch (err) { /* ignore */ }
+      }
+
+      const total = subtotal + deliveryFee;
+
+      // Save to Supabase (order + customer)
+      if (client) {
+        try {
+          // 1. Upsert customer by phone
+          let customerId = null;
+          const { data: existingCust } = await client
+            .from('customers')
+            .select('id, total_orders, total_spent')
+            .eq('phone', phone)
+            .maybeSingle();
+
+          if (existingCust) {
+            customerId = existingCust.id;
+            await client.from('customers').update({
+              name,
+              email: email || null,
+              city,
+              address,
+              total_orders: (existingCust.total_orders || 0) + 1,
+              total_spent: Number(existingCust.total_spent || 0) + total,
+              last_order_at: new Date().toISOString()
+            }).eq('id', customerId);
+          } else {
+            const { data: newCust } = await client.from('customers').insert({
+              name,
+              phone,
+              email: email || null,
+              city,
+              address,
+              total_orders: 1,
+              total_spent: total,
+              last_order_at: new Date().toISOString()
+            }).select('id').single();
+
+            if (newCust) customerId = newCust.id;
+          }
+
+          // 2. Save order
+          const orderPayload = {
+            order_number: orderNumber,
+            customer_id: customerId,
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: email || null,
+            delivery_address: address,
+            city,
+            notes: notes || null,
+            items: cart.map(i => ({
+              name: i.name,
+              qty: i.qty,
+              price: i.price,
+              length: i.length || '',
+              texture: i.texture || '',
+              color: i.color || '',
+              density: i.density || ''
+            })),
+            subtotal,
+            delivery_fee: deliveryFee,
+            total,
+            payment_method: payment,
+            payment_status: 'unpaid',
+            status: 'pending'
+          };
+
+          const { error: orderErr } = await client.from('orders').insert(orderPayload);
+          if (orderErr) throw orderErr;
+
+        } catch (err) {
+          console.error('Order save error:', err);
+          alert('Could not save order: ' + (err.message || err) + '\n\nWe will still open WhatsApp so you can send the order.');
+        }
+      }
+
+      // Build WhatsApp message
+      let message = `*NEW ORDER — Bisbam Hairs*%0A`;
+      message += `*Order #:* ${orderNumber}%0A%0A`;
+      message += `*Name:* ${encodeURIComponent(name)}%0A`;
       message += `*Phone:* ${encodeURIComponent(phone)}%0A`;
       if (email) message += `*Email:* ${encodeURIComponent(email)}%0A`;
       message += `*Address:* ${encodeURIComponent(address)}, ${encodeURIComponent(city)}%0A`;
@@ -247,23 +346,24 @@
         message += ` × ${item.qty} — ${formatNaira(item.price * item.qty)}%0A`;
       });
 
-      message += `%0A*Total:* ${formatNaira(cartTotal(cart))}`;
+      message += `%0A*Subtotal:* ${formatNaira(subtotal)}`;
+      if (deliveryFee > 0) message += `%0A*Delivery:* ${formatNaira(deliveryFee)}`;
+      message += `%0A*Total:* ${formatNaira(total)}`;
+
       if (notes) message += `%0A%0A*Notes:* ${encodeURIComponent(notes)}`;
 
-      window.open(`https://wa.me/2348146108122?text=${message}`, '_blank');
+      // Clear cart
+      localStorage.removeItem('bisbam_cart');
+      window.dispatchEvent(new Event('cart-updated'));
+
+      // Redirect to WhatsApp
+      window.location.href = `https://wa.me/2348146108122?text=${message}`;
+
+      if (btn) {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
     });
   }
-
-  /* ============ EXPOSE TO OTHER SCRIPTS ============ */
-  window.BisbamCart = {
-    getCart,
-    saveCart,
-    addToCart,
-    removeFromCart,
-    updateQty,
-    renderCartPage,
-    renderCheckoutPage,
-    formatNaira
-  };
 
 })();
