@@ -1,5 +1,5 @@
 /* =========================================================
-   BISBAM HAIRS — admin.js (Part 1 of 3)
+   BISBAM HAIRS — admin.js (Part 1 of 4)
    ========================================================= */
 
 (function () {
@@ -132,6 +132,7 @@
         result.orders = o.data.map(x => ({
           id: x.id,
           orderNumber: x.order_number || x.id,
+          customerId: x.customer_id,
           customer: x.customer_name,
           phone: x.customer_phone,
           email: x.customer_email,
@@ -845,295 +846,407 @@ async function handleDeleteCategory(categoryId) {
 }
 
 // PART 3 continues below...
-  /* =========================================================
-     PART 3 — ORDERS, CUSTOMERS, REALTIME, SETTINGS, INIT
-     ========================================================= */
+/* =========================================================
+   PART 3
+   ========================================================= */
 
-  /* ============ ORDERS PAGE ============ */
-  let activeOrderStatus = 'all';
-  let orderSearchTerm = '';
+/* ============ ORDERS PAGE ============ */
+let activeOrderStatus = 'all';
+let orderSearchTerm = '';
 
-  function renderOrdersTable(orders) {
-    const body = document.getElementById('ordersBody');
-    if (!body) return;
+function renderOrdersTable(orders) {
+  const body = document.getElementById('ordersBody');
+  if (!body) return;
 
-    let list = orders.slice();
+  let list = orders.slice();
 
-    if (activeOrderStatus !== 'all') {
-      list = list.filter(o => o.status === activeOrderStatus);
-    }
-
-    if (orderSearchTerm) {
-      const q = orderSearchTerm.toLowerCase();
-      list = list.filter(o =>
-        (o.orderNumber || '').toLowerCase().includes(q) ||
-        (o.customer || '').toLowerCase().includes(q) ||
-        (o.phone || '').includes(q)
-      );
-    }
-
-    if (list.length === 0) {
-      body.innerHTML = `<tr><td colspan="10" class="admin-empty">No orders match.</td></tr>`;
-      return;
-    }
-
-    body.innerHTML = list.map(o => `
-      <tr>
-        <td>${o.orderNumber}</td>
-        <td>${o.customer}</td>
-        <td>${o.phone}</td>
-        <td>${o.address}, ${o.city}</td>
-        <td>${(o.items || []).length}</td>
-        <td>${naira(o.total)}</td>
-        <td>${o.payment}</td>
-        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
-        <td>${o.date}</td>
-        <td><button class="btn btn-small btn-outline view-order" data-id="${o.id}">View</button></td>
-      </tr>
-    `).join('');
+  if (activeOrderStatus !== 'all') {
+    list = list.filter(o => o.status === activeOrderStatus);
   }
 
-  function wireOrdersPage() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    if (tabs.length) {
-      tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
-          tabs.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          activeOrderStatus = btn.dataset.status || 'all';
-          renderOrdersTable((window.BisbamAdminData || {}).orders || []);
-        });
-      });
-    }
+  if (orderSearchTerm) {
+    const q = orderSearchTerm.toLowerCase();
+    list = list.filter(o =>
+      (o.orderNumber || '').toLowerCase().includes(q) ||
+      (o.customer || '').toLowerCase().includes(q) ||
+      (o.phone || '').includes(q)
+    );
+  }
 
-    const search = document.getElementById('orderSearch');
-    if (search) {
-      search.addEventListener('input', e => {
-        orderSearchTerm = e.target.value.trim();
+  if (list.length === 0) {
+    body.innerHTML = `<tr><td colspan="10" class="admin-empty">No orders match.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = list.map(o => `
+    <tr>
+      <td>${o.orderNumber}</td>
+      <td>${o.customer}</td>
+      <td>${o.phone}</td>
+      <td>${o.address}, ${o.city}</td>
+      <td>${(o.items || []).length}</td>
+      <td>${naira(o.total)}</td>
+      <td>${o.payment}</td>
+      <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+      <td>${o.date}</td>
+      <td>
+        <button class="btn btn-small btn-outline view-order" data-id="${o.id}">View</button>
+        <button class="btn btn-small btn-outline delete-order" data-id="${o.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function wireOrdersPage() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  if (tabs.length) {
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeOrderStatus = btn.dataset.status || 'all';
         renderOrdersTable((window.BisbamAdminData || {}).orders || []);
       });
-    }
+    });
   }
 
-  /* ============ CUSTOMERS PAGE ============ */
-  let customerSearchTerm = '';
+  const search = document.getElementById('orderSearch');
+  if (search) {
+    search.addEventListener('input', e => {
+      orderSearchTerm = e.target.value.trim();
+      renderOrdersTable((window.BisbamAdminData || {}).orders || []);
+    });
+  }
+}
 
-  function renderCustomersTable(customers) {
-    const body = document.getElementById('customersBody');
-    if (!body) return;
+/* ============ ORDER DELETE ============ */
+async function handleDeleteOrder(orderId) {
+  const data = window.BisbamAdminData || {};
+  const order = (data.orders || []).find(o => String(o.id) === String(orderId));
+  if (!order) return;
 
-    let list = customers.slice();
+  if (!confirm(`Delete order ${order.orderNumber}? This cannot be undone.`)) return;
 
-    if (customerSearchTerm) {
-      const q = customerSearchTerm.toLowerCase();
-      list = list.filter(c =>
-        (c.name || '').toLowerCase().includes(q) ||
-        (c.phone || '').includes(q)
-      );
-    }
+  const client = db();
+  if (!client) return alert('Not connected.');
 
-    if (list.length === 0) {
-      body.innerHTML = `<tr><td colspan="8" class="admin-empty">No customers match.</td></tr>`;
-      return;
-    }
+  try {
+    const { error } = await client.from('orders').delete().eq('id', orderId);
+    if (error) throw error;
 
-    body.innerHTML = list.map(c => `
-      <tr>
-        <td>${c.name}</td>
-        <td>${c.phone}</td>
-        <td>${c.email || '—'}</td>
-        <td>${c.city || '—'}</td>
-        <td>${c.orders}</td>
-        <td>${naira(c.totalSpent)}</td>
-        <td>${c.lastOrder}</td>
-        <td><button class="btn btn-small btn-outline view-customer" data-id="${c.id}">View</button></td>
-      </tr>
+    alert('Order deleted.');
+
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderOrdersTable(data2.orders);
+    renderRecentOrders(data2.orders);
+    renderDashboardStats(data2.orders, data2.products);
+    renderBell();
+  } catch (err) {
+    console.error('Delete order error:', err);
+    alert('Error deleting: ' + (err.message || err));
+  }
+}
+
+/* ============ CUSTOMERS PAGE ============ */
+let customerSearchTerm = '';
+
+function renderCustomersTable(customers) {
+  const body = document.getElementById('customersBody');
+  if (!body) return;
+
+  let list = customers.slice();
+
+  if (customerSearchTerm) {
+    const q = customerSearchTerm.toLowerCase();
+    list = list.filter(c =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.phone || '').includes(q)
+    );
+  }
+
+  if (list.length === 0) {
+    body.innerHTML = `<tr><td colspan="8" class="admin-empty">No customers match.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = list.map(c => `
+    <tr>
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td>${c.email || '—'}</td>
+      <td>${c.city || '—'}</td>
+      <td>${c.orders}</td>
+      <td>${naira(c.totalSpent)}</td>
+      <td>${c.lastOrder}</td>
+      <td>
+        <button class="btn btn-small btn-outline view-customer" data-id="${c.id}">View</button>
+        <button class="btn btn-small btn-outline delete-customer" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function wireCustomersPage() {
+  const search = document.getElementById('customerSearch');
+  if (search) {
+    search.addEventListener('input', e => {
+      customerSearchTerm = e.target.value.trim();
+      renderCustomersTable((window.BisbamAdminData || {}).customers || []);
+    });
+  }
+}
+
+/* ============ CUSTOMER DETAIL MODAL ============ */
+function openCustomerModal(customerId) {
+  const data = window.BisbamAdminData || {};
+  const c = (data.customers || []).find(x => String(x.id) === String(customerId));
+  if (!c) return;
+
+  const body = document.getElementById('customerModalBody');
+  if (!body) return;
+
+  const customerOrders = (data.orders || []).filter(o => String(o.customerId) === String(customerId));
+
+  let ordersHtml = '';
+  if (customerOrders.length === 0) {
+    ordersHtml = `<p style="color:var(--grey);font-size:0.9rem;">No orders on record.</p>`;
+  } else {
+    ordersHtml = customerOrders.map(o => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--pink-border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <strong>${o.orderNumber}</strong>
+          <span class="status-badge status-${o.status}">${o.status}</span>
+        </div>
+        <div style="font-size:0.85rem;color:var(--grey);">
+          ${o.date} · ${(o.items || []).length} item${(o.items || []).length === 1 ? '' : 's'} · ${naira(o.total)}
+        </div>
+      </div>
     `).join('');
   }
 
-  function wireCustomersPage() {
-    const search = document.getElementById('customerSearch');
-    if (search) {
-      search.addEventListener('input', e => {
-        customerSearchTerm = e.target.value.trim();
-        renderCustomersTable((window.BisbamAdminData || {}).customers || []);
-      });
-    }
+  body.innerHTML = `
+    <p><strong>Name:</strong> ${c.name}</p>
+    <p><strong>Phone:</strong> ${c.phone}</p>
+    ${c.email ? `<p><strong>Email:</strong> ${c.email}</p>` : ''}
+    ${c.city ? `<p><strong>City:</strong> ${c.city}</p>` : ''}
+    ${c.address ? `<p><strong>Address:</strong> ${c.address}</p>` : ''}
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+    <p><strong>Total Orders:</strong> ${c.orders}</p>
+    <p><strong>Total Spent:</strong> ${naira(c.totalSpent)}</p>
+    <p><strong>Last Order:</strong> ${c.lastOrder}</p>
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+    <p><strong>Order History</strong></p>
+    ${ordersHtml}
+  `;
+
+  openModal('customerModal');
+}
+
+/* ============ CUSTOMER DELETE ============ */
+async function handleDeleteCustomer(customerId) {
+  const data = window.BisbamAdminData || {};
+  const customer = (data.customers || []).find(c => String(c.id) === String(customerId));
+  if (!customer) return;
+
+  if (!confirm(`Delete customer "${customer.name}"? Their orders will be kept but unlinked.`)) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    // Step 1: Unlink orders (set customer_id = null)
+    await client.from('orders').update({ customer_id: null }).eq('customer_id', customerId);
+
+    // Step 2: Delete customer row
+    const { error } = await client.from('customers').delete().eq('id', customerId);
+    if (error) throw error;
+
+    alert('Customer deleted.');
+
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderCustomersTable(data2.customers);
+  } catch (err) {
+    console.error('Delete customer error:', err);
+    alert('Error: ' + (err.message || err));
   }
+}
 
-  /* ============ SETTINGS LOAD ============ */
-  async function loadSettings() {
-    const form = document.getElementById('settingsForm');
-    if (!form) return;
+/* ============ SETTINGS LOAD ============ */
+async function loadSettings() {
+  const form = document.getElementById('settingsForm');
+  if (!form) return;
 
-    const client = db();
-    if (!client) return;
+  const client = db();
+  if (!client) return;
 
-    const { data, error } = await client
+  const { data, error } = await client
+    .from('settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+
+  if (error || !data) return;
+
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== null && val !== undefined) el.value = val;
+  };
+
+  set('sBrandName', data.brand_name);
+  set('sTagline', data.tagline);
+  set('sDescription', data.description);
+  set('sWhatsApp', data.whatsapp);
+  set('sAddress', data.address);
+  set('sHours', data.hours);
+  set('sInstagram', data.instagram);
+  set('sTikTok', data.tiktok);
+  set('sBankName', data.bank_name);
+  set('sAccountName', data.account_name);
+  set('sAccountNumber', data.account_number);
+  set('sDeliveryInfo', data.delivery_info);
+  set('sDeliveryFee', data.delivery_fee);
+
+  const notifyEmail = document.getElementById('sNotifyEmail');
+  const notifyWA = document.getElementById('sNotifyWhatsApp');
+  if (notifyEmail) notifyEmail.checked = !!data.notify_email;
+  if (notifyWA) notifyWA.checked = !!data.notify_whatsapp;
+}
+
+/* ============ SETTINGS SAVE ============ */
+async function handleSettingsSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  const btn = form.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  const get = (id) => (document.getElementById(id)?.value || '').trim();
+
+  const payload = {
+    brand_name: get('sBrandName'),
+    tagline: get('sTagline'),
+    description: get('sDescription'),
+    whatsapp: get('sWhatsApp'),
+    address: get('sAddress'),
+    hours: get('sHours'),
+    instagram: get('sInstagram'),
+    tiktok: get('sTikTok'),
+    bank_name: get('sBankName'),
+    account_name: get('sAccountName'),
+    account_number: get('sAccountNumber'),
+    delivery_info: get('sDeliveryInfo'),
+    delivery_fee: Number(get('sDeliveryFee')) || 0,
+    notify_email: document.getElementById('sNotifyEmail')?.checked || false,
+    notify_whatsapp: document.getElementById('sNotifyWhatsApp')?.checked || false
+  };
+
+  try {
+    const { error } = await client
       .from('settings')
-      .select('*')
-      .eq('id', 1)
-      .single();
+      .upsert({ id: 1, ...payload }, { onConflict: 'id' });
 
-    if (error || !data) {
-      console.warn('Settings load error:', error);
-      return;
-    }
-
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val !== null && val !== undefined) el.value = val;
-    };
-
-    set('sBrandName', data.brand_name);
-    set('sTagline', data.tagline);
-    set('sDescription', data.description);
-    set('sWhatsApp', data.whatsapp);
-    set('sAddress', data.address);
-    set('sHours', data.hours);
-    set('sInstagram', data.instagram);
-    set('sTikTok', data.tiktok);
-    set('sBankName', data.bank_name);
-    set('sAccountName', data.account_name);
-    set('sAccountNumber', data.account_number);
-    set('sDeliveryInfo', data.delivery_info);
-    set('sDeliveryFee', data.delivery_fee);
-
-    const notifyEmail = document.getElementById('sNotifyEmail');
-    const notifyWA = document.getElementById('sNotifyWhatsApp');
-    if (notifyEmail) notifyEmail.checked = !!data.notify_email;
-    if (notifyWA) notifyWA.checked = !!data.notify_whatsapp;
+    if (error) throw error;
+    alert('Settings saved.');
+  } catch (err) {
+    console.error('Settings save error:', err);
+    alert('Error: ' + (err.message || err));
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
   }
+}
 
-  /* ============ SETTINGS SAVE ============ */
-  async function handleSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const client = db();
-    if (!client) return alert('Not connected.');
+/* =========================================================
+   NOTIFICATIONS
+   ========================================================= */
+function injectBell() {
+  const headerActions = document.querySelector('.admin-header-actions');
+  if (!headerActions) return;
+  if (document.getElementById('adminBellWrap')) return;
 
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.textContent = 'Saving…';
-    btn.disabled = true;
-
-    const get = (id) => (document.getElementById(id)?.value || '').trim();
-
-    const payload = {
-      brand_name: get('sBrandName'),
-      tagline: get('sTagline'),
-      description: get('sDescription'),
-      whatsapp: get('sWhatsApp'),
-      address: get('sAddress'),
-      hours: get('sHours'),
-      instagram: get('sInstagram'),
-      tiktok: get('sTikTok'),
-      bank_name: get('sBankName'),
-      account_name: get('sAccountName'),
-      account_number: get('sAccountNumber'),
-      delivery_info: get('sDeliveryInfo'),
-      delivery_fee: Number(get('sDeliveryFee')) || 0,
-      notify_email: document.getElementById('sNotifyEmail')?.checked || false,
-      notify_whatsapp: document.getElementById('sNotifyWhatsApp')?.checked || false
-    };
-
-    try {
-      const { error } = await client
-        .from('settings')
-        .upsert({ id: 1, ...payload }, { onConflict: 'id' });
-
-      if (error) throw error;
-      alert('Settings saved.');
-    } catch (err) {
-      console.error('Settings save error:', err);
-      alert('Error: ' + (err.message || err));
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }
-  }
-
-  /* =========================================================
-     NOTIFICATIONS — BELL + TOAST + REALTIME
-     ========================================================= */
-
-  function injectBell() {
-    const headerActions = document.querySelector('.admin-header-actions');
-    if (!headerActions) return;
-    if (document.getElementById('adminBellWrap')) return;
-
-    const wrap = document.createElement('div');
-    wrap.className = 'admin-bell-wrap';
-    wrap.id = 'adminBellWrap';
-    wrap.innerHTML = `
-      <button type="button" class="admin-bell" id="adminBellBtn" aria-label="Notifications">
-        <svg viewBox="0 0 24 24">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <span class="admin-bell-count" id="adminBellCount">0</span>
-      </button>
-      <div class="admin-bell-panel" id="adminBellPanel" hidden>
-        <div class="admin-bell-panel-header">
-          New Orders
-          <span id="adminBellMarkSeen" style="cursor:pointer;text-decoration:underline;">Mark all read</span>
-        </div>
-        <div class="admin-bell-panel-body" id="adminBellBody">
-          <div class="admin-bell-empty">No new orders.</div>
-        </div>
+  const wrap = document.createElement('div');
+  wrap.className = 'admin-bell-wrap';
+  wrap.id = 'adminBellWrap';
+  wrap.innerHTML = `
+    <button type="button" class="admin-bell" id="adminBellBtn" aria-label="Notifications">
+      <svg viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      <span class="admin-bell-count" id="adminBellCount">0</span>
+    </button>
+    <div class="admin-bell-panel" id="adminBellPanel" hidden>
+      <div class="admin-bell-panel-header">
+        New Orders
+        <span id="adminBellMarkSeen" style="cursor:pointer;text-decoration:underline;">Mark all read</span>
       </div>
-    `;
-    headerActions.insertBefore(wrap, headerActions.firstChild);
+      <div class="admin-bell-panel-body" id="adminBellBody">
+        <div class="admin-bell-empty">No new orders.</div>
+      </div>
+    </div>
+  `;
+  headerActions.insertBefore(wrap, headerActions.firstChild);
 
-    const btn = document.getElementById('adminBellBtn');
-    const panel = document.getElementById('adminBellPanel');
+  const btn = document.getElementById('adminBellBtn');
+  const panel = document.getElementById('adminBellPanel');
 
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      panel.hidden = !panel.hidden;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.hidden = !panel.hidden;
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) panel.hidden = true;
+  });
+
+  const markSeen = document.getElementById('adminBellMarkSeen');
+  if (markSeen) {
+    markSeen.addEventListener('click', () => {
+      const orders = (window.BisbamAdminData || {}).orders || [];
+      window.BISBAM_SEEN_ORDERS = orders.map(o => o.id);
+      localStorage.setItem('bisbam_seen_orders', JSON.stringify(window.BISBAM_SEEN_ORDERS));
+      renderBell();
     });
+  }
+}
 
-    document.addEventListener('click', (e) => {
-      if (!wrap.contains(e.target)) panel.hidden = true;
-    });
+function renderBell() {
+  const orders = (window.BisbamAdminData || {}).orders || [];
+  const unseen = orders.filter(o => !window.BISBAM_SEEN_ORDERS.includes(o.id));
 
-    const markSeen = document.getElementById('adminBellMarkSeen');
-    if (markSeen) {
-      markSeen.addEventListener('click', () => {
-        const orders = (window.BisbamAdminData || {}).orders || [];
-        window.BISBAM_SEEN_ORDERS = orders.map(o => o.id);
-        localStorage.setItem('bisbam_seen_orders', JSON.stringify(window.BISBAM_SEEN_ORDERS));
-        renderBell();
-      });
-    }
+  const countEl = document.getElementById('adminBellCount');
+  const bodyEl = document.getElementById('adminBellBody');
+
+  if (countEl) {
+    countEl.textContent = unseen.length;
+    if (unseen.length > 0) countEl.classList.add('is-visible');
+    else countEl.classList.remove('is-visible');
   }
 
-  function renderBell() {
-    const orders = (window.BisbamAdminData || {}).orders || [];
-    const unseen = orders.filter(o => !window.BISBAM_SEEN_ORDERS.includes(o.id));
-
-    const countEl = document.getElementById('adminBellCount');
-    const bodyEl = document.getElementById('adminBellBody');
-
-    if (countEl) {
-      countEl.textContent = unseen.length;
-      if (unseen.length > 0) countEl.classList.add('is-visible');
-      else countEl.classList.remove('is-visible');
-    }
-
-    if (bodyEl) {
-      if (unseen.length === 0) {
-        bodyEl.innerHTML = `<div class="admin-bell-empty">No new orders.</div>`;
-      } else {
-        bodyEl.innerHTML = unseen.slice(0, 10).map(o => `
-          <a class="admin-bell-item" href="orders.html">
-            <div class="admin-bell-item-title">${o.orderNumber}</div>
-            <div class="admin-bell-item-meta">${o.customer} · ${naira(o.total)} · ${o.date}</div>
-          </a>
-        `).join('');
-      }
+  if (bodyEl) {
+    if (unseen.length === 0) {
+      bodyEl.innerHTML = `<div class="admin-bell-empty">No new orders.</div>`;
+    } else {
+      bodyEl.innerHTML = unseen.slice(0, 10).map(o => `
+        <a class="admin-bell-item" href="orders.html">
+          <div class="admin-bell-item-title">${o.orderNumber}</div>
+          <div class="admin-bell-item-meta">${o.customer} · ${naira(o.total)} · ${o.date}</div>
+        </a>
+      `).join('');
     }
   }
+}
+
+// PART 4 continues below...
+  /* =========================================================
+     PART 4 — FINAL
+     ========================================================= */
 
   function showToast(order) {
     const old = document.getElementById('adminToast');
@@ -1170,8 +1283,6 @@ async function handleDeleteCategory(categoryId) {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         async (payload) => {
-          console.log('New order received:', payload);
-
           const data = await fetchAll();
           window.BisbamAdminData = data;
 
@@ -1292,6 +1403,24 @@ async function handleDeleteCategory(categoryId) {
       return;
     }
 
+    const delOrder = e.target.closest('.delete-order');
+    if (delOrder) {
+      handleDeleteOrder(delOrder.dataset.id);
+      return;
+    }
+
+    const delCustomer = e.target.closest('.delete-customer');
+    if (delCustomer) {
+      handleDeleteCustomer(delCustomer.dataset.id);
+      return;
+    }
+
+    const viewCustomer = e.target.closest('.view-customer');
+    if (viewCustomer) {
+      openCustomerModal(viewCustomer.dataset.id);
+      return;
+    }
+
     const viewOrder = e.target.closest('.view-order');
     if (viewOrder) {
       const data = window.BisbamAdminData || {};
@@ -1334,30 +1463,6 @@ async function handleDeleteCategory(categoryId) {
         </div>
       `;
       openModal('orderModal');
-      return;
-    }
-
-    const viewCustomer = e.target.closest('.view-customer');
-    if (viewCustomer) {
-      const data = window.BisbamAdminData || {};
-      const c = (data.customers || []).find(x => String(x.id) === viewCustomer.dataset.id);
-      if (!c) return;
-
-      const body = document.getElementById('customerModalBody');
-      if (!body) return;
-
-      body.innerHTML = `
-        <p><strong>Name:</strong> ${c.name}</p>
-        <p><strong>Phone:</strong> ${c.phone}</p>
-        ${c.email ? `<p><strong>Email:</strong> ${c.email}</p>` : ''}
-        ${c.city ? `<p><strong>City:</strong> ${c.city}</p>` : ''}
-        ${c.address ? `<p><strong>Address:</strong> ${c.address}</p>` : ''}
-        <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
-        <p><strong>Total Orders:</strong> ${c.orders}</p>
-        <p><strong>Total Spent:</strong> ${naira(c.totalSpent)}</p>
-        <p><strong>Last Order:</strong> ${c.lastOrder}</p>
-      `;
-      openModal('customerModal');
       return;
     }
 
