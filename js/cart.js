@@ -1,5 +1,6 @@
 /* =========================================================
-   BISBAM HAIRS — cart.js (Part 1 of 4)
+   BISBAM HAIRS — cart.js
+   Cart engine + checkout. Card + bank transfer via Korapay.
    ========================================================= */
 
 (function () {
@@ -148,113 +149,40 @@
   }
   renderCartPage();
 
-  // PART 2 continues below...
-  /* =========================================================
-   PART 2
-   ========================================================= */
+  /* ============ CHECKOUT PAGE ============ */
+  async function renderCheckoutPage() {
+    const itemsEl = document.getElementById('checkoutItems');
+    const subtotalEl = document.getElementById('checkoutSubtotal');
+    const totalEl = document.getElementById('checkoutTotal');
+    const deliveryEl = document.getElementById('checkoutDelivery');
 
-/* ============ CHECKOUT PAGE ============ */
-async function renderCheckoutPage() {
-  const itemsEl = document.getElementById('checkoutItems');
-  const subtotalEl = document.getElementById('checkoutSubtotal');
-  const totalEl = document.getElementById('checkoutTotal');
-  const deliveryEl = document.getElementById('checkoutDelivery');
-
-  if (!itemsEl) return;
-
-  const cart = getCart();
-
-  if (cart.length === 0) {
-    itemsEl.innerHTML = '<p style="color:var(--grey);font-size:0.9rem;">Your cart is empty.</p>';
-    if (subtotalEl) subtotalEl.textContent = formatNaira(0);
-    if (totalEl) totalEl.textContent = formatNaira(0);
-    return;
-  }
-
-  itemsEl.innerHTML = cart.map(item => {
-    const variant = [item.length && `${item.length}"`, item.texture, item.color]
-      .filter(Boolean).join(' · ');
-    return `
-      <div class="checkout-item">
-        <span>${item.name} ${variant ? `(${variant})` : ''} × ${item.qty}</span>
-        <span>${formatNaira(item.price * item.qty)}</span>
-      </div>
-    `;
-  }).join('');
-
-  const subtotal = cartTotal(cart);
-  if (subtotalEl) subtotalEl.textContent = formatNaira(subtotal);
-
-  let deliveryFee = 0;
-  const client = db();
-  if (client) {
-    try {
-      const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
-      if (data && data.delivery_fee) deliveryFee = Number(data.delivery_fee) || 0;
-    } catch (err) { /* ignore */ }
-  }
-
-  if (deliveryEl) {
-    deliveryEl.textContent = deliveryFee > 0 ? formatNaira(deliveryFee) : 'Calculated at checkout';
-  }
-
-  if (totalEl) totalEl.textContent = formatNaira(subtotal + deliveryFee);
-}
-renderCheckoutPage();
-
-/* ============ ORDER NUMBER ============ */
-function generateOrderNumber() {
-  const d = new Date();
-  const y = String(d.getFullYear()).slice(-2);
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const rand = String(Math.floor(Math.random() * 9000) + 1000);
-  return `ORD-${y}${m}${day}-${rand}`;
-}
-
-// PART 3 continues below...
-/* =========================================================
-   PART 3 — CHECKOUT SUBMIT (START)
-   ========================================================= */
-
-const checkoutForm = document.getElementById('checkoutForm');
-if (checkoutForm) {
-  checkoutForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    if (!itemsEl) return;
 
     const cart = getCart();
+
     if (cart.length === 0) {
-      alert('Your cart is empty.');
+      itemsEl.innerHTML = '<p style="color:var(--grey);font-size:0.9rem;">Your cart is empty.</p>';
+      if (subtotalEl) subtotalEl.textContent = formatNaira(0);
+      if (totalEl) totalEl.textContent = formatNaira(0);
       return;
     }
 
-    const name = document.getElementById('fullName')?.value.trim() || '';
-    const whatsapp = document.getElementById('whatsapp')?.value.trim() || '';
-    const phone = document.getElementById('phone')?.value.trim() || '';
-    const email = document.getElementById('email')?.value.trim() || '';
-    const address = document.getElementById('address')?.value.trim() || '';
-    const city = document.getElementById('city')?.value.trim() || '';
-    const notes = document.getElementById('notes')?.value.trim() || '';
-    const payment = document.querySelector('input[name="payment"]:checked')?.value || 'card';
-
-    if (!name || !whatsapp || !address || !city) {
-      alert('Please fill in all required fields.');
-      return;
-    }
-
-    const btn = document.getElementById('placeOrderBtn');
-    const originalText = btn ? btn.textContent : '';
-    if (btn) {
-      btn.textContent = 'Placing order…';
-      btn.disabled = true;
-    }
-
-    const client = db();
-    const orderNumber = generateOrderNumber();
+    itemsEl.innerHTML = cart.map(item => {
+      const variant = [item.length && `${item.length}"`, item.texture, item.color]
+        .filter(Boolean).join(' · ');
+      return `
+        <div class="checkout-item">
+          <span>${item.name} ${variant ? `(${variant})` : ''} × ${item.qty}</span>
+          <span>${formatNaira(item.price * item.qty)}</span>
+        </div>
+      `;
+    }).join('');
 
     const subtotal = cartTotal(cart);
-    let deliveryFee = 0;
+    if (subtotalEl) subtotalEl.textContent = formatNaira(subtotal);
 
+    let deliveryFee = 0;
+    const client = db();
     if (client) {
       try {
         const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
@@ -262,91 +190,151 @@ if (checkoutForm) {
       } catch (err) { /* ignore */ }
     }
 
-    const total = subtotal + deliveryFee;
-
-    /* ============ SAVE ORDER TO SUPABASE ============ */
-    if (client) {
-      try {
-        let customerId = null;
-
-        const { data: existingCust } = await client
-          .from('customers')
-          .select('id, total_orders, total_spent')
-          .eq('whatsapp', whatsapp)
-          .maybeSingle();
-
-        if (existingCust) {
-          customerId = existingCust.id;
-          await client.from('customers').update({
-            name,
-            phone: phone || null,
-            whatsapp,
-            email: email || null,
-            city,
-            address,
-            total_orders: (existingCust.total_orders || 0) + 1,
-            total_spent: Number(existingCust.total_spent || 0) + total,
-            last_order_at: new Date().toISOString()
-          }).eq('id', customerId);
-        } else {
-          await client.from('customers').insert({
-            name,
-            phone: phone || null,
-            whatsapp,
-            email: email || null,
-            city,
-            address,
-            total_orders: 1,
-            total_spent: total,
-            last_order_at: new Date().toISOString()
-          });
-        }
-
-        const orderPayload = {
-          order_number: orderNumber,
-          customer_id: customerId,
-          customer_name: name,
-          customer_phone: phone || null,
-          customer_whatsapp: whatsapp,
-          customer_email: email || null,
-          delivery_address: address,
-          city,
-          notes: notes || null,
-          items: cart.map(i => ({
-            name: i.name,
-            qty: i.qty,
-            price: i.price,
-            length: i.length || '',
-            texture: i.texture || '',
-            color: i.color || '',
-            density: i.density || ''
-          })),
-          subtotal,
-          delivery_fee: deliveryFee,
-          total,
-          payment_method: payment,
-          payment_status: 'unpaid',
-          status: 'pending'
-        };
-
-        const { error: orderErr } = await client
-          .from('orders')
-          .insert(orderPayload);
-
-        if (orderErr) throw orderErr;
-
-      } catch (err) {
-        console.error('Order save error:', err);
-        alert('Could not save order: ' + (err.message || err));
-        if (btn) { btn.textContent = originalText; btn.disabled = false; }
-        return;
-      }
+    if (deliveryEl) {
+      deliveryEl.textContent = deliveryFee > 0 ? formatNaira(deliveryFee) : 'Calculated at checkout';
     }
 
-    // PART 4 continues below...
-      /* =========================================================
-     PART 4 — KORAPAY + WHATSAPP (FINAL)
-     ========================================================= */
+    if (totalEl) totalEl.textContent = formatNaira(subtotal + deliveryFee);
+  }
+  renderCheckoutPage();
+
+  /* ============ ORDER NUMBER ============ */
+  function generateOrderNumber() {
+    const d = new Date();
+    const y = String(d.getFullYear()).slice(-2);
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const rand = String(Math.floor(Math.random() * 9000) + 1000);
+    return `ORD-${y}${m}${day}-${rand}`;
+  }
+
+  /* ============ CHECKOUT SUBMIT ============ */
+  const checkoutForm = document.getElementById('checkoutForm');
+  if (checkoutForm) {
+    checkoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const cart = getCart();
+      if (cart.length === 0) {
+        alert('Your cart is empty.');
+        return;
+      }
+
+      const name = document.getElementById('fullName')?.value.trim() || '';
+      const whatsapp = document.getElementById('whatsapp')?.value.trim() || '';
+      const phone = document.getElementById('phone')?.value.trim() || '';
+      const email = document.getElementById('email')?.value.trim() || '';
+      const address = document.getElementById('address')?.value.trim() || '';
+      const city = document.getElementById('city')?.value.trim() || '';
+      const notes = document.getElementById('notes')?.value.trim() || '';
+      const payment = document.querySelector('input[name="payment"]:checked')?.value || 'card';
+
+      /* All fields required except email and notes */
+      if (!name || !whatsapp || !phone || !address || !city) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+
+      const btn = document.getElementById('placeOrderBtn');
+      const originalText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.textContent = 'Placing order…';
+        btn.disabled = true;
+      }
+
+      const client = db();
+      const orderNumber = generateOrderNumber();
+
+      const subtotal = cartTotal(cart);
+      let deliveryFee = 0;
+
+      if (client) {
+        try {
+          const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
+          if (data && data.delivery_fee) deliveryFee = Number(data.delivery_fee) || 0;
+        } catch (err) { /* ignore */ }
+      }
+
+      const total = subtotal + deliveryFee;
+
+      /* ============ SAVE ORDER TO SUPABASE ============ */
+      if (client) {
+        try {
+          let customerId = null;
+
+          const { data: existingCust } = await client
+            .from('customers')
+            .select('id, total_orders, total_spent')
+            .eq('whatsapp', whatsapp)
+            .maybeSingle();
+
+          if (existingCust) {
+            customerId = existingCust.id;
+            await client.from('customers').update({
+              name,
+              phone: phone || null,
+              whatsapp,
+              email: email || null,
+              city,
+              address,
+              total_orders: (existingCust.total_orders || 0) + 1,
+              total_spent: Number(existingCust.total_spent || 0) + total,
+              last_order_at: new Date().toISOString()
+            }).eq('id', customerId);
+          } else {
+            await client.from('customers').insert({
+              name,
+              phone: phone || null,
+              whatsapp,
+              email: email || null,
+              city,
+              address,
+              total_orders: 1,
+              total_spent: total,
+              last_order_at: new Date().toISOString()
+            });
+          }
+
+          const orderPayload = {
+            order_number: orderNumber,
+            customer_id: customerId,
+            customer_name: name,
+            customer_phone: phone || null,
+            customer_whatsapp: whatsapp,
+            customer_email: email || null,
+            delivery_address: address,
+            city,
+            notes: notes || null,
+            items: cart.map(i => ({
+              name: i.name,
+              qty: i.qty,
+              price: i.price,
+              length: i.length || '',
+              texture: i.texture || '',
+              color: i.color || '',
+              density: i.density || ''
+            })),
+            subtotal,
+            delivery_fee: deliveryFee,
+            total,
+            payment_method: payment,
+            payment_status: 'unpaid',
+            status: 'pending'
+          };
+
+          const { error: orderErr } = await client
+            .from('orders')
+            .insert(orderPayload);
+
+          if (orderErr) throw orderErr;
+
+        } catch (err) {
+          console.error('Order save error:', err);
+          alert('Could not save order: ' + (err.message || err));
+          if (btn) { btn.textContent = originalText; btn.disabled = false; }
+          return;
+        }
+      }
 
       /* ============ KORAPAY PAYMENT FLOW ============ */
       if (payment === 'card' || payment === 'bank-transfer') {
