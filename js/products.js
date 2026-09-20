@@ -1,7 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — product.js
-   Product detail page. Fetches from Supabase.
-   Gallery: images + video thumbnail. Tap to switch.
+   Product detail page with recently viewed tracking.
    ========================================================= */
 
 (function () {
@@ -69,23 +68,15 @@
       else stockStatus.textContent = 'In stock';
     }
 
-    /* ===== IMAGES + VIDEO URL ===== */
     const images = (p.images && p.images.length)
       ? p.images
       : ['assets/images/products/placeholder.jpg'];
 
     const videoUrl = p.video_url || null;
 
-    /* ===== SET MAIN ===== */
     function showImage(src) {
-      if (videoEl) {
-        videoEl.pause();
-        videoEl.hidden = true;
-      }
-      if (mainImage) {
-        mainImage.src = src;
-        mainImage.style.display = '';
-      }
+      if (videoEl) { videoEl.pause(); videoEl.hidden = true; }
+      if (mainImage) { mainImage.src = src; mainImage.style.display = ''; }
     }
 
     function showVideo() {
@@ -98,7 +89,6 @@
 
     showImage(images[0]);
 
-    /* ===== BUILD THUMBS ===== */
     if (thumbs) {
       let html = images.slice(0, 5).map((src, i) => `
         <img src="${src}" alt="View ${i + 1}" data-src="${src}" class="image-thumb">
@@ -122,7 +112,6 @@
       if (vt) vt.addEventListener('click', showVideo);
     }
 
-    /* ===== VARIATIONS ===== */
     fillVariation('length', p.lengths);
     fillVariation('texture', p.textures);
     fillVariation('color', p.colors);
@@ -145,31 +134,56 @@
         const key = [p.slug || p.id, length, texture, color, density].join('|');
         const existing = cart.find(i => i.key === key);
 
-        if (existing) {
-          existing.qty += qty;
-        } else {
-          cart.push({
-            key,
-            id: p.slug || p.id,
-            name: p.name,
-            price: p.sale_price || p.retail_price || 0,
-            image: images[0],
-            length, texture, color, density,
-            qty
-          });
-        }
+        if (existing) existing.qty += qty;
+        else cart.push({
+          key, id: p.slug || p.id, name: p.name,
+          price: p.sale_price || p.retail_price || 0,
+          image: images[0], length, texture, color, density, qty
+        });
 
         localStorage.setItem('bisbam_cart', JSON.stringify(cart));
         window.dispatchEvent(new Event('cart-updated'));
 
         fresh.textContent = 'Added ✓';
         fresh.disabled = true;
-        setTimeout(() => {
-          fresh.textContent = 'Add to Cart';
-          fresh.disabled = false;
-        }, 1500);
+        setTimeout(() => { fresh.textContent = 'Add to Cart'; fresh.disabled = false; }, 1500);
       });
     }
+
+    /* ===== BUY NOW ===== */
+    const buyBtn = document.getElementById('buyNowBtn');
+    if (buyBtn) {
+      const freshBuy = buyBtn.cloneNode(true);
+      buyBtn.parentNode.replaceChild(freshBuy, buyBtn);
+
+      freshBuy.addEventListener('click', () => {
+        const length = document.getElementById('length')?.value || '';
+        const texture = document.getElementById('texture')?.value || '';
+        const color = document.getElementById('color')?.value || '';
+        const density = document.getElementById('density')?.value || '';
+        const qty = parseInt(document.getElementById('qty')?.value || '1', 10);
+
+        const cart = JSON.parse(localStorage.getItem('bisbam_cart') || '[]');
+        const key = [p.slug || p.id, length, texture, color, density].join('|');
+        const existing = cart.find(i => i.key === key);
+
+        if (existing) existing.qty += qty;
+        else cart.push({
+          key, id: p.slug || p.id, name: p.name,
+          price: p.sale_price || p.retail_price || 0,
+          image: images[0], length, texture, color, density, qty
+        });
+
+        localStorage.setItem('bisbam_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cart-updated'));
+
+        window.location.href = 'checkout.html';
+      });
+    }
+
+    /* ===== SAVE + RENDER RECENTLY VIEWED ===== */
+    saveRecentlyViewed(p);
+    renderRecentlyViewed(p.slug || p.id);
 
     /* ===== WHATSAPP ===== */
     const waBtn = document.querySelector('.whatsapp-btn');
@@ -191,6 +205,51 @@
       opt.textContent = v;
       sel.appendChild(opt);
     });
+  }
+
+  /* ============ RECENTLY VIEWED ============ */
+  function getRecentlyViewed() {
+    return JSON.parse(localStorage.getItem('bisbam_recently_viewed') || '[]');
+  }
+
+  function saveRecentlyViewed(product) {
+    let list = getRecentlyViewed();
+    list = list.filter(p => p.id !== (product.slug || product.id));
+    list.unshift({
+      id: product.slug || product.id,
+      name: product.name,
+      image: (product.images && product.images[0]) || 'assets/images/products/placeholder.jpg',
+      price: product.sale_price || product.retail_price || 0
+    });
+    list = list.slice(0, 6);
+    localStorage.setItem('bisbam_recently_viewed', JSON.stringify(list));
+  }
+
+  function renderRecentlyViewed(currentId) {
+    const section = document.getElementById('recentlyViewedSection');
+    const grid = document.getElementById('recentlyViewedGrid');
+    if (!section || !grid) return;
+
+    let list = getRecentlyViewed();
+    list = list.filter(p => p.id !== currentId);
+
+    if (list.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    grid.innerHTML = list.slice(0, 4).map(p => `
+      <article class="product-card">
+        <div class="product-image">
+          <img src="${p.image}" alt="${p.name}" loading="lazy">
+        </div>
+        <h3 class="product-name">${p.name}</h3>
+        <p class="product-price">${naira(p.price)}</p>
+        <a href="product.html?id=${p.id}" class="btn btn-small btn-outline">View</a>
+      </article>
+    `).join('');
+
+    section.style.display = '';
   }
 
   /* ============ RELATED ============ */

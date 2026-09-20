@@ -2345,3 +2345,10 @@ table {
     margin-bottom: 0;
   }
 }
+/* =========================================================
+   RECENTLY VIEWED
+   ========================================================= */
+.recently-viewed {
+  background: var(--pink-soft);
+  padding: var(--space-2xl) 0;
+}
