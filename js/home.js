@@ -11,7 +11,7 @@
 
   if (!categoryGrid && !featuredGrid) return;
 
-  /* ============ CATEGORY SKELETONS ============ */
+  /* ============ SKELETONS ============ */
   function showCategorySkeletons(n = 4) {
     if (!categoryGrid) return;
     categoryGrid.innerHTML = Array.from({ length: n }).map(() => `
@@ -21,7 +21,6 @@
     `).join('');
   }
 
-  /* ============ FEATURED SKELETONS ============ */
   function showFeaturedSkeletons(n = 4) {
     if (!featuredGrid) return;
     featuredGrid.innerHTML = Array.from({ length: n }).map(() => `
@@ -49,7 +48,8 @@
       return 'assets/images/banners/about.jpg';
     };
 
-    categoryGrid.innerHTML = cats.slice(0, 4).map(c => `
+    // Show ALL categories — no limit
+    categoryGrid.innerHTML = cats.map(c => `
       <a href="shop.html?cat=${c.slug}" class="category-card">
         <img src="${imageFor(c)}" alt="${c.name}" loading="lazy">
         <h3>${c.name}</h3>

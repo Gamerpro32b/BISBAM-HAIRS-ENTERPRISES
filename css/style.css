@@ -2407,3 +2407,28 @@ table {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   color: var(--white);
 }
+/* =========================================================
+   CATEGORIES — HORIZONTAL SCROLL ON MOBILE
+   ========================================================= */
+@media (max-width: 640px) {
+  .category-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: var(--space-md);
+    padding-bottom: var(--space-sm);
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .category-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-grid .category-card {
+    flex: 0 0 72%;
+    scroll-snap-align: start;
+  }
+}
