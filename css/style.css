@@ -2352,3 +2352,58 @@ table {
   background: var(--pink-soft);
   padding: var(--space-2xl) 0;
 }
+/* =========================================================
+   TIKTOK FOLLOW SECTION
+   ========================================================= */
+.tiktok-follow {
+  background: var(--gradient-soft);
+  text-align: center;
+  padding: var(--space-2xl) 0;
+}
+
+.tiktok-follow-inner {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.tiktok-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto var(--space-md);
+  fill: var(--black);
+  display: block;
+}
+
+.tiktok-follow h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  margin-bottom: var(--space-sm);
+  color: var(--black);
+}
+
+.tiktok-follow p {
+  font-size: 1rem;
+  color: var(--grey);
+  margin-bottom: var(--space-lg);
+  line-height: 1.7;
+}
+
+.tiktok-follow .btn {
+  background: var(--black);
+  color: var(--white);
+  border: none;
+  padding: 14px 32px;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  display: inline-block;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.tiktok-follow .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  color: var(--white);
+}
