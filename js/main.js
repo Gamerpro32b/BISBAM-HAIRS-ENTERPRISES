@@ -1,7 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — main.js
    Global scripts: mobile nav, header scroll, contact form,
-   cart count display, shared helpers.
+   cart count display, scroll-reveal, shared helpers.
    ========================================================= */
 
 (function () {
@@ -46,7 +46,6 @@
       const overlay = document.createElement('div');
       overlay.className = 'nav-overlay';
 
-      // Place toggle AFTER logo, but wrapper-safe
       const logo = header.querySelector('.logo');
       if (logo && logo.parentNode) {
         logo.parentNode.insertBefore(toggle, logo.nextSibling);
@@ -145,7 +144,31 @@
     });
   }
 
-  /* ============ 7. SHARED HELPERS ============ */
+  /* ============ 7. SCROLL-REVEAL OBSERVER ============ */
+  function initScrollReveal() {
+    // Respect reduced motion preference
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    if (!('IntersectionObserver' in window)) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.12,
+      rootMargin: '0px 0px -60px 0px'
+    });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  }
+
+  initScrollReveal();
+
+  /* ============ 8. SHARED HELPERS ============ */
   window.Bisbam = {
     formatNaira(amount) {
       const n = Number(amount) || 0;
