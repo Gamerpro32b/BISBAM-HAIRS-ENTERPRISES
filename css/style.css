@@ -2309,3 +2309,39 @@ table {
 .why-item:hover .why-icon {
   transform: translateY(-2px) scale(1.05);
 }
+/* =========================================================
+   SHOP SEARCH INPUT
+   ========================================================= */
+.filter-bar .filter-search {
+  flex: 1 1 100%;
+  margin-bottom: var(--space-sm);
+}
+
+.filter-bar .filter-search input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--black);
+  background: var(--white);
+  border: 1px solid var(--pink-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.filter-bar .filter-search input:focus {
+  outline: none;
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+}
+
+.filter-bar .filter-search input::placeholder {
+  color: var(--grey);
+}
+
+@media (min-width: 769px) {
+  .filter-bar .filter-search {
+    flex: 1 1 200px;
+    margin-bottom: 0;
+  }
+}

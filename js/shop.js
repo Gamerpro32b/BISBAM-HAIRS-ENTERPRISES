@@ -1,7 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — shop.js
-   Reads products from Supabase (via db.js).
-   Shows loading skeletons while fetching.
+   Product listing with filter, sort, and search.
    ========================================================= */
 
 (function () {
@@ -9,6 +8,7 @@
 
   const grid = document.getElementById('shopGrid');
   const countEl = document.querySelector('.shop-count');
+  const filterSearch = document.getElementById('filterSearch');
   const filterCategory = document.getElementById('filterCategory');
   const filterLength = document.getElementById('filterLength');
   const filterTexture = document.getElementById('filterTexture');
@@ -30,7 +30,7 @@
     if (countEl) countEl.textContent = 'Loading products…';
   }
 
-  /* ============ RENDER PRODUCTS ============ */
+  /* ============ RENDER ============ */
   function renderProducts(products) {
     if (!products || products.length === 0) {
       grid.innerHTML = `
@@ -43,6 +43,7 @@
 
     grid.innerHTML = products.map(p => {
       const price = '₦' + (p.price || 0).toLocaleString('en-NG');
+      const tags = (p.tags || []).join(' ');
       return `
         <article class="product-card"
                  data-id="${p.id}"
@@ -51,7 +52,8 @@
                  data-length="${(p.lengths && p.lengths[0]) || ''}"
                  data-price="${p.price || 0}"
                  data-date="${p.date || 0}"
-                 data-popularity="${p.stock || 0}">
+                 data-popularity="${p.stock || 0}"
+                 data-search="${(p.name || '').toLowerCase()} ${(p.category || '').toLowerCase()} ${tags.toLowerCase()}">
           <div class="product-image">
             <img src="${p.image}" alt="${p.name}" loading="lazy">
           </div>
@@ -69,6 +71,7 @@
   }
 
   function applyFilters() {
+    const search = (filterSearch?.value || '').trim().toLowerCase();
     const cat = (filterCategory?.value || '').toLowerCase();
     const length = (filterLength?.value || '').toLowerCase();
     const texture = (filterTexture?.value || '').toLowerCase();
@@ -80,12 +83,14 @@
       const cardCat = (card.dataset.category || '').toLowerCase();
       const cardLen = (card.dataset.length || '').toLowerCase();
       const cardTex = (card.dataset.texture || '').toLowerCase();
+      const cardSearch = (card.dataset.search || '').toLowerCase();
 
+      const matchesSearch = !search || cardSearch.includes(search);
       const matchesCat = !cat || cardCat === cat;
       const matchesLen = !length || cardLen === length;
       const matchesTex = !texture || cardTex === texture;
 
-      card.style.display = (matchesCat && matchesLen && matchesTex) ? '' : 'none';
+      card.style.display = (matchesSearch && matchesCat && matchesLen && matchesTex) ? '' : 'none';
     });
 
     const visible = cards.filter(c => c.style.display !== 'none');
@@ -111,10 +116,14 @@
     }
   }
 
-  [filterCategory, filterLength, filterTexture, filterSort].forEach(el => {
-    if (el) el.addEventListener('change', applyFilters);
+  /* ============ WIRE EVENTS ============ */
+  [filterSearch, filterCategory, filterLength, filterTexture, filterSort].forEach(el => {
+    if (!el) return;
+    const evt = el.tagName === 'INPUT' ? 'input' : 'change';
+    el.addEventListener(evt, applyFilters);
   });
 
+  /* ============ URL PARAMS ============ */
   const params = new URLSearchParams(window.location.search);
   const catParam = params.get('cat');
   if (catParam && filterCategory) {
