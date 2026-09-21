@@ -22,7 +22,6 @@
       overflow: hidden;
     }
 
-    /* Soft pink glow behind card */
     .success-body::before {
       content: '';
       position: absolute;
@@ -36,7 +35,6 @@
       pointer-events: none;
     }
 
-    /* Floating decorative hearts */
     .success-heart {
       position: absolute;
       font-size: 22px;
@@ -58,7 +56,6 @@
       50% { transform: translateY(-22px) rotate(8deg); }
     }
 
-    /* Main card */
     .success-card {
       position: relative;
       z-index: 2;
@@ -205,6 +202,21 @@
       color: var(--pink);
     }
 
+    .success-trust-note {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--pink-border);
+      font-size: 0.8rem;
+      color: var(--grey);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .success-trust-note strong {
+      color: var(--pink-deep);
+      font-weight: 600;
+    }
+
     .success-paid-badge {
       display: inline-flex;
       align-items: center;
@@ -232,11 +244,27 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.35; }
     }
+
+    /* Redirect notice */
+    .whatsapp-redirect-note {
+      margin-top: var(--space-md);
+      font-size: 0.82rem;
+      color: var(--grey);
+      text-align: center;
+      display: none;
+    }
+
+    .whatsapp-redirect-note.is-visible {
+      display: block;
+    }
+
+    .whatsapp-redirect-note strong {
+      color: var(--pink);
+    }
   </style>
 </head>
 <body class="success-body">
 
-  <!-- Decorative floating hearts -->
   <span class="success-heart">♥</span>
   <span class="success-heart">♥</span>
   <span class="success-heart">♥</span>
@@ -246,7 +274,6 @@
 
   <div class="success-card">
 
-    <!-- Optional Paid Badge -->
     <div class="success-paid-badge" id="paidBadge" hidden>
       <span class="dot"></span>
       Payment Received
@@ -278,41 +305,134 @@
 
     <div class="success-actions">
       <a href="shop.html" class="btn btn-primary">Continue Shopping</a>
-      <a href="https://wa.me/2348146108122?text=Hi%20Bisbam%20Hairs%2C%20I%20just%20placed%20an%20order"
-         class="btn btn-outline" target="_blank" rel="noopener">
-        Message Us on WhatsApp
+      <a href="#" id="whatsappOrderBtn" class="btn btn-outline" target="_blank" rel="noopener">
+        Tap here if WhatsApp didn't open
       </a>
     </div>
 
+    <p class="whatsapp-redirect-note" id="whatsappNote">
+      Opening WhatsApp in <strong id="countdown">4</strong>s for faster delivery…
+    </p>
+
     <p class="success-footer-note">Good Hairs Attract Goodluck</p>
+
+    <p class="success-trust-note">
+      🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
+    </p>
 
   </div>
 
+  <!-- Supabase + Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+
   <script>
-    // Read URL params
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref');
-    const order = params.get('order');
+    (function () {
+      'use strict';
 
-    // Show order number if present
-    if (order) {
-      const box = document.getElementById('orderBox');
-      const num = document.getElementById('orderNumber');
-      if (box && num) {
-        num.textContent = order;
-        box.hidden = false;
-      }
-    }
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      const orderNumber = params.get('order');
 
-    // If `ref` present → assume payment flow → show "Payment Received"
-    if (ref) {
-      const badge = document.getElementById('paidBadge');
+      const paidBadge = document.getElementById('paidBadge');
       const title = document.getElementById('successTitle');
       const script = document.getElementById('successScript');
-      if (badge) badge.hidden = false;
-      if (title) title.textContent = 'Payment Received';
-      if (script) script.textContent = 'Thank you, Bam Babe ♥';
-    }
+      const orderBox = document.getElementById('orderBox');
+      const orderNumberEl = document.getElementById('orderNumber');
+      const whatsappBtn = document.getElementById('whatsappOrderBtn');
+      const whatsappNote = document.getElementById('whatsappNote');
+      const countdownEl = document.getElementById('countdown');
+
+      // Show order number if present
+      if (orderNumber) {
+        orderNumberEl.textContent = orderNumber;
+        orderBox.hidden = false;
+      }
+
+      // If `ref` present → paid flow
+      if (ref) {
+        if (paidBadge) paidBadge.hidden = false;
+        if (title) title.textContent = 'Payment Received';
+        if (script) script.textContent = 'Thank you, Bam Babe ♥';
+      }
+
+      /* ============ BUILD WHATSAPP MESSAGE + AUTO-REDIRECT ============ */
+      async function initWhatsAppRedirect() {
+        // Only fire if this was a paid order
+        if (!ref || !orderNumber) return;
+
+        // Wait for Supabase client
+        let client = window.BisbamDB;
+        if (!client && window.initSupabase) client = window.initSupabase();
+
+        if (!client) {
+          console.warn('Supabase client not ready, skipping WhatsApp auto-redirect.');
+          return;
+        }
+
+        try {
+          const { data: order, error } = await client
+            .from('orders')
+            .select('*')
+            .eq('order_number', orderNumber)
+            .single();
+
+          if (error || !order) {
+            console.warn('Order fetch failed, skipping auto-redirect:', error);
+            return;
+          }
+
+          // Only redirect if payment is confirmed
+          if (order.payment_status !== 'paid' && order.status !== 'confirmed') {
+            console.log('Payment not confirmed yet, skipping redirect.');
+            return;
+          }
+
+          // Build WhatsApp message
+          let msg = `Hi Bisbam Hairs! I just paid for my order.\n\n`;
+          msg += `Order #: ${orderNumber}\n`;
+          msg += `Name: ${order.customer_name || ''}\n\n`;
+
+          msg += `Items:\n`;
+          const items = order.items || [];
+          items.forEach((item, i) => {
+            const variant = [item.length && `${item.length}"`, item.texture, item.color, item.density]
+              .filter(Boolean).join(' · ');
+            const price = '₦' + Number(item.price * item.qty).toLocaleString('en-NG');
+            msg += `${i + 1}. ${item.name}${variant ? ` (${variant})` : ''} × ${item.qty} — ${price}\n`;
+          });
+
+          msg += `\nTotal Paid: ₦${Number(order.total || 0).toLocaleString('en-NG')}\n\n`;
+          msg += `Please confirm delivery. Thank you!`;
+
+          const waUrl = `https://wa.me/2348146108122?text=${encodeURIComponent(msg)}`;
+
+          // Set the button href for fallback
+          whatsappBtn.href = waUrl;
+
+          // Show the countdown note
+          if (whatsappNote) whatsappNote.classList.add('is-visible');
+
+          // Countdown 4 → 3 → 2 → 1 → open
+          let seconds = 4;
+          const timer = setInterval(() => {
+            seconds--;
+            if (countdownEl) countdownEl.textContent = seconds;
+            if (seconds <= 0) {
+              clearInterval(timer);
+              window.location.href = waUrl;
+            }
+          }, 1000);
+
+        } catch (err) {
+          console.warn('Auto-redirect error:', err);
+        }
+      }
+
+      // Wait a moment for Supabase to init
+      setTimeout(initWhatsAppRedirect, 400);
+
+    })();
   </script>
 
 </body>

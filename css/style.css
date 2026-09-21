@@ -2432,3 +2432,20 @@ table {
     scroll-snap-align: start;
   }
 }
+/* =========================================================
+   ORDER SUCCESS — TRUST NOTE
+   ========================================================= */
+.success-trust-note {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--pink-border);
+  font-size: 0.8rem;
+  color: var(--grey);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.success-trust-note strong {
+  color: var(--pink-deep);
+  font-weight: 600;
+}
