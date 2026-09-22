@@ -1492,4 +1492,61 @@ function renderBell() {
     }
   });
 
+/* =========================================================
+   PHASE 1 — SIDEBAR ICONS
+   ========================================================= */
+function injectSidebarIcons() {
+  const icons = {
+    'index.html': '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
+    'orders.html': '<svg viewBox="0 0 24 24"><path d="M9 11H3v10h6V11zM21 3h-6v18h6V3zM15 7H9v14h6V7z"/></svg>',
+    'products.html': '<svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
+    'categories.html': '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    'customers.html': '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    'settings.html': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+  };
+
+  document.querySelectorAll('.admin-sidebar nav a').forEach(a => {
+    const href = a.getAttribute('href');
+    const icon = icons[href];
+    if (icon && !a.querySelector('svg')) {
+      a.insertAdjacentHTML('afterbegin', icon);
+    }
+  });
+}
+
+injectSidebarIcons();
+
+/* =========================================================
+   PHASE 1 — WELCOME HEADER
+   ========================================================= */
+function injectWelcomeHeader() {
+  const header = document.querySelector('.admin-page-header');
+  if (!header) return;
+
+  const h1 = header.querySelector('h1');
+  if (!h1) return;
+
+  // Only customize the dashboard page
+  if (h1.textContent.trim().toLowerCase() !== 'dashboard') return;
+  if (header.querySelector('.admin-welcome')) return;
+
+  // Build date string
+  const now = new Date();
+  const options = { weekday: 'long', day: 'numeric', month: 'long' };
+  const dateStr = now.toLocaleDateString('en-GB', options);
+
+  // Replace the header content
+  header.innerHTML = `
+    <div class="admin-welcome">
+      <div class="admin-welcome-text">
+        <h1>Welcome back, Admin</h1>
+        <p>Here's what's happening with your store.</p>
+      </div>
+      <div class="admin-welcome-date">${dateStr}</div>
+    </div>
+  `;
+}
+
+injectWelcomeHeader();
+
 })();

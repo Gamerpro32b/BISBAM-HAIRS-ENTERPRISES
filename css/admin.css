@@ -748,3 +748,142 @@
     max-width: none;
   }
 }
+/* =========================================================
+   PHASE 1 — ADMIN POLISH
+   ========================================================= */
+
+/* Welcome header */
+.admin-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.admin-welcome-text h1 {
+  font-size: 1.75rem;
+  margin-bottom: 4px;
+}
+
+.admin-welcome-text p {
+  font-size: 0.9rem;
+  color: var(--grey);
+  margin: 0;
+}
+
+.admin-welcome-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pink);
+  padding: 8px 16px;
+  background: var(--pink-soft);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--pink-border);
+}
+
+/* Sidebar icons */
+.admin-sidebar nav a {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-sidebar nav a svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.admin-sidebar nav a.active svg {
+  opacity: 1;
+}
+
+/* Polished stat cards */
+.admin-stats {
+  gap: var(--space-md);
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-pink);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--pink);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+.stat-value {
+  font-family: var(--font-body);
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.stat-card h3 {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+/* Better admin panels */
+.admin-panel {
+  padding: var(--space-lg);
+  transition: box-shadow var(--transition);
+}
+
+.admin-panel:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Panel header with icon-friendly spacing */
+.admin-panel-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mobile tweaks */
+@media (max-width: 640px) {
+  .admin-welcome {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-welcome-date {
+    align-self: flex-start;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
