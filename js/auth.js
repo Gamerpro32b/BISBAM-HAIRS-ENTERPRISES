@@ -1,6 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — auth.js
-   Sign up, login, Google OAuth, logout, password reset.
+   Email + password signup, login, logout, password reset.
    ========================================================= */
 
 (function () {
@@ -8,7 +8,6 @@
 
   const REDIRECT_AFTER_AUTH = 'account.html';
 
-  // Mode: 'login' or 'signup'
   let mode = 'login';
 
   const authTitle = document.getElementById('authTitle');
@@ -19,7 +18,6 @@
   const authSubmitBtn = document.getElementById('authSubmitBtn');
   const authEmail = document.getElementById('authEmail');
   const authPassword = document.getElementById('authPassword');
-  const googleBtn = document.getElementById('googleBtn');
   const authError = document.getElementById('authError');
   const authSuccess = document.getElementById('authSuccess');
   const toggleText = document.getElementById('authToggleText');
@@ -91,7 +89,7 @@
       if (forgotLinkWrap) forgotLinkWrap.style.display = 'none';
     }
 
-    // Re-attach toggle listener (innerHTML replaced the link)
+    // Re-attach toggle listener
     const newToggle = document.getElementById('authToggleLink');
     if (newToggle) {
       newToggle.addEventListener('click', (e) => {
@@ -101,7 +99,6 @@
     }
   }
 
-  // Initial mode buttons
   if (tabLogin) {
     tabLogin.addEventListener('click', () => setMode('login'));
   }
@@ -112,28 +109,6 @@
     toggleLink.addEventListener('click', (e) => {
       e.preventDefault();
       setMode(mode === 'login' ? 'signup' : 'login');
-    });
-  }
-
-  /* ============ GOOGLE SIGN IN ============ */
-  if (googleBtn) {
-    googleBtn.addEventListener('click', async () => {
-      const client = db();
-      if (!client) return showError('Connection error. Please try again.');
-
-      clearMessages();
-
-      const { error } = await client.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/' + REDIRECT_AFTER_AUTH
-        }
-      });
-
-      if (error) {
-        showError(error.message || 'Could not sign in with Google.');
-      }
-      // If no error → Supabase redirects the browser to Google
     });
   }
 
@@ -168,20 +143,18 @@
 
           if (error) throw error;
 
-          // If no error and session exists → logged in instantly
           if (data && data.session) {
-            // Optionally send welcome email
+            // Optional welcome email
             try {
               await fetch('https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/send-auth-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'welcome', email })
               });
-            } catch (e) { /* ignore welcome failure */ }
+            } catch (e) { /* ignore */ }
 
             window.location.href = REDIRECT_AFTER_AUTH;
           } else {
-            // Account created but no session — likely due to email confirmation setting
             showSuccess('Account created. Please sign in.');
             setMode('login');
           }
