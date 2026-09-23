@@ -102,7 +102,7 @@
     if (menuWishlist) {
       menuWishlist.addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Wishlist coming soon.');
+        window.location.href = 'wishlist.html';
       });
     }
 
