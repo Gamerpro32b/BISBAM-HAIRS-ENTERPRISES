@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Order — Bisbam Hairs</title>
+  <meta name="description" content="Track your Bisbam Hairs order status.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ============ TRACK PAGE SPECIFIC ============ */
+    .track-body {
+      background: #FAF7F9;
+      min-height: 100vh;
+      padding-bottom: var(--space-2xl);
+    }
+
+    .track-container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    .track-header {
+      text-align: center;
+      padding: var(--space-xl) 0 var(--space-lg);
+    }
+
+    .track-header h1 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      margin: 0 0 var(--space-sm);
+      color: var(--black);
+    }
+
+    .track-header p {
+      font-size: 0.95rem;
+      color: var(--grey);
+      margin: 0;
+    }
+
+    /* Search card */
+    .track-search {
+      background: var(--white);
+      border: 1px solid var(--pink-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .track-search label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-bottom: var(--space-sm);
+    }
+
+    .track-search input {
+      width: 100%;
+      padding: 14px 18px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--black);
+      background: var(--white);
+      border: 1px solid var(--pink-border);
+      border-radius: var(--radius-sm);
+      transition: border-color var(--transition), box-shadow var(--transition);
+      letter-spacing: 0.04em;
+    }
+
+    .track-search input:focus {
+      outline: none;
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+    }
+
+    .track-search input::placeholder {
+      color: #B8B8B8;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .track-search .btn {
+      width: 100%;
+      margin-top: var(--space-md);
+    }
+
+    /* Result card */
+    .track-result {
+      margin-top: var(--space-lg);
+    }
+
+    .track-card {
+      background: var(--white);
+      border: 1px solid var(--pink-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .track-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-md);
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-md);
+      border-bottom: 1px solid var(--pink-border);
+    }
+
+    .track-order-id {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--black);
+      margin: 0 0 4px;
+      letter-spacing: 0.02em;
+    }
+
+    .track-order-date {
+      font-size: 0.82rem;
+      color: var(--grey);
+      margin: 0;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 5px 12px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
+    }
+
+    .status-pill.status-pending {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .status-pill.status-confirmed {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+
+    .status-pill.status-delivered {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .status-pill.status-cancelled {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    /* Progress tracker */
+    .track-progress {
+      margin: var(--space-lg) 0;
+    }
+
+    .track-progress-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin: 0 0 var(--space-md);
+    }
+
+    .track-step {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-sm) 0;
+      position: relative;
+    }
+
+    .track-step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--pink-border);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--grey);
+      flex-shrink: 0;
+      transition: all var(--transition);
+    }
+
+    .track-step.is-done .track-step-dot {
+      background: var(--gradient-pink);
+      border-color: transparent;
+      color: var(--white);
+    }
+
+    .track-step.is-done .track-step-dot::before {
+      content: '✓';
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .track-step.is-done .track-step-label {
+      color: var(--black);
+      font-weight: 600;
+    }
+
+    .track-step-label {
+      font-size: 0.9rem;
+      color: var(--grey);
+      margin: 0;
+    }
+
+    .track-step-sub {
+      font-size: 0.75rem;
+      color: var(--grey);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Items */
+    .track-items {
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) 0;
+      border-top: 1px solid var(--pink-border);
+    }
+
+    .track-items-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin: 0 0 var(--space-sm);
+    }
+
+    .track-item-line {
+      padding: 10px 0;
+      border-bottom: 1px solid #F2EDF0;
+      font-size: 0.9rem;
+      color: var(--black);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-md);
+      align-items: flex-start;
+    }
+
+    .track-item-line:last-child {
+      border-bottom: none;
+    }
+
+    .track-item-variant {
+      font-size: 0.75rem;
+      color: var(--grey);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .track-item-price {
+      color: var(--pink-deep);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Total */
+    .track-total {
+      display: flex;
+      justify-content: space-between;
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--pink-border);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--pink-deep);
+    }
+
+    /* WhatsApp help */
+    .track-help {
+      margin-top: var(--space-lg);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--grey);
+    }
+
+    .track-help a {
+      color: var(--pink);
+      font-weight: 600;
+    }
+
+    /* Error card */
+    .track-error {
+      background: var(--white);
+      border: 1px solid var(--pink-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      text-align: center;
+      margin-top: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .track-error-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto var(--space-md);
+      stroke: var(--pink);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.7;
+    }
+
+    .track-error h2 {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      margin-bottom: var(--space-sm);
+      color: var(--black);
+    }
+
+    .track-error p {
+      font-size: 0.9rem;
+      color: var(--grey);
+      margin-bottom: var(--space-lg);
+    }
+
+    .track-loading {
+      text-align: center;
+      padding: var(--space-xl) 0;
+      color: var(--grey);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 480px) {
+      .track-header h1 {
+        font-size: 1.65rem;
+      }
+      .track-card {
+        padding: var(--space-md);
+      }
+    }
+  </style>
+</head>
+<body class="track-body">
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="cart.html" class="cart-link" aria-label="Cart">
+          <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-count">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="track-container">
+
+    <div class="track-header">
+      <h1>Track Your Order</h1>
+      <p>Enter your order number to see its status</p>
+    </div>
+
+    <div class="track-search">
+      <label for="trackInput">Order Number</label>
+      <input type="text" id="trackInput" placeholder="e.g. ORD-260921-8820" autocomplete="off" autocapitalize="characters">
+      <button type="button" class="btn btn-primary" id="trackBtn">Track Order</button>
+    </div>
+
+    <div class="track-result" id="trackResult"></div>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+        <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="shop.html">All Products</a></li>
+          <li><a href="shop.html?cat=sdd-bonestraight">SDD Bonestraight</a></li>
+          <li><a href="shop.html?cat=bundles">Bundles</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h3>Info</h3>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="cart.html">Cart</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h3>Contact</h3>
+        <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
+        <p>WhatsApp: 08146108122</p>
+        <p>Open 24 hours</p>
+        <p>
+          <a href="https://instagram.com/bisbam_hairs" target="_blank" rel="noopener">Instagram</a> ·
+          <a href="https://www.tiktok.com/@bisbam_hairs?_r=1&_t=ZS-99q9QjCbKz4" target="_blank" rel="noopener">TikTok</a>
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/track.js"></script>
+</body>
+</html>
