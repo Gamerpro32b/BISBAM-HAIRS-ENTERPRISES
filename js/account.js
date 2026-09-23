@@ -45,10 +45,8 @@
     document.getElementById('profileName').textContent = name;
     document.getElementById('profileEmail').textContent = email;
 
-    // Verified badge (Google = verified email)
-    if (isGoogle && user.email_confirmed_at) {
-      document.getElementById('verifiedBadge').style.display = 'inline-flex';
-    } else if (user.email_confirmed_at) {
+    // Verified badge
+    if (user.email_confirmed_at || isGoogle) {
       document.getElementById('verifiedBadge').style.display = 'inline-flex';
     }
 
@@ -62,7 +60,6 @@
     }
 
     // Fetch user's orders
-    // We match by customer_email (since orders table stores customer_email)
     try {
       const { data: orders } = await client
         .from('orders')
@@ -91,40 +88,55 @@
       window.location.href = 'index.html';
     });
 
-    // Menu placeholders
-    document.getElementById('menuOrders').addEventListener('click', (e) => {
-      e.preventDefault();
-      alert('Order history page coming soon.');
-    });
+    // Menu — Order History
+    const menuOrders = document.getElementById('menuOrders');
+    if (menuOrders) {
+      menuOrders.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'orders.html';
+      });
+    }
 
-    document.getElementById('menuWishlist').addEventListener('click', (e) => {
-      e.preventDefault();
-      alert('Wishlist coming soon.');
-    });
+    // Menu — Wishlist
+    const menuWishlist = document.getElementById('menuWishlist');
+    if (menuWishlist) {
+      menuWishlist.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Wishlist coming soon.');
+      });
+    }
 
-    document.getElementById('menuEditProfile').addEventListener('click', (e) => {
-      e.preventDefault();
-      alert('Profile editing coming soon.');
-    });
+    // Menu — Personal Info
+    const menuEditProfile = document.getElementById('menuEditProfile');
+    if (menuEditProfile) {
+      menuEditProfile.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Profile editing coming soon.');
+      });
+    }
 
-    document.getElementById('menuChangePassword').addEventListener('click', async (e) => {
-      e.preventDefault();
-      if (!email) return;
-      if (!confirm('Send a password reset link to ' + email + '?')) return;
+    // Menu — Change Password
+    const menuChangePassword = document.getElementById('menuChangePassword');
+    if (menuChangePassword) {
+      menuChangePassword.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!email) return;
+        if (!confirm('Send a password reset link to ' + email + '?')) return;
 
-      try {
-        const res = await fetch('https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/send-auth-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'reset-password', email })
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || 'Failed');
-        alert('Reset link sent to ' + email);
-      } catch (err) {
-        alert('Could not send reset link: ' + err.message);
-      }
-    });
+        try {
+          const res = await fetch('https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/send-auth-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'reset-password', email })
+          });
+          const data = await res.json();
+          if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+          alert('Reset link sent to ' + email);
+        } catch (err) {
+          alert('Could not send reset link: ' + err.message);
+        }
+      });
+    }
 
     // Show content
     if (loading) loading.style.display = 'none';
