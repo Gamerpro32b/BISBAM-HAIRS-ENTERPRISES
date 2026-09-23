@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — Bisbam Hairs</title>
+  <meta name="description" content="Manage your Bisbam Hairs account.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ============ ACCOUNT PAGE SPECIFIC ============ */
+    .account-body {
+      background: #FAF7F9;
+      min-height: 100vh;
+      padding-bottom: var(--space-2xl);
+    }
+
+    .account-container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    /* Profile header */
+    .account-profile {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-lg) 0;
+      border-bottom: 1px solid var(--pink-border);
+    }
+
+    .account-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: var(--gradient-pink);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 6px 18px rgba(233, 30, 140, 0.25);
+    }
+
+    .account-avatar-img {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 6px 18px rgba(233, 30, 140, 0.25);
+    }
+
+    .account-profile-info h1 {
+      font-family: var(--font-body);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+      color: var(--black);
+      line-height: 1.2;
+    }
+
+    .account-profile-info p {
+      font-size: 0.85rem;
+      color: var(--grey);
+      margin: 0;
+      word-break: break-word;
+    }
+
+    .account-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      padding: 2px 10px;
+      background: #ECFDF5;
+      color: #16A34A;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+    }
+
+    .account-verified::before {
+      content: '✓';
+      font-size: 0.75rem;
+    }
+
+    /* Stats grid */
+    .account-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-sm);
+      margin: var(--space-lg) 0;
+    }
+
+    .account-stat {
+      background: var(--white);
+      border: 1px solid var(--pink-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md) var(--space-sm);
+      text-align: center;
+      transition: all var(--transition);
+    }
+
+    .account-stat:hover {
+      border-color: var(--pink);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .account-stat-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--pink-deep);
+      margin: 0 0 4px;
+      line-height: 1.1;
+    }
+
+    .account-stat-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin: 0;
+    }
+
+    /* Menu list */
+    .account-menu {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--pink-border);
+      overflow: hidden;
+      margin-bottom: var(--space-md);
+    }
+
+    .account-menu-title {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      padding: var(--space-md) var(--space-lg) 4px;
+      margin: 0;
+    }
+
+    .account-menu-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md) var(--space-lg);
+      border-bottom: 1px solid #F2EDF0;
+      text-decoration: none;
+      color: var(--black);
+      transition: background var(--transition);
+      cursor: pointer;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      width: 100%;
+      font-family: inherit;
+      text-align: left;
+    }
+
+    .account-menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .account-menu-item:hover {
+      background: var(--pink-soft);
+    }
+
+    .account-menu-icon {
+      width: 22px;
+      height: 22px;
+      stroke: var(--pink);
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .account-menu-label {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .account-menu-sub {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--grey);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .account-menu-arrow {
+      color: var(--grey);
+      font-size: 1.2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .account-menu-item.danger .account-menu-icon {
+      stroke: #B00020;
+    }
+
+    .account-menu-item.danger .account-menu-label {
+      color: #B00020;
+    }
+
+    /* Sign out button prominent */
+    .account-signout {
+      width: 100%;
+      padding: var(--space-md);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #B00020;
+      background: var(--white);
+      border: 1px solid #B00020;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: var(--space-md);
+    }
+
+    .account-signout:hover {
+      background: #B00020;
+      color: var(--white);
+    }
+
+    /* Loading state */
+    .account-loading {
+      text-align: center;
+      padding: var(--space-2xl) var(--space-md);
+      color: var(--grey);
+    }
+
+    @media (max-width: 480px) {
+      .account-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .account-profile-info h1 {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="account-body">
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="cart.html" class="cart-link" aria-label="Cart">
+          <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-count">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="account-container" id="accountMain">
+
+    <div class="account-loading" id="accountLoading">
+      Loading your account…
+    </div>
+
+    <!-- Account content injected by JS -->
+    <div id="accountContent" style="display:none;">
+
+      <!-- Profile header -->
+      <section class="account-profile">
+        <div id="avatarWrap">
+          <!-- Avatar injected by JS -->
+        </div>
+        <div class="account-profile-info">
+          <h1 id="profileName">—</h1>
+          <p id="profileEmail">—</p>
+          <span class="account-verified" id="verifiedBadge" style="display:none;">Verified</span>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="account-stats">
+        <div class="account-stat">
+          <p class="account-stat-value" id="statOrders">0</p>
+          <p class="account-stat-label">Orders</p>
+        </div>
+        <div class="account-stat">
+          <p class="account-stat-value" id="statPending">0</p>
+          <p class="account-stat-label">Pending</p>
+        </div>
+        <div class="account-stat">
+          <p class="account-stat-value" id="statDelivered">0</p>
+          <p class="account-stat-label">Delivered</p>
+        </div>
+        <div class="account-stat">
+          <p class="account-stat-value" id="statSpent">₦0</p>
+          <p class="account-stat-label">Spent</p>
+        </div>
+      </section>
+
+      <!-- Menu — Shopping -->
+      <div class="account-menu">
+        <p class="account-menu-title">Shopping</p>
+
+        <a href="shop.html" class="account-menu-item">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <span class="account-menu-label">Continue Shopping
+            <span class="account-menu-sub">Browse new arrivals</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+
+        <a href="#" class="account-menu-item" id="menuOrders">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11zM21 3h-6v18h6V3zM15 7H9v14h6V7z"/></svg>
+          <span class="account-menu-label">Order History
+            <span class="account-menu-sub">Track and view past orders</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+
+        <a href="#" class="account-menu-item" id="menuWishlist">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span class="account-menu-label">My Wishlist
+            <span class="account-menu-sub">Products you love</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+
+        <a href="track.html" class="account-menu-item">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span class="account-menu-label">Track an Order
+            <span class="account-menu-sub">Enter your order number</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+      </div>
+
+      <!-- Menu — Account -->
+      <div class="account-menu">
+        <p class="account-menu-title">Account</p>
+
+        <a href="#" class="account-menu-item" id="menuEditProfile">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="account-menu-label">Personal Information
+            <span class="account-menu-sub">Name, email, phone</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+
+        <a href="contact.html" class="account-menu-item">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="account-menu-label">Contact Support
+            <span class="account-menu-sub">Chat with us on WhatsApp</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+
+        <a href="#" class="account-menu-item" id="menuChangePassword">
+          <svg class="account-menu-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span class="account-menu-label">Change Password
+            <span class="account-menu-sub">Send reset link to email</span>
+          </span>
+          <span class="account-menu-arrow">›</span>
+        </a>
+      </div>
+
+      <!-- Sign out -->
+      <button type="button" class="account-signout" id="signOutBtn">
+        Sign Out
+      </button>
+
+    </div>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/logo/logo.png" alt="Bisbam Hairs logo">
+        <p>Premium human hair, luxury wigs &amp; quality extensions.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="shop.html">All Products</a></li>
+          <li><a href="shop.html?cat=sdd-bonestraight">SDD Bonestraight</a></li>
+          <li><a href="shop.html?cat=bundles">Bundles</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h3>Info</h3>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="cart.html">Cart</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h3>Contact</h3>
+        <p>44 Nnobi Street, Kilo Bus Stop,<br>Surulere, Lagos</p>
+        <p>WhatsApp: 08146108122</p>
+        <p>Open 24 hours</p>
+        <p>
+          <a href="https://instagram.com/bisbam_hairs" target="_blank" rel="noopener">Instagram</a> ·
+          <a href="https://www.tiktok.com/@bisbam_hairs?_r=1&_t=ZS-99q9QjCbKz4" target="_blank" rel="noopener">TikTok</a>
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Bisbam Hairs Enterprises. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/account.js"></script>
+</body>
+</html>
