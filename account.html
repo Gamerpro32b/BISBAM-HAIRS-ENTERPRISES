@@ -24,7 +24,6 @@
       padding: 0 var(--space-md);
     }
 
-    /* Profile header */
     .account-profile {
       display: flex;
       align-items: center;
@@ -94,7 +93,6 @@
       font-size: 0.75rem;
     }
 
-    /* Stats grid */
     .account-stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -134,7 +132,6 @@
       margin: 0;
     }
 
-    /* Menu list */
     .account-menu {
       background: var(--white);
       border-radius: var(--radius-md);
@@ -213,15 +210,6 @@
       flex-shrink: 0;
     }
 
-    .account-menu-item.danger .account-menu-icon {
-      stroke: #B00020;
-    }
-
-    .account-menu-item.danger .account-menu-label {
-      color: #B00020;
-    }
-
-    /* Sign out button prominent */
     .account-signout {
       width: 100%;
       padding: var(--space-md);
@@ -244,20 +232,116 @@
       color: var(--white);
     }
 
-    /* Loading state */
     .account-loading {
       text-align: center;
       padding: var(--space-2xl) var(--space-md);
       color: var(--grey);
     }
 
+    /* ============ PROFILE MODAL ============ */
+    .profile-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-md);
+    }
+
+    .profile-modal[hidden] {
+      display: none;
+    }
+
+    .profile-modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    .profile-modal-content {
+      position: relative;
+      background: var(--white);
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 480px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .profile-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-lg);
+    }
+
+    .profile-modal-header h2 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      margin: 0;
+    }
+
+    .profile-modal-close {
+      font-size: 1.5rem;
+      line-height: 1;
+      color: var(--grey);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      transition: all var(--transition);
+    }
+
+    .profile-modal-close:hover {
+      background: var(--pink-soft);
+      color: var(--pink);
+    }
+
+    .profile-modal-actions {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: flex-end;
+      margin-top: var(--space-lg);
+    }
+
+    .profile-modal-error,
+    .profile-modal-success {
+      margin-top: var(--space-md);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .profile-modal-error {
+      background: #FCE4EC;
+      color: #B00020;
+    }
+
+    .profile-modal-success {
+      background: #ECFDF5;
+      color: #16A34A;
+    }
+
     @media (max-width: 480px) {
       .account-stats {
         grid-template-columns: repeat(2, 1fr);
       }
-
       .account-profile-info h1 {
         font-size: 1rem;
+      }
+      .profile-modal-actions {
+        flex-direction: column-reverse;
+      }
+      .profile-modal-actions .btn {
+        width: 100%;
       }
     }
   </style>
@@ -297,14 +381,11 @@
       Loading your account…
     </div>
 
-    <!-- Account content injected by JS -->
     <div id="accountContent" style="display:none;">
 
       <!-- Profile header -->
       <section class="account-profile">
-        <div id="avatarWrap">
-          <!-- Avatar injected by JS -->
-        </div>
+        <div id="avatarWrap"></div>
         <div class="account-profile-info">
           <h1 id="profileName">—</h1>
           <p id="profileEmail">—</p>
@@ -344,7 +425,7 @@
           <span class="account-menu-arrow">›</span>
         </a>
 
-        <a href="#" class="account-menu-item" id="menuOrders">
+        <a href="orders.html" class="account-menu-item" id="menuOrders">
           <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11zM21 3h-6v18h6V3zM15 7H9v14h6V7z"/></svg>
           <span class="account-menu-label">Order History
             <span class="account-menu-sub">Track and view past orders</span>
@@ -352,7 +433,7 @@
           <span class="account-menu-arrow">›</span>
         </a>
 
-        <a href="#" class="account-menu-item" id="menuWishlist">
+        <a href="wishlist.html" class="account-menu-item" id="menuWishlist">
           <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           <span class="account-menu-label">My Wishlist
             <span class="account-menu-sub">Products you love</span>
@@ -373,13 +454,13 @@
       <div class="account-menu">
         <p class="account-menu-title">Account</p>
 
-        <a href="#" class="account-menu-item" id="menuEditProfile">
+        <button type="button" class="account-menu-item" id="menuEditProfile">
           <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span class="account-menu-label">Personal Information
             <span class="account-menu-sub">Name, email, phone</span>
           </span>
           <span class="account-menu-arrow">›</span>
-        </a>
+        </button>
 
         <a href="contact.html" class="account-menu-item">
           <svg class="account-menu-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -389,13 +470,13 @@
           <span class="account-menu-arrow">›</span>
         </a>
 
-        <a href="#" class="account-menu-item" id="menuChangePassword">
+        <button type="button" class="account-menu-item" id="menuChangePassword">
           <svg class="account-menu-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span class="account-menu-label">Change Password
             <span class="account-menu-sub">Send reset link to email</span>
           </span>
           <span class="account-menu-arrow">›</span>
-        </a>
+        </button>
       </div>
 
       <!-- Sign out -->
@@ -406,6 +487,39 @@
     </div>
 
   </main>
+
+  <!-- ============ PROFILE EDIT MODAL ============ -->
+  <div class="profile-modal" id="profileModal" hidden>
+    <div class="profile-modal-overlay" data-close-profile-modal></div>
+    <div class="profile-modal-content">
+      <div class="profile-modal-header">
+        <h2>Personal Information</h2>
+        <button type="button" class="profile-modal-close" data-close-profile-modal>&times;</button>
+      </div>
+
+      <form id="profileForm">
+        <div class="form-group">
+          <label for="profileFullName">Display Name</label>
+          <input type="text" id="profileFullName" name="fullName" maxlength="60" required>
+          <p class="form-note">This is how your name appears on your account.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="profileEmailReadonly">Email</label>
+          <input type="email" id="profileEmailReadonly" disabled>
+          <p class="form-note">Email cannot be changed.</p>
+        </div>
+
+        <p class="profile-modal-error" id="profileModalError" hidden></p>
+        <p class="profile-modal-success" id="profileModalSuccess" hidden></p>
+
+        <div class="profile-modal-actions">
+          <button type="button" class="btn btn-outline" data-close-profile-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="profileSaveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- ============ FOOTER ============ -->
   <footer class="site-footer">

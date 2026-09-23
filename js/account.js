@@ -1,6 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — account.js
-   Reads logged-in user, shows profile + order stats.
+   Profile, stats, order history link, wishlist link,
+   personal info edit (display name), change password.
    ========================================================= */
 
 (function () {
@@ -18,6 +19,35 @@
   const loading = document.getElementById('accountLoading');
   const content = document.getElementById('accountContent');
 
+  /* ============ MODAL ELEMENTS ============ */
+  const profileModal = document.getElementById('profileModal');
+  const profileForm = document.getElementById('profileForm');
+  const profileFullName = document.getElementById('profileFullName');
+  const profileEmailReadonly = document.getElementById('profileEmailReadonly');
+  const profileSaveBtn = document.getElementById('profileSaveBtn');
+  const profileModalError = document.getElementById('profileModalError');
+  const profileModalSuccess = document.getElementById('profileModalSuccess');
+
+  /* ============ MODAL HELPERS ============ */
+  function openProfileModal() {
+    if (profileModal) profileModal.hidden = false;
+    if (profileModalError) profileModalError.hidden = true;
+    if (profileModalSuccess) profileModalSuccess.hidden = true;
+  }
+
+  function closeProfileModal() {
+    if (profileModal) profileModal.hidden = true;
+  }
+
+  document.querySelectorAll('[data-close-profile-modal]').forEach(el => {
+    el.addEventListener('click', closeProfileModal);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeProfileModal();
+  });
+
+  /* ============ MAIN INIT ============ */
   async function init() {
     const client = db();
     if (!client) {
@@ -39,14 +69,13 @@
     const meta = user.user_metadata || {};
     const name = meta.full_name || meta.name || email.split('@')[0] || 'Bam Babe';
     const avatarUrl = meta.avatar_url || meta.picture || '';
-    const isGoogle = (user.app_metadata && user.app_metadata.provider === 'google');
 
     // Fill profile
     document.getElementById('profileName').textContent = name;
     document.getElementById('profileEmail').textContent = email;
 
     // Verified badge
-    if (user.email_confirmed_at || isGoogle) {
+    if (user.email_confirmed_at) {
       document.getElementById('verifiedBadge').style.display = 'inline-flex';
     }
 
@@ -58,6 +87,10 @@
       const initial = name.charAt(0).toUpperCase();
       avatarWrap.innerHTML = `<div class="account-avatar">${initial}</div>`;
     }
+
+    // Populate modal fields
+    if (profileFullName) profileFullName.value = name;
+    if (profileEmailReadonly) profileEmailReadonly.value = email;
 
     // Fetch user's orders
     try {
@@ -81,14 +114,14 @@
       console.warn('Order stats fetch failed:', err);
     }
 
-    // Sign out
+    /* ============ SIGN OUT ============ */
     document.getElementById('signOutBtn').addEventListener('click', async () => {
       if (!confirm('Sign out of your account?')) return;
       await client.auth.signOut();
       window.location.href = 'index.html';
     });
 
-    // Menu — Order History
+    /* ============ MENU — ORDER HISTORY ============ */
     const menuOrders = document.getElementById('menuOrders');
     if (menuOrders) {
       menuOrders.addEventListener('click', (e) => {
@@ -97,7 +130,7 @@
       });
     }
 
-    // Menu — Wishlist
+    /* ============ MENU — WISHLIST ============ */
     const menuWishlist = document.getElementById('menuWishlist');
     if (menuWishlist) {
       menuWishlist.addEventListener('click', (e) => {
@@ -106,16 +139,16 @@
       });
     }
 
-    // Menu — Personal Info
+    /* ============ MENU — PERSONAL INFO ============ */
     const menuEditProfile = document.getElementById('menuEditProfile');
     if (menuEditProfile) {
       menuEditProfile.addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Profile editing coming soon.');
+        openProfileModal();
       });
     }
 
-    // Menu — Change Password
+    /* ============ MENU — CHANGE PASSWORD ============ */
     const menuChangePassword = document.getElementById('menuChangePassword');
     if (menuChangePassword) {
       menuChangePassword.addEventListener('click', async (e) => {
@@ -138,7 +171,63 @@
       });
     }
 
-    // Show content
+    /* ============ PROFILE FORM SUBMIT ============ */
+    if (profileForm) {
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const newName = (profileFullName?.value || '').trim();
+        if (!newName) {
+          if (profileModalError) {
+            profileModalError.hidden = false;
+            profileModalError.textContent = 'Please enter a name.';
+          }
+          return;
+        }
+
+        if (profileModalError) profileModalError.hidden = true;
+        if (profileModalSuccess) profileModalSuccess.hidden = true;
+
+        const originalText = profileSaveBtn.textContent;
+        profileSaveBtn.textContent = 'Saving…';
+        profileSaveBtn.disabled = true;
+
+        try {
+          const { error } = await client.auth.updateUser({
+            data: { full_name: newName }
+          });
+
+          if (error) throw error;
+
+          // Update UI immediately
+          document.getElementById('profileName').textContent = newName;
+          const initial = newName.charAt(0).toUpperCase();
+
+          // Update avatar initial if no avatar image
+          if (!avatarUrl && avatarWrap) {
+            avatarWrap.innerHTML = `<div class="account-avatar">${initial}</div>`;
+          }
+
+          if (profileModalSuccess) {
+            profileModalSuccess.hidden = false;
+            profileModalSuccess.textContent = 'Saved!';
+          }
+
+          setTimeout(closeProfileModal, 1200);
+        } catch (err) {
+          console.error('Profile update error:', err);
+          if (profileModalError) {
+            profileModalError.hidden = false;
+            profileModalError.textContent = err.message || 'Could not save. Please try again.';
+          }
+        } finally {
+          profileSaveBtn.textContent = originalText;
+          profileSaveBtn.disabled = false;
+        }
+      });
+    }
+
+    /* ============ SHOW CONTENT ============ */
     if (loading) loading.style.display = 'none';
     if (content) content.style.display = 'block';
   }
