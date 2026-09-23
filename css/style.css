@@ -2794,3 +2794,86 @@ table {
     font-size: 0.55rem;
   }
 }
+/* =========================================================
+   WISHLIST — HEART ON PRODUCT CARDS
+   ========================================================= */
+.product-card {
+  position: relative;
+}
+
+.wishlist-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(239, 227, 234, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(20, 20, 20, 0.08);
+}
+
+.wishlist-heart:hover {
+  background: var(--white);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(233, 30, 140, 0.18);
+  border-color: var(--pink);
+}
+
+.wishlist-heart svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--black);
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: all var(--transition);
+}
+
+.wishlist-heart:hover svg {
+  stroke: var(--pink);
+}
+
+/* Active state — heart is saved */
+.wishlist-heart.is-saved svg {
+  fill: var(--pink);
+  stroke: var(--pink);
+}
+
+.wishlist-heart.is-saved {
+  background: var(--white);
+  border-color: var(--pink);
+}
+
+/* Small animation on tap */
+.wishlist-heart.tapped svg {
+  animation: heartPop 0.4s ease;
+}
+
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 640px) {
+  .wishlist-heart {
+    width: 32px;
+    height: 32px;
+    top: 8px;
+    right: 8px;
+  }
+  .wishlist-heart svg {
+    width: 16px;
+    height: 16px;
+  }
+}
