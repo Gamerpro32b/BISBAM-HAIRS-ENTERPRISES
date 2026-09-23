@@ -2720,3 +2720,77 @@ table {
     width: 72px;
   }
 }
+/* =========================================================
+   HEADER — ACCOUNT LINK
+   ========================================================= */
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--black);
+  transition: background var(--transition), color var(--transition);
+  position: relative;
+}
+
+.account-link:hover {
+  background: var(--pink-soft);
+  color: var(--pink);
+}
+
+.account-link svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--transition);
+}
+
+.account-link:hover svg {
+  transform: translateY(-1px);
+}
+
+/* Initial badge for logged-in user */
+.account-link.has-user::after {
+  content: attr(data-initial);
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--gradient-pink);
+  border: 2px solid var(--white);
+  border-radius: 999px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .account-link {
+    width: 40px;
+    height: 40px;
+  }
+  .account-link svg {
+    width: 20px;
+    height: 20px;
+  }
+  .account-link.has-user::after {
+    top: 0;
+    right: 0;
+    min-width: 16px;
+    height: 16px;
+    line-height: 16px;
+    font-size: 0.55rem;
+  }
+}
