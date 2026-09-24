@@ -1,7 +1,7 @@
 /* =========================================================
    BISBAM HAIRS — account.js
    Profile, stats, order history link, wishlist link,
-   personal info edit (display name), change password.
+   personal info edit, change password, sign out.
    ========================================================= */
 
 (function () {
@@ -116,7 +116,14 @@
 
     /* ============ SIGN OUT ============ */
     document.getElementById('signOutBtn').addEventListener('click', async () => {
-      if (!confirm('Sign out of your account?')) return;
+      const ok = await window.Bisbam.confirm({
+        title: 'Sign out?',
+        message: 'You will need to sign in again to access your account.',
+        confirmText: 'Sign Out',
+        cancelText: 'Cancel',
+        destructive: true
+      });
+      if (!ok) return;
       await client.auth.signOut();
       window.location.href = 'index.html';
     });
@@ -154,7 +161,14 @@
       menuChangePassword.addEventListener('click', async (e) => {
         e.preventDefault();
         if (!email) return;
-        if (!confirm('Send a password reset link to ' + email + '?')) return;
+
+        const ok = await window.Bisbam.confirm({
+          title: 'Send reset link?',
+          message: 'We will email a password reset link to ' + email,
+          confirmText: 'Send Link',
+          cancelText: 'Cancel'
+        });
+        if (!ok) return;
 
         try {
           const res = await fetch('https://tqcwmqqxzzsdfuxskayl.supabase.co/functions/v1/send-auth-email', {

@@ -247,11 +247,85 @@
       window.dispatchEvent(new Event('cart-updated'));
     },
 
-    whatsapp(text = '') {
-      const msg = text ? `?text=${encodeURIComponent(text)}` : '';
-      return `https://wa.me/2348146108122${msg}`;
-    }
-  };
+      whatsapp(text = '') {
+    const msg = text ? `?text=${encodeURIComponent(text)}` : '';
+    return `https://wa.me/2348146108122${msg}`;
+  },
+
+  confirm(options = {}) {
+    return new Promise((resolve) => {
+      const {
+        title = 'Are you sure?',
+        message = '',
+        confirmText = 'Confirm',
+        cancelText = 'Cancel',
+        destructive = false
+      } = options;
+
+      // Create modal markup
+      const modal = document.createElement('div');
+      modal.className = 'bisbam-confirm' + (destructive ? ' danger' : '');
+      modal.innerHTML = `
+        <div class="bisbam-confirm-overlay"></div>
+        <div class="bisbam-confirm-card">
+          <div class="bisbam-confirm-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h3 class="bisbam-confirm-title"></h3>
+          <p class="bisbam-confirm-message"></p>
+          <div class="bisbam-confirm-actions">
+            <button type="button" class="bisbam-confirm-cancel"></button>
+            <button type="button" class="bisbam-confirm-confirm"></button>
+          </div>
+        </div>
+      `;
+
+      // Fill text safely
+      modal.querySelector('.bisbam-confirm-title').textContent = title;
+      modal.querySelector('.bisbam-confirm-message').textContent = message;
+      modal.querySelector('.bisbam-confirm-confirm').textContent = confirmText;
+      modal.querySelector('.bisbam-confirm-cancel').textContent = cancelText;
+
+      document.body.appendChild(modal);
+
+      // Prevent body scroll
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      // Force reflow then add is-visible for animation
+      requestAnimationFrame(() => {
+        modal.classList.add('is-visible');
+      });
+
+      function close(result) {
+        modal.classList.remove('is-visible');
+        document.body.style.overflow = prevOverflow;
+        setTimeout(() => {
+          modal.remove();
+          resolve(result);
+        }, 250);
+      }
+
+      // Wire buttons
+      modal.querySelector('.bisbam-confirm-confirm').addEventListener('click', () => close(true));
+      modal.querySelector('.bisbam-confirm-cancel').addEventListener('click', () => close(false));
+      modal.querySelector('.bisbam-confirm-overlay').addEventListener('click', () => close(false));
+
+      // ESC closes
+      function escHandler(e) {
+        if (e.key === 'Escape') {
+          document.removeEventListener('keydown', escHandler);
+          close(false);
+        }
+      }
+      document.addEventListener('keydown', escHandler);
+    });
+  }
+};
 
 /* ============ 9. PASSWORD EYE TOGGLE ============ */
 function initPasswordToggles() {
