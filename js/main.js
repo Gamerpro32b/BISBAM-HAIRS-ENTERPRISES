@@ -376,4 +376,116 @@ function initPasswordToggles() {
 }
 
 initPasswordToggles();
+
+/* ============ 10. GLOBAL WISHLIST LOGIC ============ */
+let bisbamUserId = null;
+let bisbamWishlistIds = new Set();
+let bisbamWishlistLoaded = false;
+
+async function loadWishlistGlobal() {
+  const client = (window.BisbamDB) || (window.initSupabase ? window.initSupabase() : null);
+  if (!client) return;
+
+  const { data: session } = await client.auth.getSession();
+  if (!session || !session.session) {
+    bisbamUserId = null;
+    bisbamWishlistIds = new Set();
+    bisbamWishlistLoaded = true;
+    return;
+  }
+
+  bisbamUserId = session.session.user.id;
+
+  try {
+    const { data } = await client
+      .from('wishlists')
+      .select('product_id')
+      .eq('user_id', bisbamUserId);
+
+    bisbamWishlistIds = new Set((data || []).map(w => String(w.product_id)));
+  } catch (err) {
+    console.warn('Wishlist load error:', err);
+  }
+
+  bisbamWishlistLoaded = true;
+
+  // Refresh all hearts on page
+  document.querySelectorAll('.wishlist-heart').forEach(btn => {
+    const id = btn.getAttribute('data-wishlist-id');
+    if (!id) return;
+    if (bisbamWishlistIds.has(String(id))) {
+      btn.classList.add('is-saved');
+    } else {
+      btn.classList.remove('is-saved');
+    }
+  });
+}
+
+async function toggleWishlistGlobal(btn) {
+  const productId = btn.getAttribute('data-wishlist-id');
+  if (!productId) return;
+
+  if (!bisbamUserId) {
+    alert('Sign in to save items to your wishlist.');
+    return;
+  }
+
+  const client = (window.BisbamDB) || (window.initSupabase ? window.initSupabase() : null);
+  if (!client) return;
+
+  const currentlySaved = bisbamWishlistIds.has(String(productId));
+
+  // Pop animation
+  btn.classList.add('tapped');
+  setTimeout(() => btn.classList.remove('tapped'), 400);
+
+  try {
+    if (currentlySaved) {
+      const { error } = await client
+        .from('wishlists')
+        .delete()
+        .eq('user_id', bisbamUserId)
+        .eq('product_id', productId);
+      if (error) throw error;
+      bisbamWishlistIds.delete(String(productId));
+      btn.classList.remove('is-saved');
+      btn.setAttribute('aria-label', 'Save to wishlist');
+    } else {
+      const { error } = await client
+        .from('wishlists')
+        .insert({ user_id: bisbamUserId, product_id: productId });
+      if (error) throw error;
+      bisbamWishlistIds.add(String(productId));
+      btn.classList.add('is-saved');
+      btn.setAttribute('aria-label', 'Remove from wishlist');
+    }
+  } catch (err) {
+    console.error('Wishlist toggle error:', err);
+    alert('Could not update wishlist. Please try again.');
+  }
+}
+
+// Attach any heart buttons present on the page
+function initWishlistHearts() {
+  document.querySelectorAll('.wishlist-heart').forEach(btn => {
+    if (btn.dataset.wishlistBound === '1') return;
+    btn.dataset.wishlistBound = '1';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleWishlistGlobal(btn);
+    });
+  });
+}
+
+// Kick off
+loadWishlistGlobal().then(() => initWishlistHearts());
+
+// Expose for reuse
+window.BisbamWishlist = {
+  init: initWishlistHearts,
+  reload: loadWishlistGlobal,
+  toggle: toggleWishlistGlobal,
+  isSaved: (id) => bisbamWishlistIds.has(String(id))
+};
 })();

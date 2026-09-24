@@ -238,16 +238,29 @@
       return;
     }
 
-    grid.innerHTML = list.slice(0, 4).map(p => `
-      <article class="product-card">
-        <div class="product-image">
-          <img src="${p.image}" alt="${p.name}" loading="lazy">
-        </div>
-        <h3 class="product-name">${p.name}</h3>
-        <p class="product-price">${naira(p.price)}</p>
-        <a href="product.html?id=${p.id}" class="btn btn-small btn-outline">View</a>
-      </article>
-    `).join('');
+    grid.innerHTML = data.map(p => {
+  const image = (p.images && p.images[0]) || 'assets/images/products/placeholder.jpg';
+  return `
+    <article class="product-card" data-id="${p.id}">
+      <button type="button" class="wishlist-heart"
+              data-wishlist-id="${p.id}"
+              aria-label="Save to wishlist">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </button>
+      <div class="product-image">
+        <img src="${image}" alt="${p.name}" loading="lazy">
+      </div>
+      <h3 class="product-name">${p.name}</h3>
+      <p class="product-price">${naira(p.sale_price || p.retail_price || 0)}</p>
+      <a href="product.html?id=${p.slug || p.id}" class="btn btn-small btn-outline">View</a>
+    </article>
+  `;
+}).join('');
+
+// Bind hearts
+if (window.BisbamWishlist) window.BisbamWishlist.init();
 
     section.style.display = '';
   }
