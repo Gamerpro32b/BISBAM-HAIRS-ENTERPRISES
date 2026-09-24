@@ -1677,4 +1677,191 @@ async function handleSettingsSubmit(e) {
     }
   });
 
+  /* =========================================================
+     DELIVERY ZONES
+     ========================================================= */
+  let editingZoneId = null;
+
+  const zonesBody = document.getElementById('zonesBody');
+  const addZoneBtn = document.getElementById('addZoneBtn');
+  const zoneModal = document.getElementById('zoneModal');
+  const zoneModalTitle = document.getElementById('zoneModalTitle');
+  const zoneForm = document.getElementById('zoneForm');
+
+  async function renderDeliveryZones() {
+    if (!zonesBody) return;
+
+    const client = db();
+    if (!client) return;
+
+    const { data, error } = await client
+      .from('delivery_zones')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('label', { ascending: true });
+
+    if (error) {
+      zonesBody.innerHTML = `<tr><td colspan="4" class="admin-empty">Could not load zones.</td></tr>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      zonesBody.innerHTML = `<tr><td colspan="4" class="admin-empty">No zones yet. Click "+ Add Zone" to create one.</td></tr>`;
+      return;
+    }
+
+    zonesBody.innerHTML = data.map(z => `
+      <tr>
+        <td><strong>${z.label}</strong></td>
+        <td>${naira(z.fee)}</td>
+        <td>${z.sort_order || 0}</td>
+        <td>
+          <button class="btn btn-small btn-outline edit-zone" data-id="${z.id}">Edit</button>
+          <button class="btn btn-small btn-outline delete-zone" data-id="${z.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function openZoneModal(zone) {
+    editingZoneId = zone ? zone.id : null;
+
+    const form = document.getElementById('zoneForm');
+    form.reset();
+
+    if (zone) {
+      form.querySelector('#zLabel').value = zone.label || '';
+      form.querySelector('#zFee').value = zone.fee || 0;
+      form.querySelector('#zOrder').value = zone.sort_order || 0;
+      zoneModalTitle.textContent = 'Edit Zone';
+    } else {
+      form.querySelector('#zOrder').value = 0;
+      zoneModalTitle.textContent = 'Add Zone';
+    }
+
+    if (zoneModal) zoneModal.hidden = false;
+  }
+
+  async function handleZoneSubmit(e) {
+    e.preventDefault();
+
+    const client = db();
+    if (!client) return;
+
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+
+    const label = form.querySelector('#zLabel').value.trim();
+    const fee = Number(form.querySelector('#zFee').value) || 0;
+    const sortOrder = Number(form.querySelector('#zOrder').value) || 0;
+
+    if (!label) {
+      alert('Label is required.');
+      return;
+    }
+
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+
+    try {
+      const payload = { label, fee, sort_order: sortOrder };
+
+      if (editingZoneId) {
+        const { error } = await client
+          .from('delivery_zones')
+          .update(payload)
+          .eq('id', editingZoneId);
+        if (error) throw error;
+        alert('Zone updated.');
+      } else {
+        const { error } = await client.from('delivery_zones').insert(payload);
+        if (error) throw error;
+        alert('Zone added.');
+      }
+
+      editingZoneId = null;
+      if (zoneModal) zoneModal.hidden = true;
+      await renderDeliveryZones();
+    } catch (err) {
+      console.error('Zone save error:', err);
+      alert('Error: ' + (err.message || err));
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  async function handleDeleteZone(zoneId) {
+    const client = db();
+    if (!client) return;
+
+    // Find zone for confirmation
+    const { data: zone } = await client
+      .from('delivery_zones')
+      .select('*')
+      .eq('id', zoneId)
+      .single();
+
+    if (!zone) return;
+
+    const ok = await window.Bisbam.confirm({
+      title: 'Delete zone?',
+      message: `"${zone.label}" will be removed from checkout options.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      destructive: true
+    });
+    if (!ok) return;
+
+    try {
+      const { error } = await client.from('delivery_zones').delete().eq('id', zoneId);
+      if (error) throw error;
+      alert('Zone deleted.');
+      await renderDeliveryZones();
+    } catch (err) {
+      console.error('Zone delete error:', err);
+      alert('Error: ' + (err.message || err));
+    }
+  }
+
+  // Wire up only if we're on the delivery zones page
+  if (zonesBody) {
+    renderDeliveryZones();
+
+    if (addZoneBtn) {
+      addZoneBtn.addEventListener('click', () => openZoneModal(null));
+    }
+
+    if (zoneForm) {
+      zoneForm.addEventListener('submit', handleZoneSubmit);
+    }
+
+    document.querySelectorAll('[data-close-modal]').forEach(el => {
+      el.addEventListener('click', () => {
+        editingZoneId = null;
+        if (zoneModal) zoneModal.hidden = true;
+      });
+    });
+
+    document.addEventListener('click', e => {
+      const editBtn = e.target.closest('.edit-zone');
+      if (editBtn) {
+        const id = editBtn.dataset.id;
+        (async () => {
+          const client = db();
+          if (!client) return;
+          const { data } = await client.from('delivery_zones').select('*').eq('id', id).single();
+          if (data) openZoneModal(data);
+        })();
+        return;
+      }
+
+      const delBtn = e.target.closest('.delete-zone');
+      if (delBtn) {
+        handleDeleteZone(delBtn.dataset.id);
+        return;
+      }
+    });
+  }
 })();
