@@ -3085,3 +3085,29 @@ table {
   border-color: var(--pink);
   color: var(--pink);
 }
+/* =========================================================
+   PRODUCT CARD — CATEGORY LABEL
+   ========================================================= */
+.product-category {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pink);
+  margin: var(--space-md) var(--space-md) 4px;
+  display: block;
+  line-height: 1;
+}
+
+.product-card .product-name {
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .product-category {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    margin: var(--space-sm) var(--space-sm) 4px;
+  }
+}
