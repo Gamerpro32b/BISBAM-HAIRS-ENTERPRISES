@@ -113,12 +113,42 @@
               <label for="pDescription">Description</label>
               <textarea id="pDescription" name="description" rows="4"></textarea>
             </div>
-            <div class="form-group">
-              <label for="pCategory">Category *</label>
-              <select id="pCategory" name="category" required>
-                <option value="">Select category</option>
-              </select>
-            </div>
+           <div class="form-group">
+  <label for="pCategory">Category *</label>
+  <select id="pCategory" name="category" required>
+    <option value="">Select category</option>
+  </select>
+</div>
+
+<!-- Inline new category form (hidden by default) -->
+<div class="inline-new-category" id="inlineNewCategory" hidden>
+  <div class="inline-new-category-inner">
+    <p class="inline-new-category-title">➕ New Category</p>
+
+    <div class="form-group">
+      <label for="newCatName">Name *</label>
+      <input type="text" id="newCatName" placeholder="e.g. Pixie Curls">
+    </div>
+
+    <div class="form-group">
+      <label for="newCatSlug">Slug (auto)</label>
+      <input type="text" id="newCatSlug" placeholder="pixie-curls">
+    </div>
+
+    <div class="form-group">
+      <label for="newCatImage">Image (optional)</label>
+      <input type="file" id="newCatImage" accept="image/*">
+      <p class="form-note">Under 500KB. JPG/PNG.</p>
+    </div>
+
+    <p class="inline-new-category-error" id="newCatError" hidden></p>
+
+    <div class="inline-new-category-actions">
+      <button type="button" class="btn btn-outline btn-small" id="cancelNewCatBtn">Cancel</button>
+      <button type="button" class="btn btn-primary btn-small" id="saveNewCatBtn">Save Category</button>
+    </div>
+  </div>
+</div>
             <div class="form-group">
               <label for="pTags">Tags (comma separated)</label>
               <input type="text" id="pTags" name="tags" placeholder="e.g. bone straight, 13x4, HD lace">

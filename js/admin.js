@@ -1,5 +1,5 @@
 /* =========================================================
-   BISBAM HAIRS — admin.js (Part 1 of 3)
+   BISBAM HAIRS — admin.js (Part 1 of 5)
    ========================================================= */
 
 (function () {
@@ -212,15 +212,29 @@
   /* ============ DROPDOWNS ============ */
   function fillCategoryDropdown(selectEl, cats) {
     if (!selectEl) return;
+
     const firstOption = selectEl.querySelector('option');
     selectEl.innerHTML = '';
     if (firstOption) selectEl.appendChild(firstOption);
+
     (cats || []).forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.slug;
       opt.textContent = c.name;
       selectEl.appendChild(opt);
     });
+
+    if (selectEl.id === 'pCategory') {
+      const sep = document.createElement('option');
+      sep.disabled = true;
+      sep.textContent = '────────────';
+      selectEl.appendChild(sep);
+
+      const newOpt = document.createElement('option');
+      newOpt.value = '__NEW_CATEGORY__';
+      newOpt.textContent = '➕ Create new category…';
+      selectEl.appendChild(newOpt);
+    }
   }
 
   /* ============ DASHBOARD ============ */
@@ -536,6 +550,11 @@ async function uploadCategoryImage(client, file) {
   return pub ? pub.publicUrl : null;
 }
 
+// PART 3 continues below...
+/* =========================================================
+   PART 3
+   ========================================================= */
+
 /* ============ PRODUCT SAVE ============ */
 async function handleProductSubmit(e) {
   e.preventDefault();
@@ -644,565 +663,566 @@ async function handleProductSubmit(e) {
   }
 }
 
-// PART 3 continues below...
-  /* =========================================================
-     PART 3 — FINAL
-     ========================================================= */
+/* ============ PRODUCT EDIT ============ */
+function openEditModal(product) {
+  editingProductId = product.id;
+  window.BISBAM_PENDING_IMAGES = [];
 
-  /* ============ PRODUCT EDIT ============ */
-  function openEditModal(product) {
-    editingProductId = product.id;
-    window.BISBAM_PENDING_IMAGES = [];
+  const form = document.getElementById('productForm');
+  form.querySelector('#pName').value = product.name || '';
+  form.querySelector('#pDescription').value = product.description || '';
+  form.querySelector('#pCategory').value = product.category || '';
+  form.querySelector('#pTags').value = (product.tags || []).join(', ');
+  form.querySelector('#pRetailPrice').value = product.retail_price || 0;
+  form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
+  form.querySelector('#pSalePrice').value = product.sale_price || '';
+  form.querySelector('#pStock').value = product.stock || 0;
+  form.querySelector('#pLowStockThreshold').value = 3;
+  form.querySelector('#pAvailability').value = product.availability || 'in';
 
-    const form = document.getElementById('productForm');
-    form.querySelector('#pName').value = product.name || '';
-    form.querySelector('#pDescription').value = product.description || '';
-    form.querySelector('#pCategory').value = product.category || '';
-    form.querySelector('#pTags').value = (product.tags || []).join(', ');
-    form.querySelector('#pRetailPrice').value = product.retail_price || 0;
-    form.querySelector('#pWholesalePrice').value = product.wholesale_price || '';
-    form.querySelector('#pSalePrice').value = product.sale_price || '';
-    form.querySelector('#pStock').value = product.stock || 0;
-    form.querySelector('#pLowStockThreshold').value = 3;
-    form.querySelector('#pAvailability').value = product.availability || 'in';
+  setChecked('lengthCheckboxes', product.lengths || []);
+  setChecked('textureCheckboxes', product.textures || []);
+  setChecked('colorCheckboxes', product.colors || []);
+  setChecked('densityCheckboxes', product.densities || []);
 
-    setChecked('lengthCheckboxes', product.lengths || []);
-    setChecked('textureCheckboxes', product.textures || []);
-    setChecked('colorCheckboxes', product.colors || []);
-    setChecked('densityCheckboxes', product.densities || []);
+  form.querySelector('#pLaceType').value = product.lace_type || '';
+  form.querySelector('#pCapSize').value = product.cap_size || '';
+  form.querySelector('#pFeatured').checked = !!product.featured;
+  form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
 
-    form.querySelector('#pLaceType').value = product.lace_type || '';
-    form.querySelector('#pCapSize').value = product.cap_size || '';
-    form.querySelector('#pFeatured').checked = !!product.featured;
-    form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
+  renderImagePreviews();
+  document.getElementById('productModalTitle').textContent = 'Edit Product';
+  openModal('productModal');
+}
 
-    renderImagePreviews();
-    document.getElementById('productModalTitle').textContent = 'Edit Product';
-    openModal('productModal');
+/* ============ PRODUCT DELETE ============ */
+async function handleDelete(productId) {
+  const data = window.BisbamAdminData || {};
+  const product = (data.products || []).find(p => String(p.id) === String(productId));
+  if (!product) return;
+
+  const ok = await window.Bisbam.confirm({
+    title: 'Delete product?',
+    message: `"${product.name}" will be permanently removed, including its images and video.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    destructive: true
+  });
+  if (!ok) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    const imagesToDelete = (product.images || [])
+      .filter(u => u.includes('/Product-images/'))
+      .map(u => 'products/' + u.split('/Product-images/')[1]);
+    if (imagesToDelete.length) {
+      await client.storage.from('Product-images').remove(imagesToDelete);
+    }
+    if (product.video_url && product.video_url.includes('/Product-videos/')) {
+      const videoPath = 'videos/' + product.video_url.split('/Product-videos/')[1];
+      await client.storage.from('Product-videos').remove([videoPath]);
+    }
+
+    const { error } = await client.from('products').delete().eq('id', productId);
+    if (error) throw error;
+
+    alert('Product deleted.');
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderProductsTable(data2.products);
+    renderDashboardStats(data2.orders, data2.products);
+    renderLowStock(data2.products);
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Error deleting: ' + (err.message || err));
+  }
+}
+
+/* ============ CATEGORIES TABLE ============ */
+function renderCategoriesTable(categories) {
+  const body = document.getElementById('categoriesBody');
+  if (!body) return;
+
+  if (!categories || categories.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" class="admin-empty">No categories yet.</td></tr>`;
+    return;
   }
 
-  /* ============ PRODUCT DELETE ============ */
-  async function handleDelete(productId) {
-    const data = window.BisbamAdminData || {};
-    const product = (data.products || []).find(p => String(p.id) === String(productId));
-    if (!product) return;
-
-    const ok = await window.Bisbam.confirm({
-      title: 'Delete product?',
-      message: `"${product.name}" will be permanently removed, including its images and video.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      destructive: true
-    });
-    if (!ok) return;
-
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    try {
-      const imagesToDelete = (product.images || [])
-        .filter(u => u.includes('/Product-images/'))
-        .map(u => 'products/' + u.split('/Product-images/')[1]);
-      if (imagesToDelete.length) {
-        await client.storage.from('Product-images').remove(imagesToDelete);
-      }
-      if (product.video_url && product.video_url.includes('/Product-videos/')) {
-        const videoPath = 'videos/' + product.video_url.split('/Product-videos/')[1];
-        await client.storage.from('Product-videos').remove([videoPath]);
-      }
-
-      const { error } = await client.from('products').delete().eq('id', productId);
-      if (error) throw error;
-
-      alert('Product deleted.');
-      const data2 = await fetchAll();
-      window.BisbamAdminData = data2;
-      renderProductsTable(data2.products);
-      renderDashboardStats(data2.orders, data2.products);
-      renderLowStock(data2.products);
-    } catch (err) {
-      console.error('Delete error:', err);
-      alert('Error deleting: ' + (err.message || err));
-    }
-  }
-
-  /* ============ CATEGORIES TABLE ============ */
-  function renderCategoriesTable(categories) {
-    const body = document.getElementById('categoriesBody');
-    if (!body) return;
-
-    if (!categories || categories.length === 0) {
-      body.innerHTML = `<tr><td colspan="5" class="admin-empty">No categories yet.</td></tr>`;
-      return;
-    }
-
-    body.innerHTML = categories.map(c => {
-      const imgSrc = c.image_url
-        ? (c.image_url.startsWith('http') ? c.image_url : '../' + c.image_url)
-        : '../assets/images/products/placeholder.jpg';
-      return `
-        <tr>
-          <td><img src="${imgSrc}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;"></td>
-          <td>${c.name}</td>
-          <td>${c.slug}</td>
-          <td>${c.description || '—'}</td>
-          <td>
-            <button class="btn btn-small btn-outline edit-category" data-id="${c.id}">Edit</button>
-            <button class="btn btn-small btn-outline delete-category" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  /* ============ CATEGORY SAVE ============ */
-  async function handleCategorySubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-
-    try {
-      const name = form.querySelector('#cName').value.trim();
-      const slug = form.querySelector('#cSlug').value.trim();
-      const description = form.querySelector('#cDescription').value.trim();
-
-      const imageFile = window.BISBAM_PENDING_CATEGORY_IMAGE;
-
-      const current = editingCategoryId
-        ? ((window.BisbamAdminData || {}).categories || []).find(c => c.id === editingCategoryId)
-        : null;
-
-      let imageUrl = current ? current.image_url : null;
-
-      btn.textContent = 'Saving…';
-      btn.disabled = true;
-
-      if (imageFile) {
-        imageUrl = await uploadCategoryImage(client, imageFile);
-      }
-
-      const payload = { name, slug, description, image_url: imageUrl };
-
-      if (editingCategoryId) {
-        const { error } = await client.from('categories').update(payload).eq('id', editingCategoryId);
-        if (error) throw error;
-        alert('Category updated.');
-      } else {
-        const { error } = await client.from('categories').insert(payload);
-        if (error) throw error;
-        alert('Category added.');
-      }
-
-      form.reset();
-      window.BISBAM_PENDING_CATEGORY_IMAGE = null;
-      renderCategoryImagePreview();
-      editingCategoryId = null;
-      document.getElementById('categoryModalTitle').textContent = 'Add Category';
-
-      const data = await fetchAll();
-      window.BisbamAdminData = data;
-      renderCategoriesTable(data.categories);
-      fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
-      fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
-
-      closeModal('categoryModal');
-    } catch (err) {
-      console.error('Category save error:', err);
-      alert('Error: ' + (err.message || err));
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }
-  }
-
-  /* ============ CATEGORY EDIT ============ */
-  function openEditCategoryModal(category) {
-    editingCategoryId = category.id;
-    window.BISBAM_PENDING_CATEGORY_IMAGE = null;
-
-    const form = document.getElementById('categoryForm');
-    form.querySelector('#cName').value = category.name || '';
-    form.querySelector('#cSlug').value = category.slug || '';
-    form.querySelector('#cDescription').value = category.description || '';
-
-    renderCategoryImagePreview();
-    document.getElementById('categoryModalTitle').textContent = 'Edit Category';
-    openModal('categoryModal');
-  }
-
-  /* ============ CATEGORY DELETE ============ */
-  async function handleDeleteCategory(categoryId) {
-    const data = window.BisbamAdminData || {};
-    const category = (data.categories || []).find(c => String(c.id) === String(categoryId));
-    if (!category) return;
-
-    const ok = await window.Bisbam.confirm({
-      title: 'Delete category?',
-      message: `"${category.name}" will be permanently removed.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      destructive: true
-    });
-    if (!ok) return;
-
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    try {
-      if (category.image_url && category.image_url.includes('/Product-images/')) {
-        const path = 'categories/' + category.image_url.split('/Product-images/')[1];
-        await client.storage.from('Product-images').remove([path]);
-      }
-
-      const { error } = await client.from('categories').delete().eq('id', categoryId);
-      if (error) throw error;
-
-      alert('Category deleted.');
-      const data2 = await fetchAll();
-      window.BisbamAdminData = data2;
-      renderCategoriesTable(data2.categories);
-      fillCategoryDropdown(document.getElementById('pCategory'), data2.categories);
-      fillCategoryDropdown(document.getElementById('productCategoryFilter'), data2.categories);
-    } catch (err) {
-      console.error('Delete category error:', err);
-      alert('Error: ' + (err.message || err));
-    }
-  }
-
-  /* ============ ORDERS PAGE ============ */
-  let activeOrderStatus = 'all';
-  let orderSearchTerm = '';
-
-  function renderOrdersTable(orders) {
-    const body = document.getElementById('ordersBody');
-    if (!body) return;
-
-    let list = orders.slice();
-
-    if (activeOrderStatus !== 'all') {
-      list = list.filter(o => o.status === activeOrderStatus);
-    }
-
-    if (orderSearchTerm) {
-      const q = orderSearchTerm.toLowerCase();
-      list = list.filter(o =>
-        (o.orderNumber || '').toLowerCase().includes(q) ||
-        (o.customer || '').toLowerCase().includes(q) ||
-        (o.phone || '').includes(q)
-      );
-    }
-
-    if (list.length === 0) {
-      body.innerHTML = `<tr><td colspan="10" class="admin-empty">No orders match.</td></tr>`;
-      return;
-    }
-
-    body.innerHTML = list.map(o => `
+  body.innerHTML = categories.map(c => {
+    const imgSrc = c.image_url
+      ? (c.image_url.startsWith('http') ? c.image_url : '../' + c.image_url)
+      : '../assets/images/products/placeholder.jpg';
+    return `
       <tr>
-        <td>${o.orderNumber}</td>
-        <td>${o.customer}</td>
-        <td>${o.phone}</td>
-        <td>${o.address}, ${o.city}</td>
-        <td>${(o.items || []).length}</td>
-        <td>${naira(o.total)}</td>
-        <td>${o.payment}</td>
-        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
-        <td>${o.date}</td>
-        <td>
-          <button class="btn btn-small btn-outline view-order" data-id="${o.id}">View</button>
-          <button class="btn btn-small btn-outline delete-order" data-id="${o.id}" style="color:#b00020;border-color:#b00020;">Del</button>
-        </td>
-      </tr>
-    `).join('');
-  }
-
-  function wireOrdersPage() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    if (tabs.length) {
-      tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
-          tabs.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          activeOrderStatus = btn.dataset.status || 'all';
-          renderOrdersTable((window.BisbamAdminData || {}).orders || []);
-        });
-      });
-    }
-
-    const search = document.getElementById('orderSearch');
-    if (search) {
-      search.addEventListener('input', e => {
-        orderSearchTerm = e.target.value.trim();
-        renderOrdersTable((window.BisbamAdminData || {}).orders || []);
-      });
-    }
-  }
-
-  /* ============ ORDER DELETE ============ */
-  async function handleDeleteOrder(orderId) {
-    const data = window.BisbamAdminData || {};
-    const order = (data.orders || []).find(o => String(o.id) === String(orderId));
-    if (!order) return;
-
-    const ok = await window.Bisbam.confirm({
-      title: 'Delete order?',
-      message: `Order ${order.orderNumber} will be permanently removed from the system.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      destructive: true
-    });
-    if (!ok) return;
-
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    try {
-      const { error } = await client.from('orders').delete().eq('id', orderId);
-      if (error) throw error;
-
-      alert('Order deleted.');
-
-      const data2 = await fetchAll();
-      window.BisbamAdminData = data2;
-      renderOrdersTable(data2.orders);
-      renderRecentOrders(data2.orders);
-      renderDashboardStats(data2.orders, data2.products);
-      renderBell();
-    } catch (err) {
-      console.error('Delete order error:', err);
-      alert('Error deleting: ' + (err.message || err));
-    }
-  }
-
-  /* ============ CUSTOMERS PAGE ============ */
-  let customerSearchTerm = '';
-
-  function renderCustomersTable(customers) {
-    const body = document.getElementById('customersBody');
-    if (!body) return;
-
-    let list = customers.slice();
-
-    if (customerSearchTerm) {
-      const q = customerSearchTerm.toLowerCase();
-      list = list.filter(c =>
-        (c.name || '').toLowerCase().includes(q) ||
-        (c.phone || '').includes(q)
-      );
-    }
-
-    if (list.length === 0) {
-      body.innerHTML = `<tr><td colspan="8" class="admin-empty">No customers match.</td></tr>`;
-      return;
-    }
-
-    body.innerHTML = list.map(c => `
-      <tr>
+        <td><img src="${imgSrc}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;"></td>
         <td>${c.name}</td>
-        <td>${c.phone}</td>
-        <td>${c.email || '—'}</td>
-        <td>${c.city || '—'}</td>
-        <td>${c.orders}</td>
-        <td>${naira(c.totalSpent)}</td>
-        <td>${c.lastOrder}</td>
+        <td>${c.slug}</td>
+        <td>${c.description || '—'}</td>
         <td>
-          <button class="btn btn-small btn-outline view-customer" data-id="${c.id}">View</button>
-          <button class="btn btn-small btn-outline delete-customer" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+          <button class="btn btn-small btn-outline edit-category" data-id="${c.id}">Edit</button>
+          <button class="btn btn-small btn-outline delete-category" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
         </td>
       </tr>
-    `).join('');
-  }
-
-  function wireCustomersPage() {
-    const search = document.getElementById('customerSearch');
-    if (search) {
-      search.addEventListener('input', e => {
-        customerSearchTerm = e.target.value.trim();
-        renderCustomersTable((window.BisbamAdminData || {}).customers || []);
-      });
-    }
-  }
-
-  /* ============ CUSTOMER DETAIL MODAL ============ */
-  function openCustomerModal(customerId) {
-    const data = window.BisbamAdminData || {};
-    const c = (data.customers || []).find(x => String(x.id) === String(customerId));
-    if (!c) return;
-
-    const body = document.getElementById('customerModalBody');
-    if (!body) return;
-
-    const customerOrders = (data.orders || []).filter(o => String(o.customerId) === String(customerId));
-
-    let ordersHtml = '';
-    if (customerOrders.length === 0) {
-      ordersHtml = `<p style="color:var(--grey);font-size:0.9rem;">No orders on record.</p>`;
-    } else {
-      ordersHtml = customerOrders.map(o => `
-        <div style="padding:10px 0;border-bottom:1px solid var(--pink-border);">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <strong>${o.orderNumber}</strong>
-            <span class="status-badge status-${o.status}">${o.status}</span>
-          </div>
-          <div style="font-size:0.85rem;color:var(--grey);">
-            ${o.date} · ${(o.items || []).length} item${(o.items || []).length === 1 ? '' : 's'} · ${naira(o.total)}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    body.innerHTML = `
-      <p><strong>Name:</strong> ${c.name}</p>
-      <p><strong>Phone:</strong> ${c.phone}</p>
-      ${c.email ? `<p><strong>Email:</strong> ${c.email}</p>` : ''}
-      ${c.city ? `<p><strong>City:</strong> ${c.city}</p>` : ''}
-      ${c.address ? `<p><strong>Address:</strong> ${c.address}</p>` : ''}
-      <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
-      <p><strong>Total Orders:</strong> ${c.orders}</p>
-      <p><strong>Total Spent:</strong> ${naira(c.totalSpent)}</p>
-      <p><strong>Last Order:</strong> ${c.lastOrder}</p>
-      <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
-      <p><strong>Order History</strong></p>
-      ${ordersHtml}
     `;
+  }).join('');
+}
 
-    openModal('customerModal');
-  }
+/* ============ CATEGORY SAVE ============ */
+async function handleCategorySubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const client = db();
+  if (!client) return alert('Not connected.');
 
-  /* ============ CUSTOMER DELETE ============ */
-  async function handleDeleteCustomer(customerId) {
-    const data = window.BisbamAdminData || {};
-    const customer = (data.customers || []).find(c => String(c.id) === String(customerId));
-    if (!customer) return;
+  const btn = form.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
 
-    const ok = await window.Bisbam.confirm({
-      title: 'Delete customer?',
-      message: `"${customer.name}" will be removed. Their orders will be kept but unlinked from the customer.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      destructive: true
-    });
-    if (!ok) return;
+  try {
+    const name = form.querySelector('#cName').value.trim();
+    const slug = form.querySelector('#cSlug').value.trim();
+    const description = form.querySelector('#cDescription').value.trim();
 
-    const client = db();
-    if (!client) return alert('Not connected.');
+    const imageFile = window.BISBAM_PENDING_CATEGORY_IMAGE;
 
-    try {
-      // Step 1: Unlink orders
-      await client.from('orders').update({ customer_id: null }).eq('customer_id', customerId);
+    const current = editingCategoryId
+      ? ((window.BisbamAdminData || {}).categories || []).find(c => c.id === editingCategoryId)
+      : null;
 
-      // Step 2: Delete customer row
-      const { error } = await client.from('customers').delete().eq('id', customerId);
-      if (error) throw error;
+    let imageUrl = current ? current.image_url : null;
 
-      alert('Customer deleted.');
-
-      const data2 = await fetchAll();
-      window.BisbamAdminData = data2;
-      renderCustomersTable(data2.customers);
-    } catch (err) {
-      console.error('Delete customer error:', err);
-      alert('Error: ' + (err.message || err));
-    }
-  }
-
-  /* ============ SETTINGS LOAD ============ */
-  async function loadSettings() {
-    const form = document.getElementById('settingsForm');
-    if (!form) return;
-
-    const client = db();
-    if (!client) return;
-
-    const { data, error } = await client
-      .from('settings')
-      .select('*')
-      .eq('id', 1)
-      .single();
-
-    if (error || !data) return;
-
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val !== null && val !== undefined) el.value = val;
-    };
-
-    set('sBrandName', data.brand_name);
-    set('sTagline', data.tagline);
-    set('sDescription', data.description);
-    set('sWhatsApp', data.whatsapp);
-    set('sAddress', data.address);
-    set('sHours', data.hours);
-    set('sInstagram', data.instagram);
-    set('sTikTok', data.tiktok);
-    set('sBankName', data.bank_name);
-    set('sAccountName', data.account_name);
-    set('sAccountNumber', data.account_number);
-    set('sDeliveryInfo', data.delivery_info);
-    set('sDeliveryFee', data.delivery_fee);
-
-    const notifyEmail = document.getElementById('sNotifyEmail');
-    const notifyWA = document.getElementById('sNotifyWhatsApp');
-    if (notifyEmail) notifyEmail.checked = !!data.notify_email;
-    if (notifyWA) notifyWA.checked = !!data.notify_whatsapp;
-  }
-
-  /* ============ SETTINGS SAVE ============ */
-  async function handleSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const client = db();
-    if (!client) return alert('Not connected.');
-
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
     btn.textContent = 'Saving…';
     btn.disabled = true;
 
-    const get = (id) => (document.getElementById(id)?.value || '').trim();
-
-    const payload = {
-      brand_name: get('sBrandName'),
-      tagline: get('sTagline'),
-      description: get('sDescription'),
-      whatsapp: get('sWhatsApp'),
-      address: get('sAddress'),
-      hours: get('sHours'),
-      instagram: get('sInstagram'),
-      tiktok: get('sTikTok'),
-      bank_name: get('sBankName'),
-      account_name: get('sAccountName'),
-      account_number: get('sAccountNumber'),
-      delivery_info: get('sDeliveryInfo'),
-      delivery_fee: Number(get('sDeliveryFee')) || 0,
-      notify_email: document.getElementById('sNotifyEmail')?.checked || false,
-      notify_whatsapp: document.getElementById('sNotifyWhatsApp')?.checked || false
-    };
-
-    try {
-      const { error } = await client
-        .from('settings')
-        .upsert({ id: 1, ...payload }, { onConflict: 'id' });
-
-      if (error) throw error;
-      alert('Settings saved.');
-    } catch (err) {
-      console.error('Settings save error:', err);
-      alert('Error: ' + (err.message || err));
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
+    if (imageFile) {
+      imageUrl = await uploadCategoryImage(client, imageFile);
     }
+
+    const payload = { name, slug, description, image_url: imageUrl };
+
+    if (editingCategoryId) {
+      const { error } = await client.from('categories').update(payload).eq('id', editingCategoryId);
+      if (error) throw error;
+      alert('Category updated.');
+    } else {
+      const { error } = await client.from('categories').insert(payload);
+      if (error) throw error;
+      alert('Category added.');
+    }
+
+    form.reset();
+    window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+    renderCategoryImagePreview();
+    editingCategoryId = null;
+    document.getElementById('categoryModalTitle').textContent = 'Add Category';
+
+    const data = await fetchAll();
+    window.BisbamAdminData = data;
+    renderCategoriesTable(data.categories);
+    fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
+    fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
+
+    closeModal('categoryModal');
+  } catch (err) {
+    console.error('Category save error:', err);
+    alert('Error: ' + (err.message || err));
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+/* ============ CATEGORY EDIT ============ */
+function openEditCategoryModal(category) {
+  editingCategoryId = category.id;
+  window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+
+  const form = document.getElementById('categoryForm');
+  form.querySelector('#cName').value = category.name || '';
+  form.querySelector('#cSlug').value = category.slug || '';
+  form.querySelector('#cDescription').value = category.description || '';
+
+  renderCategoryImagePreview();
+  document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+  openModal('categoryModal');
+}
+
+/* ============ CATEGORY DELETE ============ */
+async function handleDeleteCategory(categoryId) {
+  const data = window.BisbamAdminData || {};
+  const category = (data.categories || []).find(c => String(c.id) === String(categoryId));
+  if (!category) return;
+
+  const ok = await window.Bisbam.confirm({
+    title: 'Delete category?',
+    message: `"${category.name}" will be permanently removed.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    destructive: true
+  });
+  if (!ok) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    if (category.image_url && category.image_url.includes('/Product-images/')) {
+      const path = 'categories/' + category.image_url.split('/Product-images/')[1];
+      await client.storage.from('Product-images').remove([path]);
+    }
+
+    const { error } = await client.from('categories').delete().eq('id', categoryId);
+    if (error) throw error;
+
+    alert('Category deleted.');
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderCategoriesTable(data2.categories);
+    fillCategoryDropdown(document.getElementById('pCategory'), data2.categories);
+    fillCategoryDropdown(document.getElementById('productCategoryFilter'), data2.categories);
+  } catch (err) {
+    console.error('Delete category error:', err);
+    alert('Error: ' + (err.message || err));
+  }
+}
+
+// PART 4 continues below...
+/* =========================================================
+   PART 4
+   ========================================================= */
+
+/* ============ ORDERS PAGE ============ */
+let activeOrderStatus = 'all';
+let orderSearchTerm = '';
+
+function renderOrdersTable(orders) {
+  const body = document.getElementById('ordersBody');
+  if (!body) return;
+
+  let list = orders.slice();
+
+  if (activeOrderStatus !== 'all') {
+    list = list.filter(o => o.status === activeOrderStatus);
   }
 
+  if (orderSearchTerm) {
+    const q = orderSearchTerm.toLowerCase();
+    list = list.filter(o =>
+      (o.orderNumber || '').toLowerCase().includes(q) ||
+      (o.customer || '').toLowerCase().includes(q) ||
+      (o.phone || '').includes(q)
+    );
+  }
+
+  if (list.length === 0) {
+    body.innerHTML = `<tr><td colspan="10" class="admin-empty">No orders match.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = list.map(o => `
+    <tr>
+      <td>${o.orderNumber}</td>
+      <td>${o.customer}</td>
+      <td>${o.phone}</td>
+      <td>${o.address}, ${o.city}</td>
+      <td>${(o.items || []).length}</td>
+      <td>${naira(o.total)}</td>
+      <td>${o.payment}</td>
+      <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+      <td>${o.date}</td>
+      <td>
+        <button class="btn btn-small btn-outline view-order" data-id="${o.id}">View</button>
+        <button class="btn btn-small btn-outline delete-order" data-id="${o.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function wireOrdersPage() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  if (tabs.length) {
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeOrderStatus = btn.dataset.status || 'all';
+        renderOrdersTable((window.BisbamAdminData || {}).orders || []);
+      });
+    });
+  }
+
+  const search = document.getElementById('orderSearch');
+  if (search) {
+    search.addEventListener('input', e => {
+      orderSearchTerm = e.target.value.trim();
+      renderOrdersTable((window.BisbamAdminData || {}).orders || []);
+    });
+  }
+}
+
+/* ============ ORDER DELETE ============ */
+async function handleDeleteOrder(orderId) {
+  const data = window.BisbamAdminData || {};
+  const order = (data.orders || []).find(o => String(o.id) === String(orderId));
+  if (!order) return;
+
+  const ok = await window.Bisbam.confirm({
+    title: 'Delete order?',
+    message: `Order ${order.orderNumber} will be permanently removed from the system.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    destructive: true
+  });
+  if (!ok) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    const { error } = await client.from('orders').delete().eq('id', orderId);
+    if (error) throw error;
+
+    alert('Order deleted.');
+
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderOrdersTable(data2.orders);
+    renderRecentOrders(data2.orders);
+    renderDashboardStats(data2.orders, data2.products);
+    renderBell();
+  } catch (err) {
+    console.error('Delete order error:', err);
+    alert('Error deleting: ' + (err.message || err));
+  }
+}
+
+/* ============ CUSTOMERS PAGE ============ */
+let customerSearchTerm = '';
+
+function renderCustomersTable(customers) {
+  const body = document.getElementById('customersBody');
+  if (!body) return;
+
+  let list = customers.slice();
+
+  if (customerSearchTerm) {
+    const q = customerSearchTerm.toLowerCase();
+    list = list.filter(c =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.phone || '').includes(q)
+    );
+  }
+
+  if (list.length === 0) {
+    body.innerHTML = `<tr><td colspan="8" class="admin-empty">No customers match.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = list.map(c => `
+    <tr>
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td>${c.email || '—'}</td>
+      <td>${c.city || '—'}</td>
+      <td>${c.orders}</td>
+      <td>${naira(c.totalSpent)}</td>
+      <td>${c.lastOrder}</td>
+      <td>
+        <button class="btn btn-small btn-outline view-customer" data-id="${c.id}">View</button>
+        <button class="btn btn-small btn-outline delete-customer" data-id="${c.id}" style="color:#b00020;border-color:#b00020;">Del</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function wireCustomersPage() {
+  const search = document.getElementById('customerSearch');
+  if (search) {
+    search.addEventListener('input', e => {
+      customerSearchTerm = e.target.value.trim();
+      renderCustomersTable((window.BisbamAdminData || {}).customers || []);
+    });
+  }
+}
+
+/* ============ CUSTOMER DETAIL MODAL ============ */
+function openCustomerModal(customerId) {
+  const data = window.BisbamAdminData || {};
+  const c = (data.customers || []).find(x => String(x.id) === String(customerId));
+  if (!c) return;
+
+  const body = document.getElementById('customerModalBody');
+  if (!body) return;
+
+  const customerOrders = (data.orders || []).filter(o => String(o.customerId) === String(customerId));
+
+  let ordersHtml = '';
+  if (customerOrders.length === 0) {
+    ordersHtml = `<p style="color:var(--grey);font-size:0.9rem;">No orders on record.</p>`;
+  } else {
+    ordersHtml = customerOrders.map(o => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--pink-border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <strong>${o.orderNumber}</strong>
+          <span class="status-badge status-${o.status}">${o.status}</span>
+        </div>
+        <div style="font-size:0.85rem;color:var(--grey);">
+          ${o.date} · ${(o.items || []).length} item${(o.items || []).length === 1 ? '' : 's'} · ${naira(o.total)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  body.innerHTML = `
+    <p><strong>Name:</strong> ${c.name}</p>
+    <p><strong>Phone:</strong> ${c.phone}</p>
+    ${c.email ? `<p><strong>Email:</strong> ${c.email}</p>` : ''}
+    ${c.city ? `<p><strong>City:</strong> ${c.city}</p>` : ''}
+    ${c.address ? `<p><strong>Address:</strong> ${c.address}</p>` : ''}
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+    <p><strong>Total Orders:</strong> ${c.orders}</p>
+    <p><strong>Total Spent:</strong> ${naira(c.totalSpent)}</p>
+    <p><strong>Last Order:</strong> ${c.lastOrder}</p>
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--pink-border);">
+    <p><strong>Order History</strong></p>
+    ${ordersHtml}
+  `;
+
+  openModal('customerModal');
+}
+
+/* ============ CUSTOMER DELETE ============ */
+async function handleDeleteCustomer(customerId) {
+  const data = window.BisbamAdminData || {};
+  const customer = (data.customers || []).find(c => String(c.id) === String(customerId));
+  if (!customer) return;
+
+  const ok = await window.Bisbam.confirm({
+    title: 'Delete customer?',
+    message: `"${customer.name}" will be removed. Their orders will be kept but unlinked from the customer.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    destructive: true
+  });
+  if (!ok) return;
+
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  try {
+    await client.from('orders').update({ customer_id: null }).eq('customer_id', customerId);
+
+    const { error } = await client.from('customers').delete().eq('id', customerId);
+    if (error) throw error;
+
+    alert('Customer deleted.');
+
+    const data2 = await fetchAll();
+    window.BisbamAdminData = data2;
+    renderCustomersTable(data2.customers);
+  } catch (err) {
+    console.error('Delete customer error:', err);
+    alert('Error: ' + (err.message || err));
+  }
+}
+
+/* ============ SETTINGS LOAD ============ */
+async function loadSettings() {
+  const form = document.getElementById('settingsForm');
+  if (!form) return;
+
+  const client = db();
+  if (!client) return;
+
+  const { data, error } = await client
+    .from('settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+
+  if (error || !data) return;
+
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== null && val !== undefined) el.value = val;
+  };
+
+  set('sBrandName', data.brand_name);
+  set('sTagline', data.tagline);
+  set('sDescription', data.description);
+  set('sWhatsApp', data.whatsapp);
+  set('sAddress', data.address);
+  set('sHours', data.hours);
+  set('sInstagram', data.instagram);
+  set('sTikTok', data.tiktok);
+  set('sBankName', data.bank_name);
+  set('sAccountName', data.account_name);
+  set('sAccountNumber', data.account_number);
+  set('sDeliveryInfo', data.delivery_info);
+  set('sDeliveryFee', data.delivery_fee);
+
+  const notifyEmail = document.getElementById('sNotifyEmail');
+  const notifyWA = document.getElementById('sNotifyWhatsApp');
+  if (notifyEmail) notifyEmail.checked = !!data.notify_email;
+  if (notifyWA) notifyWA.checked = !!data.notify_whatsapp;
+}
+
+/* ============ SETTINGS SAVE ============ */
+async function handleSettingsSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const client = db();
+  if (!client) return alert('Not connected.');
+
+  const btn = form.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  const get = (id) => (document.getElementById(id)?.value || '').trim();
+
+  const payload = {
+    brand_name: get('sBrandName'),
+    tagline: get('sTagline'),
+    description: get('sDescription'),
+    whatsapp: get('sWhatsApp'),
+    address: get('sAddress'),
+    hours: get('sHours'),
+    instagram: get('sInstagram'),
+    tiktok: get('sTikTok'),
+    bank_name: get('sBankName'),
+    account_name: get('sAccountName'),
+    account_number: get('sAccountNumber'),
+    delivery_info: get('sDeliveryInfo'),
+    delivery_fee: Number(get('sDeliveryFee')) || 0,
+    notify_email: document.getElementById('sNotifyEmail')?.checked || false,
+    notify_whatsapp: document.getElementById('sNotifyWhatsApp')?.checked || false
+  };
+
+  try {
+    const { error } = await client
+      .from('settings')
+      .upsert({ id: 1, ...payload }, { onConflict: 'id' });
+
+    if (error) throw error;
+    alert('Settings saved.');
+  } catch (err) {
+    console.error('Settings save error:', err);
+    alert('Error: ' + (err.message || err));
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+// PART 5 continues below...
   /* =========================================================
-     NOTIFICATIONS
+     PART 5 — NOTIFICATIONS + INIT + GLOBAL CLICKS (FINAL)
      ========================================================= */
-    function injectBell() {
+
+  /* ============ NOTIFICATION BELL ============ */
+  function injectBell() {
     const headerActions = document.querySelector('.admin-header-actions');
     if (!headerActions) return;
     if (document.getElementById('adminBellWrap')) return;
@@ -1370,6 +1390,7 @@ async function handleProductSubmit(e) {
     await loadSettings();
     startRealtime();
 
+    /* ===== Add Product button ===== */
     const addProductBtn = document.getElementById('addProductBtn');
     if (addProductBtn) {
       addProductBtn.addEventListener('click', () => {
@@ -1378,6 +1399,7 @@ async function handleProductSubmit(e) {
         document.getElementById('productForm').reset();
         document.getElementById('productModalTitle').textContent = 'Add Product';
         renderImagePreviews();
+        closeInlineNewCategory();
         openModal('productModal');
       });
     }
@@ -1385,6 +1407,7 @@ async function handleProductSubmit(e) {
     const productForm = document.getElementById('productForm');
     if (productForm) productForm.addEventListener('submit', handleProductSubmit);
 
+    /* ===== Add Category button ===== */
     const addCategoryBtn = document.getElementById('addCategoryBtn');
     if (addCategoryBtn) {
       addCategoryBtn.addEventListener('click', () => {
@@ -1402,8 +1425,138 @@ async function handleProductSubmit(e) {
 
     const settingsForm = document.getElementById('settingsForm');
     if (settingsForm) settingsForm.addEventListener('submit', handleSettingsSubmit);
+
+    /* ===== INLINE NEW CATEGORY ===== */
+    initInlineNewCategory();
   }
   init();
+
+  /* =========================================================
+     INLINE NEW CATEGORY
+     ========================================================= */
+  function initInlineNewCategory() {
+    const pCategorySelect = document.getElementById('pCategory');
+    const inlineNewCategory = document.getElementById('inlineNewCategory');
+    const newCatName = document.getElementById('newCatName');
+    const newCatSlug = document.getElementById('newCatSlug');
+    const newCatImage = document.getElementById('newCatImage');
+    const newCatError = document.getElementById('newCatError');
+    const cancelNewCatBtn = document.getElementById('cancelNewCatBtn');
+    const saveNewCatBtn = document.getElementById('saveNewCatBtn');
+
+    if (!inlineNewCategory) return;
+
+    window.openInlineNewCategory = function () {
+      inlineNewCategory.hidden = false;
+      if (newCatError) newCatError.hidden = true;
+      if (newCatName) newCatName.focus();
+    };
+
+    window.closeInlineNewCategory = function () {
+      inlineNewCategory.hidden = true;
+      if (newCatName) newCatName.value = '';
+      if (newCatSlug) newCatSlug.value = '';
+      if (newCatImage) newCatImage.value = '';
+      if (newCatError) newCatError.hidden = true;
+      if (pCategorySelect) pCategorySelect.value = '';
+    };
+
+    if (pCategorySelect) {
+      pCategorySelect.addEventListener('change', () => {
+        if (pCategorySelect.value === '__NEW_CATEGORY__') {
+          pCategorySelect.value = '';
+          window.openInlineNewCategory();
+        }
+      });
+    }
+
+    if (newCatName && newCatSlug) {
+      newCatName.addEventListener('input', () => {
+        newCatSlug.value = newCatName.value.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      });
+    }
+
+    if (cancelNewCatBtn) {
+      cancelNewCatBtn.addEventListener('click', () => window.closeInlineNewCategory());
+    }
+
+    if (saveNewCatBtn) {
+      saveNewCatBtn.addEventListener('click', async () => {
+        const client = db();
+        if (!client) return;
+
+        const name = (newCatName?.value || '').trim();
+        const slug = (newCatSlug?.value || '').trim();
+
+        if (!name || !slug) {
+          if (newCatError) {
+            newCatError.hidden = false;
+            newCatError.textContent = 'Name and slug are required.';
+          }
+          return;
+        }
+
+        const originalText = saveNewCatBtn.textContent;
+        saveNewCatBtn.textContent = 'Saving…';
+        saveNewCatBtn.disabled = true;
+        if (newCatError) newCatError.hidden = true;
+
+        try {
+          let imageUrl = null;
+          const file = newCatImage?.files?.[0];
+          if (file) {
+            if (file.size > 500 * 1024) {
+              throw new Error('Image is over 500KB. Please compress it first.');
+            }
+            const ext = file.name.split('.').pop().toLowerCase();
+            const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+            const filepath = `categories/${filename}`;
+
+            const { error: upErr } = await client.storage
+              .from('Product-images')
+              .upload(filepath, file, { cacheControl: '31536000', upsert: false });
+
+            if (upErr) throw upErr;
+
+            const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
+            if (pub && pub.publicUrl) imageUrl = pub.publicUrl;
+          }
+
+          const { error } = await client.from('categories').insert({
+            name,
+            slug,
+            image_url: imageUrl
+          });
+
+          if (error) throw error;
+
+          const data = await fetchAll();
+          window.BisbamAdminData = data;
+          fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
+          fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
+          renderCategoriesTable(data.categories);
+
+          if (pCategorySelect) pCategorySelect.value = slug;
+
+          window.closeInlineNewCategory();
+
+          alert(`Category "${name}" created and selected.`);
+
+        } catch (err) {
+          console.error('New category error:', err);
+          if (newCatError) {
+            newCatError.hidden = false;
+            newCatError.textContent = err.message || 'Could not create category.';
+          }
+        } finally {
+          saveNewCatBtn.textContent = originalText;
+          saveNewCatBtn.disabled = false;
+        }
+      });
+    }
+  }
 
   /* ============ GLOBAL CLICKS ============ */
   document.addEventListener('click', e => {
