@@ -1,6 +1,6 @@
 /* =========================================================
    BISBAM HAIRS — cart.js
-   Cart engine + checkout. Card + bank transfer via Korapay.
+   Cart engine + checkout with dynamic delivery zones.
    ========================================================= */
 
 (function () {
@@ -181,20 +181,56 @@
     const subtotal = cartTotal(cart);
     if (subtotalEl) subtotalEl.textContent = formatNaira(subtotal);
 
-    let deliveryFee = 0;
+    /* ===== DELIVERY ZONES ===== */
     const client = db();
-    if (client) {
+    const citySelect = document.getElementById('city');
+
+    if (client && citySelect) {
       try {
-        const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
-        if (data && data.delivery_fee) deliveryFee = Number(data.delivery_fee) || 0;
-      } catch (err) { /* ignore */ }
+        const { data: zones } = await client
+          .from('delivery_zones')
+          .select('*')
+          .order('sort_order', { ascending: true })
+          .order('label', { ascending: true });
+
+        if (zones && zones.length) {
+          // Keep the placeholder option
+          const first = citySelect.querySelector('option');
+          citySelect.innerHTML = '';
+          if (first) citySelect.appendChild(first);
+
+          zones.forEach(z => {
+            const opt = document.createElement('option');
+            opt.value = z.label;
+            opt.textContent = `${z.label} — ${formatNaira(z.fee)}`;
+            opt.dataset.fee = z.fee;
+            citySelect.appendChild(opt);
+          });
+
+          // Update totals when user picks a zone
+          citySelect.addEventListener('change', () => {
+            const chosen = citySelect.options[citySelect.selectedIndex];
+            const fee = chosen?.dataset?.fee ? Number(chosen.dataset.fee) : 0;
+
+            if (deliveryEl) {
+              deliveryEl.textContent = fee > 0 ? formatNaira(fee) : 'Select location';
+            }
+            if (totalEl) {
+              totalEl.textContent = formatNaira(subtotal + fee);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Delivery zones fetch error:', err);
+      }
     }
 
     if (deliveryEl) {
-      deliveryEl.textContent = deliveryFee > 0 ? formatNaira(deliveryFee) : 'Calculated at checkout';
+      deliveryEl.textContent = 'Select location';
     }
-
-    if (totalEl) totalEl.textContent = formatNaira(subtotal + deliveryFee);
+    if (totalEl) {
+      totalEl.textContent = formatNaira(subtotal);
+    }
   }
   renderCheckoutPage();
 
@@ -246,13 +282,17 @@
       const orderNumber = generateOrderNumber();
 
       const subtotal = cartTotal(cart);
+
+      /* Read delivery fee from selected zone */
+      const citySelectEl = document.getElementById('city');
       let deliveryFee = 0;
 
-      if (client) {
-        try {
-          const { data } = await client.from('settings').select('delivery_fee').eq('id', 1).single();
-          if (data && data.delivery_fee) deliveryFee = Number(data.delivery_fee) || 0;
-        } catch (err) { /* ignore */ }
+      if (citySelectEl) {
+        const chosen = citySelectEl.options[citySelectEl.selectedIndex];
+        const feeAttr = chosen?.dataset?.fee;
+        if (feeAttr !== undefined && feeAttr !== '') {
+          deliveryFee = Number(feeAttr) || 0;
+        }
       }
 
       const total = subtotal + deliveryFee;
