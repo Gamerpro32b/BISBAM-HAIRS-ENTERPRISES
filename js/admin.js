@@ -597,28 +597,63 @@ async function handleProductSubmit(e) {
     const videoFile = videoInput && videoInput.files[0] ? videoInput.files[0] : null;
 
     const current = editingProductId
-      ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
-      : null;
+  ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
+  : null;
 
-    let images = current && current.images && current.images.length
-      ? current.images
-      : ['assets/images/products/placeholder.jpg'];
+let images = current && current.images && current.images.length
+  ? current.images
+  : ['assets/images/products/placeholder.jpg'];
 
-    let videoUrl = current ? current.video_url : null;
+let videoUrl = current ? current.video_url : null;
 
-    btn.textContent = 'Uploading…';
-    btn.disabled = true;
+btn.textContent = 'Uploading…';
+btn.disabled = true;
 
-    if (files.length > 0) {
-      const uploaded = await uploadImages(client, files);
-      if (uploaded.length) images = uploaded;
+/* ===== UPLOAD NEW IMAGES + DELETE OLD ===== */
+if (files.length > 0) {
+  const uploaded = await uploadImages(client, files);
+
+  if (uploaded.length) {
+    // Auto-delete old images from Storage (if editing an existing product)
+    if (current && current.images && current.images.length) {
+      const oldToDelete = current.images
+        .filter(u => u.includes('/Product-images/'))
+        .map(u => 'products/' + u.split('/Product-images/')[1]);
+
+      if (oldToDelete.length) {
+        try {
+          await client.storage.from('Product-images').remove(oldToDelete);
+          console.log('Deleted old images:', oldToDelete.length);
+        } catch (delErr) {
+          console.warn('Could not delete old images:', delErr);
+          // Continue anyway — new image is more important than cleanup
+        }
+      }
     }
 
-    if (videoFile) {
-      const url = await uploadVideo(client, videoFile);
-      if (url) videoUrl = url;
+    images = uploaded;
+  }
+}
+
+/* ===== UPLOAD NEW VIDEO + DELETE OLD ===== */
+if (videoFile) {
+  const url = await uploadVideo(client, videoFile);
+
+  if (url) {
+    // Auto-delete old video from Storage (if editing an existing product)
+    if (current && current.video_url && current.video_url.includes('/Product-videos/')) {
+      try {
+        const oldVideoPath = 'videos/' + current.video_url.split('/Product-videos/')[1];
+        await client.storage.from('Product-videos').remove([oldVideoPath]);
+        console.log('Deleted old video:', oldVideoPath);
+      } catch (delErr) {
+        console.warn('Could not delete old video:', delErr);
+      }
     }
 
+    videoUrl = url;
+  }
+}
     btn.textContent = 'Saving…';
 
     const payload = {
