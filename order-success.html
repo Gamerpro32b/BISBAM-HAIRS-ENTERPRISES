@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Placed — Bisbam Hairs</title>
+  <title>Order Status — Bisbam Hairs</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,6 +76,12 @@
 
     @keyframes cardIn {
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    .success-loading {
+      padding: var(--space-lg) 0;
+      color: var(--grey);
+      font-size: 0.9rem;
     }
 
     .success-eyebrow {
@@ -171,9 +177,7 @@
       margin-bottom: 10px;
     }
 
-    .success-steps li:last-child {
-      margin-bottom: 0;
-    }
+    .success-steps li:last-child { margin-bottom: 0; }
 
     .success-steps li::before {
       content: '✦';
@@ -191,9 +195,7 @@
       margin-top: var(--space-lg);
     }
 
-    .success-actions .btn {
-      width: 100%;
-    }
+    .success-actions .btn { width: 100%; }
 
     .success-footer-note {
       margin-top: var(--space-lg);
@@ -232,6 +234,21 @@
       margin-bottom: var(--space-md);
     }
 
+    .success-pending-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: #FEF3C7;
+      color: #92400E;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      margin-bottom: var(--space-md);
+    }
+
     .success-paid-badge .dot {
       width: 8px;
       height: 8px;
@@ -240,12 +257,18 @@
       animation: pulse-dot 1.6s ease-in-out infinite;
     }
 
+    .success-pending-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: #92400E;
+      border-radius: 50%;
+    }
+
     @keyframes pulse-dot {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.35; }
     }
 
-    /* Redirect notice */
     .whatsapp-redirect-note {
       margin-top: var(--space-md);
       font-size: 0.82rem;
@@ -254,12 +277,22 @@
       display: none;
     }
 
-    .whatsapp-redirect-note.is-visible {
-      display: block;
+    .whatsapp-redirect-note.is-visible { display: block; }
+
+    .whatsapp-redirect-note strong { color: var(--pink); }
+
+    .success-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--pink-border);
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto var(--space-md);
     }
 
-    .whatsapp-redirect-note strong {
-      color: var(--pink);
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -272,57 +305,14 @@
   <span class="success-heart">♥</span>
   <span class="success-heart">♥</span>
 
-  <div class="success-card">
-
-    <div class="success-paid-badge" id="paidBadge" hidden>
-      <span class="dot"></span>
-      Payment Received
+  <div class="success-card" id="successCard">
+    <div class="success-loading" id="loadingState">
+      <div class="success-spinner"></div>
+      Verifying your order…
     </div>
-
-    <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
-
-    <h1 class="success-title" id="successTitle">Order Placed</h1>
-
-    <p class="success-script" id="successScript">Thank you, Bam Babe ♥</p>
-
-    <div class="success-divider"></div>
-
-    <div class="success-order-box" id="orderBox" hidden>
-      <span class="success-order-label">Order Number</span>
-      <span class="success-order-number" id="orderNumber">—</span>
-    </div>
-
-    <p class="success-message">
-      We've received your order. A member of our team will reach out shortly to
-      <strong>confirm delivery and payment details</strong>. Thank you for trusting Bisbam Hairs.
-    </p>
-
-    <ul class="success-steps">
-      <li>We'll send you a WhatsApp confirmation.</li>
-      <li>Delivery timeline depends on your location.</li>
-      <li>Keep your phone reachable for updates.</li>
-    </ul>
-
-    <div class="success-actions">
-      <a href="shop.html" class="btn btn-primary">Continue Shopping</a>
-      <a href="#" id="whatsappOrderBtn" class="btn btn-outline" target="_blank" rel="noopener">
-        Tap here if WhatsApp didn't open
-      </a>
-    </div>
-
-    <p class="whatsapp-redirect-note" id="whatsappNote">
-      Opening WhatsApp in <strong id="countdown">4</strong>s for faster delivery…
-    </p>
-
-    <p class="success-footer-note">Good Hairs Attract Goodluck</p>
-
-    <p class="success-trust-note">
-      🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
-    </p>
-
+    <!-- Content injected by JS -->
   </div>
 
-  <!-- Supabase + Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
 
@@ -334,103 +324,291 @@
       const ref = params.get('ref');
       const orderNumber = params.get('order');
 
-      const paidBadge = document.getElementById('paidBadge');
-      const title = document.getElementById('successTitle');
-      const script = document.getElementById('successScript');
-      const orderBox = document.getElementById('orderBox');
-      const orderNumberEl = document.getElementById('orderNumber');
-      const whatsappBtn = document.getElementById('whatsappOrderBtn');
-      const whatsappNote = document.getElementById('whatsappNote');
-      const countdownEl = document.getElementById('countdown');
+      const card = document.getElementById('successCard');
+      const loading = document.getElementById('loadingState');
 
-      // Show order number if present
-      if (orderNumber) {
-        orderNumberEl.textContent = orderNumber;
-        orderBox.hidden = false;
+      function db() {
+        if (!window.BisbamDB && window.initSupabase) window.initSupabase();
+        return window.BisbamDB;
       }
 
-      // If `ref` present → paid flow
-      if (ref) {
-        if (paidBadge) paidBadge.hidden = false;
-        if (title) title.textContent = 'Payment Received';
-        if (script) script.textContent = 'Thank you, Bam Babe ♥';
+      function naira(n) {
+        return '₦' + Number(n || 0).toLocaleString('en-NG');
       }
 
-      /* ============ BUILD WHATSAPP MESSAGE + AUTO-REDIRECT ============ */
-      async function initWhatsAppRedirect() {
-        // Only fire if this was a paid order
-        if (!ref || !orderNumber) return;
-
-        // Wait for Supabase client
-        let client = window.BisbamDB;
-        if (!client && window.initSupabase) client = window.initSupabase();
-
-        if (!client) {
-          console.warn('Supabase client not ready, skipping WhatsApp auto-redirect.');
+      async function init() {
+        // No order number → show generic page
+        if (!orderNumber) {
+          renderGeneric();
           return;
         }
+
+        const client = db();
+        if (!client) {
+          renderError('Connection error. Please try again.');
+          return;
+        }
+
+        // Wait a moment for Supabase to process URL tokens (if any)
+        await new Promise(r => setTimeout(r, 300));
 
         try {
           const { data: order, error } = await client
             .from('orders')
             .select('*')
             .eq('order_number', orderNumber)
-            .single();
+            .maybeSingle();
 
           if (error || !order) {
-            console.warn('Order fetch failed, skipping auto-redirect:', error);
+            renderNotFound();
             return;
           }
 
-          // Only redirect if payment is confirmed
-          if (order.payment_status !== 'paid' && order.status !== 'confirmed') {
-            console.log('Payment not confirmed yet, skipping redirect.');
-            return;
+          const isPaid = order.payment_status === 'paid' || order.status === 'confirmed';
+
+          if (isPaid) {
+            renderPaid(order);
+          } else {
+            renderPending(order);
           }
-
-          // Build WhatsApp message
-          let msg = `Hi Bisbam Hairs! I just paid for my order.\n\n`;
-          msg += `Order #: ${orderNumber}\n`;
-          msg += `Name: ${order.customer_name || ''}\n\n`;
-
-          msg += `Items:\n`;
-          const items = order.items || [];
-          items.forEach((item, i) => {
-            const variant = [item.length && `${item.length}"`, item.texture, item.color, item.density]
-              .filter(Boolean).join(' · ');
-            const price = '₦' + Number(item.price * item.qty).toLocaleString('en-NG');
-            msg += `${i + 1}. ${item.name}${variant ? ` (${variant})` : ''} × ${item.qty} — ${price}\n`;
-          });
-
-          msg += `\nTotal Paid: ₦${Number(order.total || 0).toLocaleString('en-NG')}\n\n`;
-          msg += `Please confirm delivery. Thank you!`;
-
-          const waUrl = `https://wa.me/2348146108122?text=${encodeURIComponent(msg)}`;
-
-          // Set the button href for fallback
-          whatsappBtn.href = waUrl;
-
-          // Show the countdown note
-          if (whatsappNote) whatsappNote.classList.add('is-visible');
-
-          // Countdown 4 → 3 → 2 → 1 → open
-          let seconds = 4;
-          const timer = setInterval(() => {
-            seconds--;
-            if (countdownEl) countdownEl.textContent = seconds;
-            if (seconds <= 0) {
-              clearInterval(timer);
-              window.location.href = waUrl;
-            }
-          }, 1000);
-
         } catch (err) {
-          console.warn('Auto-redirect error:', err);
+          console.warn('Order fetch error:', err);
+          renderError('Could not load your order. Please try again.');
         }
       }
 
-      // Wait a moment for Supabase to init
-      setTimeout(initWhatsAppRedirect, 400);
+      /* ============ PAID ============ */
+      function renderPaid(order) {
+        const itemsHtml = (order.items || []).map(i => {
+          const variant = [i.length && `${i.length}"`, i.texture, i.color, i.density]
+            .filter(Boolean).join(' · ');
+          return `
+            <div style="padding:8px 0;border-bottom:1px solid #F2EDF0;font-size:0.88rem;text-align:left;">
+              ${i.name} × ${i.qty}
+              ${variant ? `<span style="display:block;font-size:0.75rem;color:var(--grey);">${variant}</span>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="success-paid-badge">
+            <span class="dot"></span>
+            Payment Received
+          </div>
+
+          <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
+
+          <h1 class="success-title">Payment Received</h1>
+          <p class="success-script">Thank you, Bam Babe ♥</p>
+
+          <div class="success-divider"></div>
+
+          <div class="success-order-box">
+            <span class="success-order-label">Order Number</span>
+            <span class="success-order-number">${order.order_number}</span>
+          </div>
+
+          <p class="success-message">
+            We've received your order. A member of our team will reach out shortly to
+            <strong>confirm delivery details</strong>. Thank you for trusting Bisbam Hairs.
+          </p>
+
+          <ul class="success-steps">
+            <li>We'll send you a WhatsApp confirmation.</li>
+            <li>Delivery timeline depends on your location.</li>
+            <li>Keep your phone reachable for updates.</li>
+          </ul>
+
+          <div class="success-actions">
+            <a href="shop.html" class="btn btn-primary">Continue Shopping</a>
+            <a href="#" id="whatsappOrderBtn" class="btn btn-outline" target="_blank" rel="noopener">
+              Tap here if WhatsApp didn't open
+            </a>
+          </div>
+
+          <p class="whatsapp-redirect-note" id="whatsappNote">
+            Opening WhatsApp in <strong id="countdown">4</strong>s for faster delivery…
+          </p>
+
+          <p class="success-footer-note">Good Hairs Attract Goodluck</p>
+
+          <p class="success-trust-note">
+            🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
+          </p>
+        `;
+
+        // Auto WhatsApp redirect
+        startWhatsAppRedirect(order);
+      }
+
+      /* ============ PENDING / CANCELLED ============ */
+      function renderPending(order) {
+        card.innerHTML = `
+          <div class="success-pending-badge">
+            <span class="dot"></span>
+            Payment Not Completed
+          </div>
+
+          <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
+
+          <h1 class="success-title">Payment Didn't Go Through</h1>
+          <p class="success-script">Don't worry, Bam Babe</p>
+
+          <div class="success-divider"></div>
+
+          <div class="success-order-box">
+            <span class="success-order-label">Your Order Reference</span>
+            <span class="success-order-number">${order.order_number}</span>
+          </div>
+
+          <p class="success-message">
+            Your payment wasn't completed, so your order is on hold.
+            <strong>You can try again or message us for help.</strong>
+          </p>
+
+          <ul class="success-steps">
+            <li>Your cart items are still saved.</li>
+            <li>You can retry payment anytime.</li>
+            <li>We're here on WhatsApp if you need help.</li>
+          </ul>
+
+          <div class="success-actions">
+            <a href="checkout.html" class="btn btn-primary">Try Payment Again</a>
+            <a href="https://wa.me/2348146108122?text=${encodeURIComponent('Hi Bisbam Hairs, I need help with order ' + order.order_number)}"
+               class="btn btn-outline" target="_blank" rel="noopener">
+              Message us on WhatsApp
+            </a>
+            <a href="shop.html" class="btn btn-outline">Continue Shopping</a>
+          </div>
+
+          <p class="success-footer-note">Good Hairs Attract Goodluck</p>
+
+          <p class="success-trust-note">
+            🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
+          </p>
+        `;
+      }
+
+      /* ============ GENERIC (no order number) ============ */
+      function renderGeneric() {
+        card.innerHTML = `
+          <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
+          <h1 class="success-title">Order Status</h1>
+          <p class="success-script">Thank you, Bam Babe ♥</p>
+
+          <div class="success-divider"></div>
+
+          <p class="success-message">
+            To view your order status, please enter your order number.
+          </p>
+
+          <div class="success-actions">
+            <a href="track.html" class="btn btn-primary">Track Your Order</a>
+            <a href="shop.html" class="btn btn-outline">Continue Shopping</a>
+          </div>
+
+          <p class="success-footer-note">Good Hairs Attract Goodluck</p>
+
+          <p class="success-trust-note">
+            🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
+          </p>
+        `;
+      }
+
+      /* ============ NOT FOUND ============ */
+      function renderNotFound() {
+        card.innerHTML = `
+          <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
+          <h1 class="success-title">Order Not Found</h1>
+          <p class="success-script">Something's off</p>
+
+          <div class="success-divider"></div>
+
+          <p class="success-message">
+            We couldn't find an order with that number. Please try again or message us for help.
+          </p>
+
+          <div class="success-actions">
+            <a href="https://wa.me/2348146108122?text=${encodeURIComponent('Hi Bisbam Hairs, I need help with my order.')}"
+               class="btn btn-primary" target="_blank" rel="noopener">
+              Message us on WhatsApp
+            </a>
+            <a href="shop.html" class="btn btn-outline">Continue Shopping</a>
+          </div>
+
+          <p class="success-footer-note">Good Hairs Attract Goodluck</p>
+
+          <p class="success-trust-note">
+            🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
+          </p>
+        `;
+      }
+
+      /* ============ ERROR ============ */
+      function renderError(msg) {
+        card.innerHTML = `
+          <p class="success-eyebrow">Bisbam Hairs · Lagos</p>
+          <h1 class="success-title">Something Went Wrong</h1>
+
+          <div class="success-divider"></div>
+
+          <p class="success-message">${msg}</p>
+
+          <div class="success-actions">
+            <a href="index.html" class="btn btn-primary">Back to Home</a>
+            <a href="https://wa.me/2348146108122" class="btn btn-outline" target="_blank" rel="noopener">
+              Message us on WhatsApp
+            </a>
+          </div>
+
+          <p class="success-trust-note">
+            🔒 Always shop on <strong>www.bisbam.com</strong> — the official Bisbam Hairs website.
+          </p>
+        `;
+      }
+
+      /* ============ WHATSAPP AUTO-REDIRECT ============ */
+      function startWhatsAppRedirect(order) {
+        const btn = document.getElementById('whatsappOrderBtn');
+        const note = document.getElementById('whatsappNote');
+        const countdownEl = document.getElementById('countdown');
+
+        if (!btn) return;
+
+        // Build message
+        let msg = `Hi Bisbam Hairs! I just paid for my order.\n\n`;
+        msg += `Order #: ${order.order_number}\n`;
+        msg += `Name: ${order.customer_name || ''}\n\n`;
+
+        msg += `Items:\n`;
+        (order.items || []).forEach((item, i) => {
+          const variant = [item.length && `${item.length}"`, item.texture, item.color, item.density]
+            .filter(Boolean).join(' · ');
+          const price = '₦' + Number(item.price * item.qty).toLocaleString('en-NG');
+          msg += `${i + 1}. ${item.name}${variant ? ` (${variant})` : ''} × ${item.qty} — ${price}\n`;
+        });
+
+        msg += `\nTotal Paid: ₦${Number(order.total || 0).toLocaleString('en-NG')}\n\n`;
+        msg += `Please confirm delivery. Thank you!`;
+
+        const waUrl = `https://wa.me/2348146108122?text=${encodeURIComponent(msg)}`;
+        btn.href = waUrl;
+
+        // Show countdown
+        if (note) note.classList.add('is-visible');
+
+        let seconds = 4;
+        const timer = setInterval(() => {
+          seconds--;
+          if (countdownEl) countdownEl.textContent = seconds;
+          if (seconds <= 0) {
+            clearInterval(timer);
+            window.location.href = waUrl;
+          }
+        }, 1000);
+      }
+
+      init();
 
     })();
   </script>
