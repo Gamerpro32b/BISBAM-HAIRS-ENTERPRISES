@@ -3111,3 +3111,132 @@ table {
     margin: var(--space-sm) var(--space-sm) 4px;
   }
 }
+/* =========================================================
+   AUTH PAGE — SUBTLE ANIMATIONS
+   ========================================================= */
+
+/* Pulsing pink glow behind the card */
+.auth-body::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 480px;
+  height: 480px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(233, 30, 140, 0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: authPulse 6s ease-in-out infinite;
+}
+
+@keyframes authPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* Floating sparkle dots */
+.auth-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.auth-sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, rgba(233, 30, 140, 0.9) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: sparkleFloat 10s ease-in-out infinite;
+  opacity: 0;
+}
+
+.auth-sparkle:nth-child(1) {
+  left: 12%;
+  top: 20%;
+  animation-delay: 0s;
+  animation-duration: 9s;
+}
+.auth-sparkle:nth-child(2) {
+  left: 85%;
+  top: 15%;
+  animation-delay: 1.5s;
+  animation-duration: 11s;
+  width: 8px;
+  height: 8px;
+}
+.auth-sparkle:nth-child(3) {
+  left: 8%;
+  top: 75%;
+  animation-delay: 3s;
+  animation-duration: 10s;
+}
+.auth-sparkle:nth-child(4) {
+  left: 90%;
+  top: 82%;
+  animation-delay: 4.5s;
+  animation-duration: 12s;
+  width: 5px;
+  height: 5px;
+}
+.auth-sparkle:nth-child(5) {
+  left: 45%;
+  top: 8%;
+  animation-delay: 6s;
+  animation-duration: 9.5s;
+  width: 4px;
+  height: 4px;
+}
+.auth-sparkle:nth-child(6) {
+  left: 55%;
+  top: 92%;
+  animation-delay: 2s;
+  animation-duration: 11.5s;
+  width: 7px;
+  height: 7px;
+}
+
+@keyframes sparkleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-45px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-70px) scale(0.5);
+  }
+}
+
+/* Make sure the card sits above animations */
+.auth-card {
+  z-index: 10;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .auth-body::after {
+    animation: none;
+  }
+  .auth-sparkle {
+    animation: none;
+    opacity: 0.4;
+  }
+}
