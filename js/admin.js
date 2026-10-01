@@ -1,5 +1,5 @@
 /* =========================================================
-   BISBAM HAIRS — admin.js (Part 1 of 5)
+   BISBAM HAIRS — admin.js (Part 1 of 6)
    ========================================================= */
 
 (function () {
@@ -14,6 +14,8 @@
   let editingCategoryId = null;
   window.BISBAM_PENDING_IMAGES = [];
   window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+  window.BISBAM_REMOVED_EXISTING_IMAGES = [];
+  window.BISBAM_REMOVED_EXISTING_VIDEO = false;
   window.BISBAM_SEEN_ORDERS = JSON.parse(localStorage.getItem('bisbam_seen_orders') || '[]');
 
   function naira(n) {
@@ -200,7 +202,11 @@
       if (modal) modal.hidden = true;
       if (modal && modal.id === 'productModal') {
         window.BISBAM_PENDING_IMAGES = [];
+        window.BISBAM_REMOVED_EXISTING_IMAGES = [];
+        window.BISBAM_REMOVED_EXISTING_VIDEO = false;
         renderImagePreviews();
+        renderExistingImages(null);
+        renderExistingVideo(null);
       }
       if (modal && modal.id === 'categoryModal') {
         window.BISBAM_PENDING_CATEGORY_IMAGE = null;
@@ -292,9 +298,8 @@
       </tr>
     `).join('');
   }
-
-  // PART 2 continues below...
-  /* =========================================================
+  
+/* =========================================================
    PART 2
    ========================================================= */
 
@@ -396,7 +401,7 @@ function setChecked(containerId, values) {
   });
 }
 
-/* ============ IMAGE PICKER (PRODUCT) ============ */
+/* ============ IMAGE PICKER (PRODUCT — NEW IMAGES) ============ */
 function renderImagePreviews() {
   const grid = document.getElementById('imagePreviewGrid');
   const note = document.getElementById('imageCountNote');
@@ -423,23 +428,89 @@ function renderImagePreviews() {
   });
 }
 
-const addImageBtn = document.getElementById('addImageBtn');
-const imageInput = document.getElementById('pImages');
+/* ============ EXISTING IMAGES (from product being edited) ============ */
+function renderExistingImages(product) {
+  const group = document.getElementById('existingImagesGroup');
+  const grid = document.getElementById('existingImagesGrid');
+  if (!group || !grid) return;
 
-if (addImageBtn && imageInput) {
-  addImageBtn.addEventListener('click', () => imageInput.click());
-  imageInput.addEventListener('change', (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (file.size > 500 * 1024) {
-      alert('"' + file.name + '" is over 500KB. Please compress it first.');
-      imageInput.value = '';
-      return;
-    }
-    window.BISBAM_PENDING_IMAGES.push(file);
-    imageInput.value = '';
-    renderImagePreviews();
+  const images = (product && product.images) ? product.images : [];
+
+  // Hide the whole section if no images
+  if (images.length === 0) {
+    group.hidden = true;
+    grid.innerHTML = '';
+    return;
+  }
+
+  group.hidden = false;
+
+  grid.innerHTML = images.map((url, i) => {
+    const isRemoved = window.BISBAM_REMOVED_EXISTING_IMAGES.includes(url);
+    const cls = isRemoved ? 'image-preview-item is-removed' : 'image-preview-item';
+    return `
+      <div class="${cls}" data-existing-url="${url}">
+        <img src="${url}" alt="Image ${i + 1}">
+        <button type="button"
+                class="image-preview-remove existing-image-remove"
+                data-existing-url="${url}"
+                title="${isRemoved ? 'Restore' : 'Remove'}"
+                style="${isRemoved ? 'background:#16A34A;' : ''}">
+          ${isRemoved ? '↺' : '×'}
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.existing-image-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.dataset.existingUrl;
+      const idx = window.BISBAM_REMOVED_EXISTING_IMAGES.indexOf(url);
+      if (idx === -1) {
+        window.BISBAM_REMOVED_EXISTING_IMAGES.push(url);
+      } else {
+        window.BISBAM_REMOVED_EXISTING_IMAGES.splice(idx, 1);
+      }
+      // Re-render with current product
+      const data = window.BisbamAdminData || {};
+      const product = (data.products || []).find(p => p.id === editingProductId);
+      renderExistingImages(product);
+    });
   });
+}
+
+/* ============ EXISTING VIDEO ============ */
+function renderExistingVideo(product) {
+  const group = document.getElementById('existingVideoGroup');
+  const preview = document.getElementById('existingVideoPreview');
+  if (!group || !preview) return;
+
+  const videoUrl = product ? product.video_url : null;
+
+  // If no video, or marked for removal → hide
+  if (!videoUrl || window.BISBAM_REMOVED_EXISTING_VIDEO) {
+    group.hidden = true;
+    preview.innerHTML = '';
+    return;
+  }
+
+  group.hidden = false;
+
+  preview.innerHTML = `
+    <video src="${videoUrl}" controls preload="metadata" playsinline></video>
+    <span class="existing-video-label">Current video</span>
+    <button type="button" class="existing-video-remove" id="removeExistingVideoBtn">Remove Video</button>
+  `;
+
+  const removeBtn = document.getElementById('removeExistingVideoBtn');
+  if (removeBtn) {
+    removeBtn.addEventListener('click', () => {
+      window.BISBAM_REMOVED_EXISTING_VIDEO = true;
+      const data = window.BisbamAdminData || {};
+      const product = (data.products || []).find(p => p.id === editingProductId);
+      renderExistingVideo(product);
+    });
+  }
 }
 
 /* ============ IMAGE PICKER (CATEGORY) ============ */
@@ -472,6 +543,25 @@ function renderCategoryImagePreview() {
       renderCategoryImagePreview();
     });
   }
+}
+/* ============ IMAGE PICKER (PRODUCT — NEW IMAGES) ============ */
+const addImageBtn = document.getElementById('addImageBtn');
+const imageInput = document.getElementById('pImages');
+
+if (addImageBtn && imageInput) {
+  addImageBtn.addEventListener('click', () => imageInput.click());
+  imageInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) {
+      alert('"' + file.name + '" is over 500KB. Please compress it first.');
+      imageInput.value = '';
+      return;
+    }
+    window.BISBAM_PENDING_IMAGES.push(file);
+    imageInput.value = '';
+    renderImagePreviews();
+  });
 }
 
 const addCategoryImageBtn = document.getElementById('addCategoryImageBtn');
@@ -550,9 +640,8 @@ async function uploadCategoryImage(client, file) {
   return pub ? pub.publicUrl : null;
 }
 
-// PART 3 continues below...
 /* =========================================================
-   PART 3
+   PART 3 — PRODUCT SAVE / EDIT / DELETE, CATEGORIES
    ========================================================= */
 
 /* ============ PRODUCT SAVE ============ */
@@ -597,63 +686,104 @@ async function handleProductSubmit(e) {
     const videoFile = videoInput && videoInput.files[0] ? videoInput.files[0] : null;
 
     const current = editingProductId
-  ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
-  : null;
+      ? ((window.BisbamAdminData || {}).products || []).find(p => p.id === editingProductId)
+      : null;
 
-let images = current && current.images && current.images.length
-  ? current.images
-  : ['assets/images/products/placeholder.jpg'];
-
-let videoUrl = current ? current.video_url : null;
-
-btn.textContent = 'Uploading…';
-btn.disabled = true;
-
-/* ===== UPLOAD NEW IMAGES + DELETE OLD ===== */
-if (files.length > 0) {
-  const uploaded = await uploadImages(client, files);
-
-  if (uploaded.length) {
-    // Auto-delete old images from Storage (if editing an existing product)
+    // ===== Build the final image list =====
+    // Start from the CURRENT product's images (if editing), remove any the user marked for removal
+    let keptImages = [];
     if (current && current.images && current.images.length) {
-      const oldToDelete = current.images
-        .filter(u => u.includes('/Product-images/'))
-        .map(u => 'products/' + u.split('/Product-images/')[1]);
-
-      if (oldToDelete.length) {
-        try {
-          await client.storage.from('Product-images').remove(oldToDelete);
-          console.log('Deleted old images:', oldToDelete.length);
-        } catch (delErr) {
-          console.warn('Could not delete old images:', delErr);
-          // Continue anyway — new image is more important than cleanup
-        }
-      }
+      keptImages = current.images.filter(url => !window.BISBAM_REMOVED_EXISTING_IMAGES.includes(url));
     }
 
-    images = uploaded;
-  }
-}
+    let images = keptImages.length ? keptImages : [];
+    let videoUrl = current ? current.video_url : null;
 
-/* ===== UPLOAD NEW VIDEO + DELETE OLD ===== */
-if (videoFile) {
-  const url = await uploadVideo(client, videoFile);
+    // If user marked the existing video for removal → clear it (but only if no new video being uploaded)
+    if (window.BISBAM_REMOVED_EXISTING_VIDEO && !videoFile) {
+      videoUrl = null;
+    }
 
-  if (url) {
-    // Auto-delete old video from Storage (if editing an existing product)
-    if (current && current.video_url && current.video_url.includes('/Product-videos/')) {
+    btn.textContent = 'Uploading…';
+    btn.disabled = true;
+
+    /* ===== UPLOAD NEW IMAGES (appended to kept images) ===== */
+    if (files.length > 0) {
+      const uploaded = await uploadImages(client, files);
+
+      if (uploaded.length) {
+        // Delete the ones the user marked as removed from Storage
+        if (window.BISBAM_REMOVED_EXISTING_IMAGES.length) {
+          const toDelete = window.BISBAM_REMOVED_EXISTING_IMAGES
+            .filter(u => u.includes('/Product-images/'))
+            .map(u => 'products/' + u.split('/Product-images/')[1]);
+
+          if (toDelete.length) {
+            try {
+              await client.storage.from('Product-images').remove(toDelete);
+              console.log('Deleted removed images:', toDelete.length);
+            } catch (delErr) {
+              console.warn('Could not delete removed images:', delErr);
+            }
+          }
+        }
+
+        images = [...keptImages, ...uploaded];
+      }
+    } else {
+      // No new files — but user may have removed some existing ones
+      if (window.BISBAM_REMOVED_EXISTING_IMAGES.length) {
+        const toDelete = window.BISBAM_REMOVED_EXISTING_IMAGES
+          .filter(u => u.includes('/Product-images/'))
+          .map(u => 'products/' + u.split('/Product-images/')[1]);
+
+        if (toDelete.length) {
+          try {
+            await client.storage.from('Product-images').remove(toDelete);
+            console.log('Deleted removed images:', toDelete.length);
+          } catch (delErr) {
+            console.warn('Could not delete removed images:', delErr);
+          }
+        }
+      }
+
+      images = keptImages;
+    }
+
+    // If nothing left at all → fall back to placeholder
+    if (images.length === 0) {
+      images = ['assets/images/products/placeholder.jpg'];
+    }
+
+    /* ===== UPLOAD NEW VIDEO (or keep existing) ===== */
+    if (videoFile) {
+      const url = await uploadVideo(client, videoFile);
+
+      if (url) {
+        // Delete old video from Storage
+        if (current && current.video_url && current.video_url.includes('/Product-videos/')) {
+          try {
+            const oldVideoPath = 'videos/' + current.video_url.split('/Product-videos/')[1];
+            await client.storage.from('Product-videos').remove([oldVideoPath]);
+            console.log('Deleted old video:', oldVideoPath);
+          } catch (delErr) {
+            console.warn('Could not delete old video:', delErr);
+          }
+        }
+
+        videoUrl = url;
+      }
+    } else if (window.BISBAM_REMOVED_EXISTING_VIDEO && current && current.video_url && current.video_url.includes('/Product-videos/')) {
+      // User removed the existing video and did not upload a new one → delete from storage
       try {
         const oldVideoPath = 'videos/' + current.video_url.split('/Product-videos/')[1];
         await client.storage.from('Product-videos').remove([oldVideoPath]);
-        console.log('Deleted old video:', oldVideoPath);
+        console.log('Deleted removed video:', oldVideoPath);
       } catch (delErr) {
-        console.warn('Could not delete old video:', delErr);
+        console.warn('Could not delete removed video:', delErr);
       }
     }
 
-    videoUrl = url;
-  }
-}
     btn.textContent = 'Saving…';
 
     const payload = {
@@ -678,7 +808,11 @@ if (videoFile) {
 
     form.reset();
     window.BISBAM_PENDING_IMAGES = [];
+    window.BISBAM_REMOVED_EXISTING_IMAGES = [];
+    window.BISBAM_REMOVED_EXISTING_VIDEO = false;
     renderImagePreviews();
+    renderExistingImages(null);
+    renderExistingVideo(null);
     editingProductId = null;
     document.getElementById('productModalTitle').textContent = 'Add Product';
 
@@ -702,6 +836,8 @@ if (videoFile) {
 function openEditModal(product) {
   editingProductId = product.id;
   window.BISBAM_PENDING_IMAGES = [];
+  window.BISBAM_REMOVED_EXISTING_IMAGES = [];
+  window.BISBAM_REMOVED_EXISTING_VIDEO = false;
 
   const form = document.getElementById('productForm');
   form.querySelector('#pName').value = product.name || '';
@@ -726,6 +862,8 @@ function openEditModal(product) {
   form.querySelector('#pWholesaleAvailable').checked = !!product.wholesale_available;
 
   renderImagePreviews();
+  renderExistingImages(product);
+  renderExistingVideo(product);
   document.getElementById('productModalTitle').textContent = 'Edit Product';
   openModal('productModal');
 }
@@ -922,9 +1060,8 @@ async function handleDeleteCategory(categoryId) {
   }
 }
 
-// PART 4 continues below...
 /* =========================================================
-   PART 4
+   PART 4 — ORDERS, CUSTOMERS, SETTINGS
    ========================================================= */
 
 /* ============ ORDERS PAGE ============ */
@@ -1251,347 +1388,352 @@ async function handleSettingsSubmit(e) {
   }
 }
 
-// PART 5 continues below...
-  /* =========================================================
-     PART 5 — NOTIFICATIONS + INIT + GLOBAL CLICKS (FINAL)
-     ========================================================= */
+/* =========================================================
+   PART 5 — NOTIFICATIONS, REALTIME, INIT
+   ========================================================= */
 
-  /* ============ NOTIFICATION BELL ============ */
-  function injectBell() {
-    const headerActions = document.querySelector('.admin-header-actions');
-    if (!headerActions) return;
-    if (document.getElementById('adminBellWrap')) return;
+/* ============ NOTIFICATION BELL ============ */
+function injectBell() {
+  const headerActions = document.querySelector('.admin-header-actions');
+  if (!headerActions) return;
+  if (document.getElementById('adminBellWrap')) return;
 
-    const wrap = document.createElement('div');
-    wrap.className = 'admin-bell-wrap';
-    wrap.id = 'adminBellWrap';
-    wrap.innerHTML = `
-      <button type="button" class="admin-bell" id="adminBellBtn" aria-label="Notifications">
-        <svg viewBox="0 0 24 24">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <span class="admin-bell-count" id="adminBellCount">0</span>
-      </button>
-      <div class="admin-bell-panel" id="adminBellPanel" hidden>
-        <div class="admin-bell-panel-header">
-          New Orders
-          <span id="adminBellMarkSeen" style="cursor:pointer;text-decoration:underline;">Mark all read</span>
-        </div>
-        <div class="admin-bell-panel-body" id="adminBellBody">
-          <div class="admin-bell-empty">No new orders.</div>
-        </div>
+  const wrap = document.createElement('div');
+  wrap.className = 'admin-bell-wrap';
+  wrap.id = 'adminBellWrap';
+  wrap.innerHTML = `
+    <button type="button" class="admin-bell" id="adminBellBtn" aria-label="Notifications">
+      <svg viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      <span class="admin-bell-count" id="adminBellCount">0</span>
+    </button>
+    <div class="admin-bell-panel" id="adminBellPanel" hidden>
+      <div class="admin-bell-panel-header">
+        New Orders
+        <span id="adminBellMarkSeen" style="cursor:pointer;text-decoration:underline;">Mark all read</span>
       </div>
-    `;
-    headerActions.insertBefore(wrap, headerActions.firstChild);
+      <div class="admin-bell-panel-body" id="adminBellBody">
+        <div class="admin-bell-empty">No new orders.</div>
+      </div>
+    </div>
+  `;
+  headerActions.insertBefore(wrap, headerActions.firstChild);
 
-    const btn = document.getElementById('adminBellBtn');
-    const panel = document.getElementById('adminBellPanel');
+  const btn = document.getElementById('adminBellBtn');
+  const panel = document.getElementById('adminBellPanel');
 
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      panel.hidden = !panel.hidden;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.hidden = !panel.hidden;
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) panel.hidden = true;
+  });
+
+  const markSeen = document.getElementById('adminBellMarkSeen');
+  if (markSeen) {
+    markSeen.addEventListener('click', () => {
+      const orders = (window.BisbamAdminData || {}).orders || [];
+      window.BISBAM_SEEN_ORDERS = orders.map(o => o.id);
+      localStorage.setItem('bisbam_seen_orders', JSON.stringify(window.BISBAM_SEEN_ORDERS));
+      renderBell();
     });
+  }
+}
 
-    document.addEventListener('click', (e) => {
-      if (!wrap.contains(e.target)) panel.hidden = true;
-    });
+function renderBell() {
+  const orders = (window.BisbamAdminData || {}).orders || [];
+  const unseen = orders.filter(o => !window.BISBAM_SEEN_ORDERS.includes(o.id));
 
-    const markSeen = document.getElementById('adminBellMarkSeen');
-    if (markSeen) {
-      markSeen.addEventListener('click', () => {
-        const orders = (window.BisbamAdminData || {}).orders || [];
-        window.BISBAM_SEEN_ORDERS = orders.map(o => o.id);
-        localStorage.setItem('bisbam_seen_orders', JSON.stringify(window.BISBAM_SEEN_ORDERS));
+  const countEl = document.getElementById('adminBellCount');
+  const bodyEl = document.getElementById('adminBellBody');
+
+  if (countEl) {
+    countEl.textContent = unseen.length;
+    if (unseen.length > 0) countEl.classList.add('is-visible');
+    else countEl.classList.remove('is-visible');
+  }
+
+  if (bodyEl) {
+    if (unseen.length === 0) {
+      bodyEl.innerHTML = `<div class="admin-bell-empty">No new orders.</div>`;
+    } else {
+      bodyEl.innerHTML = unseen.slice(0, 10).map(o => `
+        <a class="admin-bell-item" href="orders.html">
+          <div class="admin-bell-item-title">${o.orderNumber}</div>
+          <div class="admin-bell-item-meta">${o.customer} · ${naira(o.total)} · ${o.date}</div>
+        </a>
+      `).join('');
+    }
+  }
+}
+
+function showToast(order) {
+  const old = document.getElementById('adminToast');
+  if (old) old.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'admin-toast';
+  toast.id = 'adminToast';
+  toast.innerHTML = `
+    <div class="admin-toast-title">🔔 New Order</div>
+    <div class="admin-toast-body">${order.customer} — ${naira(order.total)}</div>
+    <div class="admin-toast-meta">${order.orderNumber}</div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add('is-visible'), 50);
+
+  toast.addEventListener('click', () => {
+    window.location.href = 'orders.html';
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('is-visible');
+    setTimeout(() => toast.remove(), 400);
+  }, 8000);
+}
+
+function startRealtime() {
+  const client = db();
+  if (!client) return;
+
+  client
+    .channel('public:orders')
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'orders' },
+      async (payload) => {
+        const data = await fetchAll();
+        window.BisbamAdminData = data;
+
+        renderDashboardStats(data.orders, data.products);
+        renderRecentOrders(data.orders);
+        renderOrdersTable(data.orders);
+        renderCustomersTable(data.customers);
         renderBell();
-      });
-    }
-  }
 
-  function renderBell() {
-    const orders = (window.BisbamAdminData || {}).orders || [];
-    const unseen = orders.filter(o => !window.BISBAM_SEEN_ORDERS.includes(o.id));
-
-    const countEl = document.getElementById('adminBellCount');
-    const bodyEl = document.getElementById('adminBellBody');
-
-    if (countEl) {
-      countEl.textContent = unseen.length;
-      if (unseen.length > 0) countEl.classList.add('is-visible');
-      else countEl.classList.remove('is-visible');
-    }
-
-    if (bodyEl) {
-      if (unseen.length === 0) {
-        bodyEl.innerHTML = `<div class="admin-bell-empty">No new orders.</div>`;
-      } else {
-        bodyEl.innerHTML = unseen.slice(0, 10).map(o => `
-          <a class="admin-bell-item" href="orders.html">
-            <div class="admin-bell-item-title">${o.orderNumber}</div>
-            <div class="admin-bell-item-meta">${o.customer} · ${naira(o.total)} · ${o.date}</div>
-          </a>
-        `).join('');
+        showToast({
+          customer: payload.new.customer_name || 'Customer',
+          total: payload.new.total || 0,
+          orderNumber: payload.new.order_number || 'New order'
+        });
       }
-    }
-  }
+    )
+    .subscribe();
+}
 
-  function showToast(order) {
-    const old = document.getElementById('adminToast');
-    if (old) old.remove();
+/* ============ INLINE NEW CATEGORY ============ */
+function initInlineNewCategory() {
+  const pCategorySelect = document.getElementById('pCategory');
+  const inlineNewCategory = document.getElementById('inlineNewCategory');
+  const newCatName = document.getElementById('newCatName');
+  const newCatSlug = document.getElementById('newCatSlug');
+  const newCatImage = document.getElementById('newCatImage');
+  const newCatError = document.getElementById('newCatError');
+  const cancelNewCatBtn = document.getElementById('cancelNewCatBtn');
+  const saveNewCatBtn = document.getElementById('saveNewCatBtn');
 
-    const toast = document.createElement('div');
-    toast.className = 'admin-toast';
-    toast.id = 'adminToast';
-    toast.innerHTML = `
-      <div class="admin-toast-title">🔔 New Order</div>
-      <div class="admin-toast-body">${order.customer} — ${naira(order.total)}</div>
-      <div class="admin-toast-meta">${order.orderNumber}</div>
-    `;
-    document.body.appendChild(toast);
+  if (!inlineNewCategory) return;
 
-    setTimeout(() => toast.classList.add('is-visible'), 50);
+  window.openInlineNewCategory = function () {
+    inlineNewCategory.hidden = false;
+    if (newCatError) newCatError.hidden = true;
+    if (newCatName) newCatName.focus();
+  };
 
-    toast.addEventListener('click', () => {
-      window.location.href = 'orders.html';
+  window.closeInlineNewCategory = function () {
+    inlineNewCategory.hidden = true;
+    if (newCatName) newCatName.value = '';
+    if (newCatSlug) newCatSlug.value = '';
+    if (newCatImage) newCatImage.value = '';
+    if (newCatError) newCatError.hidden = true;
+    if (pCategorySelect) pCategorySelect.value = '';
+  };
+
+  if (pCategorySelect) {
+    pCategorySelect.addEventListener('change', () => {
+      if (pCategorySelect.value === '__NEW_CATEGORY__') {
+        pCategorySelect.value = '';
+        window.openInlineNewCategory();
+      }
     });
-
-    setTimeout(() => {
-      toast.classList.remove('is-visible');
-      setTimeout(() => toast.remove(), 400);
-    }, 8000);
   }
 
-  function startRealtime() {
-    const client = db();
-    if (!client) return;
+  if (newCatName && newCatSlug) {
+    newCatName.addEventListener('input', () => {
+      newCatSlug.value = newCatName.value.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    });
+  }
 
-    client
-      .channel('public:orders')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'orders' },
-        async (payload) => {
-          const data = await fetchAll();
-          window.BisbamAdminData = data;
+  if (cancelNewCatBtn) {
+    cancelNewCatBtn.addEventListener('click', () => window.closeInlineNewCategory());
+  }
 
-          renderDashboardStats(data.orders, data.products);
-          renderRecentOrders(data.orders);
-          renderOrdersTable(data.orders);
-          renderCustomersTable(data.customers);
-          renderBell();
+  if (saveNewCatBtn) {
+    saveNewCatBtn.addEventListener('click', async () => {
+      const client = db();
+      if (!client) return;
 
-          showToast({
-            customer: payload.new.customer_name || 'Customer',
-            total: payload.new.total || 0,
-            orderNumber: payload.new.order_number || 'New order'
-          });
+      const name = (newCatName?.value || '').trim();
+      const slug = (newCatSlug?.value || '').trim();
+
+      if (!name || !slug) {
+        if (newCatError) {
+          newCatError.hidden = false;
+          newCatError.textContent = 'Name and slug are required.';
         }
-      )
-      .subscribe();
+        return;
+      }
+
+      const originalText = saveNewCatBtn.textContent;
+      saveNewCatBtn.textContent = 'Saving…';
+      saveNewCatBtn.disabled = true;
+      if (newCatError) newCatError.hidden = true;
+
+      try {
+        let imageUrl = null;
+        const file = newCatImage?.files?.[0];
+        if (file) {
+          if (file.size > 500 * 1024) {
+            throw new Error('Image is over 500KB. Please compress it first.');
+          }
+          const ext = file.name.split('.').pop().toLowerCase();
+          const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+          const filepath = `categories/${filename}`;
+
+          const { error: upErr } = await client.storage
+            .from('Product-images')
+            .upload(filepath, file, { cacheControl: '31536000', upsert: false });
+
+          if (upErr) throw upErr;
+
+          const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
+          if (pub && pub.publicUrl) imageUrl = pub.publicUrl;
+        }
+
+        const { error } = await client.from('categories').insert({
+          name,
+          slug,
+          image_url: imageUrl
+        });
+
+        if (error) throw error;
+
+        const data = await fetchAll();
+        window.BisbamAdminData = data;
+        fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
+        fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
+        renderCategoriesTable(data.categories);
+
+        if (pCategorySelect) pCategorySelect.value = slug;
+
+        window.closeInlineNewCategory();
+
+        alert(`Category "${name}" created and selected.`);
+
+      } catch (err) {
+        console.error('New category error:', err);
+        if (newCatError) {
+          newCatError.hidden = false;
+          newCatError.textContent = err.message || 'Could not create category.';
+        }
+      } finally {
+        saveNewCatBtn.textContent = originalText;
+        saveNewCatBtn.disabled = false;
+      }
+    });
+  }
+}
+
+/* ============ INIT ============ */
+async function init() {
+  const data = await fetchAll();
+  window.BisbamAdminData = data;
+
+  fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
+  fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
+
+  fillCheckboxes('lengthCheckboxes',
+    ['10','12','14','16','18','20','22','24','26','28','30'], 'length');
+  fillCheckboxes('textureCheckboxes',
+    ['bone-straight','silky-straight','body-wave','loose-wave','deep-curly','kinky-curly'], 'texture');
+  fillCheckboxes('colorCheckboxes',
+    ['natural-black','dark-brown','chestnut-brown','blonde','99j-burgundy'], 'color');
+  fillCheckboxes('densityCheckboxes',
+    ['150','180','200','250','300'], 'density');
+
+  renderDashboardStats(data.orders, data.products);
+  renderRecentOrders(data.orders);
+  renderLowStock(data.products);
+  renderProductsTable(data.products);
+  renderCategoriesTable(data.categories);
+  renderOrdersTable(data.orders);
+  renderCustomersTable(data.customers);
+  wireProductsPageFilters();
+  wireOrdersPage();
+  wireCustomersPage();
+  renderImagePreviews();
+  renderCategoryImagePreview();
+
+  injectBell();
+  renderBell();
+
+  await loadSettings();
+  startRealtime();
+
+  /* ===== Add Product button ===== */
+  const addProductBtn = document.getElementById('addProductBtn');
+  if (addProductBtn) {
+    addProductBtn.addEventListener('click', () => {
+      editingProductId = null;
+      window.BISBAM_PENDING_IMAGES = [];
+      window.BISBAM_REMOVED_EXISTING_IMAGES = [];
+      window.BISBAM_REMOVED_EXISTING_VIDEO = false;
+      document.getElementById('productForm').reset();
+      document.getElementById('productModalTitle').textContent = 'Add Product';
+      renderImagePreviews();
+      renderExistingImages(null);
+      renderExistingVideo(null);
+      closeInlineNewCategory();
+      openModal('productModal');
+    });
   }
 
-  /* ============ INIT ============ */
-  async function init() {
-    const data = await fetchAll();
-    window.BisbamAdminData = data;
+  const productForm = document.getElementById('productForm');
+  if (productForm) productForm.addEventListener('submit', handleProductSubmit);
 
-    fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
-    fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
-
-    fillCheckboxes('lengthCheckboxes',
-      ['10','12','14','16','18','20','22','24','26','28','30'], 'length');
-    fillCheckboxes('textureCheckboxes',
-      ['bone-straight','silky-straight','body-wave','loose-wave','deep-curly','kinky-curly'], 'texture');
-    fillCheckboxes('colorCheckboxes',
-      ['natural-black','dark-brown','chestnut-brown','blonde','99j-burgundy'], 'color');
-    fillCheckboxes('densityCheckboxes',
-      ['150','180','200','250','300'], 'density');
-
-    renderDashboardStats(data.orders, data.products);
-    renderRecentOrders(data.orders);
-    renderLowStock(data.products);
-    renderProductsTable(data.products);
-    renderCategoriesTable(data.categories);
-    renderOrdersTable(data.orders);
-    renderCustomersTable(data.customers);
-    wireProductsPageFilters();
-    wireOrdersPage();
-    wireCustomersPage();
-    renderImagePreviews();
-    renderCategoryImagePreview();
-
-    injectBell();
-    renderBell();
-
-    await loadSettings();
-    startRealtime();
-
-    /* ===== Add Product button ===== */
-    const addProductBtn = document.getElementById('addProductBtn');
-    if (addProductBtn) {
-      addProductBtn.addEventListener('click', () => {
-        editingProductId = null;
-        window.BISBAM_PENDING_IMAGES = [];
-        document.getElementById('productForm').reset();
-        document.getElementById('productModalTitle').textContent = 'Add Product';
-        renderImagePreviews();
-        closeInlineNewCategory();
-        openModal('productModal');
-      });
-    }
-
-    const productForm = document.getElementById('productForm');
-    if (productForm) productForm.addEventListener('submit', handleProductSubmit);
-
-    /* ===== Add Category button ===== */
-    const addCategoryBtn = document.getElementById('addCategoryBtn');
-    if (addCategoryBtn) {
-      addCategoryBtn.addEventListener('click', () => {
-        editingCategoryId = null;
-        window.BISBAM_PENDING_CATEGORY_IMAGE = null;
-        document.getElementById('categoryForm').reset();
-        document.getElementById('categoryModalTitle').textContent = 'Add Category';
-        renderCategoryImagePreview();
-        openModal('categoryModal');
-      });
-    }
-
-    const categoryForm = document.getElementById('categoryForm');
-    if (categoryForm) categoryForm.addEventListener('submit', handleCategorySubmit);
-
-    const settingsForm = document.getElementById('settingsForm');
-    if (settingsForm) settingsForm.addEventListener('submit', handleSettingsSubmit);
-
-    /* ===== INLINE NEW CATEGORY ===== */
-    initInlineNewCategory();
+  /* ===== Add Category button ===== */
+  const addCategoryBtn = document.getElementById('addCategoryBtn');
+  if (addCategoryBtn) {
+    addCategoryBtn.addEventListener('click', () => {
+      editingCategoryId = null;
+      window.BISBAM_PENDING_CATEGORY_IMAGE = null;
+      document.getElementById('categoryForm').reset();
+      document.getElementById('categoryModalTitle').textContent = 'Add Category';
+      renderCategoryImagePreview();
+      openModal('categoryModal');
+    });
   }
-  init();
+
+  const categoryForm = document.getElementById('categoryForm');
+  if (categoryForm) categoryForm.addEventListener('submit', handleCategorySubmit);
+
+  const settingsForm = document.getElementById('settingsForm');
+  if (settingsForm) settingsForm.addEventListener('submit', handleSettingsSubmit);
+
+  /* ===== INLINE NEW CATEGORY ===== */
+  initInlineNewCategory();
+}
+init();
 
   /* =========================================================
-     INLINE NEW CATEGORY
+     PART 6 — GLOBAL CLICKS, DELIVERY ZONES, CLOSE IIFE
      ========================================================= */
-  function initInlineNewCategory() {
-    const pCategorySelect = document.getElementById('pCategory');
-    const inlineNewCategory = document.getElementById('inlineNewCategory');
-    const newCatName = document.getElementById('newCatName');
-    const newCatSlug = document.getElementById('newCatSlug');
-    const newCatImage = document.getElementById('newCatImage');
-    const newCatError = document.getElementById('newCatError');
-    const cancelNewCatBtn = document.getElementById('cancelNewCatBtn');
-    const saveNewCatBtn = document.getElementById('saveNewCatBtn');
-
-    if (!inlineNewCategory) return;
-
-    window.openInlineNewCategory = function () {
-      inlineNewCategory.hidden = false;
-      if (newCatError) newCatError.hidden = true;
-      if (newCatName) newCatName.focus();
-    };
-
-    window.closeInlineNewCategory = function () {
-      inlineNewCategory.hidden = true;
-      if (newCatName) newCatName.value = '';
-      if (newCatSlug) newCatSlug.value = '';
-      if (newCatImage) newCatImage.value = '';
-      if (newCatError) newCatError.hidden = true;
-      if (pCategorySelect) pCategorySelect.value = '';
-    };
-
-    if (pCategorySelect) {
-      pCategorySelect.addEventListener('change', () => {
-        if (pCategorySelect.value === '__NEW_CATEGORY__') {
-          pCategorySelect.value = '';
-          window.openInlineNewCategory();
-        }
-      });
-    }
-
-    if (newCatName && newCatSlug) {
-      newCatName.addEventListener('input', () => {
-        newCatSlug.value = newCatName.value.toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-      });
-    }
-
-    if (cancelNewCatBtn) {
-      cancelNewCatBtn.addEventListener('click', () => window.closeInlineNewCategory());
-    }
-
-    if (saveNewCatBtn) {
-      saveNewCatBtn.addEventListener('click', async () => {
-        const client = db();
-        if (!client) return;
-
-        const name = (newCatName?.value || '').trim();
-        const slug = (newCatSlug?.value || '').trim();
-
-        if (!name || !slug) {
-          if (newCatError) {
-            newCatError.hidden = false;
-            newCatError.textContent = 'Name and slug are required.';
-          }
-          return;
-        }
-
-        const originalText = saveNewCatBtn.textContent;
-        saveNewCatBtn.textContent = 'Saving…';
-        saveNewCatBtn.disabled = true;
-        if (newCatError) newCatError.hidden = true;
-
-        try {
-          let imageUrl = null;
-          const file = newCatImage?.files?.[0];
-          if (file) {
-            if (file.size > 500 * 1024) {
-              throw new Error('Image is over 500KB. Please compress it first.');
-            }
-            const ext = file.name.split('.').pop().toLowerCase();
-            const filename = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-            const filepath = `categories/${filename}`;
-
-            const { error: upErr } = await client.storage
-              .from('Product-images')
-              .upload(filepath, file, { cacheControl: '31536000', upsert: false });
-
-            if (upErr) throw upErr;
-
-            const { data: pub } = client.storage.from('Product-images').getPublicUrl(filepath);
-            if (pub && pub.publicUrl) imageUrl = pub.publicUrl;
-          }
-
-          const { error } = await client.from('categories').insert({
-            name,
-            slug,
-            image_url: imageUrl
-          });
-
-          if (error) throw error;
-
-          const data = await fetchAll();
-          window.BisbamAdminData = data;
-          fillCategoryDropdown(document.getElementById('pCategory'), data.categories);
-          fillCategoryDropdown(document.getElementById('productCategoryFilter'), data.categories);
-          renderCategoriesTable(data.categories);
-
-          if (pCategorySelect) pCategorySelect.value = slug;
-
-          window.closeInlineNewCategory();
-
-          alert(`Category "${name}" created and selected.`);
-
-        } catch (err) {
-          console.error('New category error:', err);
-          if (newCatError) {
-            newCatError.hidden = false;
-            newCatError.textContent = err.message || 'Could not create category.';
-          }
-        } finally {
-          saveNewCatBtn.textContent = originalText;
-          saveNewCatBtn.disabled = false;
-        }
-      });
-    }
-  }
 
   /* ============ GLOBAL CLICKS ============ */
   document.addEventListener('click', e => {
@@ -1831,7 +1973,6 @@ async function handleSettingsSubmit(e) {
     const client = db();
     if (!client) return;
 
-    // Find zone for confirmation
     const { data: zone } = await client
       .from('delivery_zones')
       .select('*')
@@ -1899,4 +2040,5 @@ async function handleSettingsSubmit(e) {
       }
     });
   }
+
 })();

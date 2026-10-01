@@ -962,3 +962,95 @@
     width: 100%;
   }
 }
+/* =========================================================
+   EXISTING MEDIA (Edit Product modal)
+   Current images + current video shown when editing.
+   ========================================================= */
+
+/* Container for the existing video preview */
+.existing-video-preview {
+  display: inline-block;
+  max-width: 220px;
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--pink-soft);
+  border: 1px solid var(--pink-border);
+  border-radius: var(--radius-sm);
+}
+
+/* The video element itself */
+.existing-video-preview video {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: var(--radius-sm);
+  background: #000;
+}
+
+/* Remove button under the video */
+.existing-video-preview .existing-video-remove {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-sm);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #B00020;
+  background: var(--white);
+  border: 1px solid #B00020;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.existing-video-preview .existing-video-remove:hover {
+  background: #B00020;
+  color: var(--white);
+}
+
+/* Small caption under the video */
+.existing-video-preview .existing-video-label {
+  display: block;
+  margin-top: var(--space-xs);
+  font-size: 0.7rem;
+  color: var(--grey);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Existing images grid — reuses .image-preview-grid ===== */
+/* But we add a visual marker so the user knows these are CURRENT (not new) */
+
+#existingImagesGrid .image-preview-item {
+  border: 2px solid var(--pink);
+  position: relative;
+}
+
+#existingImagesGrid .image-preview-item::after {
+  content: 'CURRENT';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--pink);
+  color: var(--white);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding: 3px 0;
+}
+
+/* Mobile tweak */
+@media (max-width: 640px) {
+  .existing-video-preview {
+    max-width: 100%;
+  }
+  .existing-video-preview video {
+    max-width: 100%;
+  }
+}

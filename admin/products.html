@@ -235,8 +235,16 @@
           <div class="form-section">
             <h3>Media</h3>
 
+            <!-- ===== EXISTING IMAGES (shown only when editing a product that has images) ===== -->
+            <div class="form-group" id="existingImagesGroup" hidden>
+              <label>Current Images</label>
+              <div id="existingImagesGrid" class="image-preview-grid"></div>
+              <p class="form-note">Tap × to remove. Only removes when you save.</p>
+            </div>
+
+            <!-- ===== NEW IMAGES ===== -->
             <div class="form-group">
-              <label>Product Images</label>
+              <label>Add New Images</label>
               <input type="file" id="pImages" accept="image/*" style="display:none;">
               <div class="image-picker-row">
                 <button type="button" class="btn btn-outline btn-small" id="addImageBtn">+ Add Image</button>
@@ -246,8 +254,16 @@
               <p class="form-note">JPG/PNG, under 500KB each. Tap "+ Add Image" for each photo.</p>
             </div>
 
+            <!-- ===== EXISTING VIDEO (shown only when editing a product that has a video) ===== -->
+            <div class="form-group" id="existingVideoGroup" hidden>
+              <label>Current Video</label>
+              <div id="existingVideoPreview" class="existing-video-preview"></div>
+              <p class="form-note">Tap Remove to delete. Or pick a new video below to replace.</p>
+            </div>
+
+            <!-- ===== NEW VIDEO ===== -->
             <div class="form-group">
-              <label for="pVideo">Product Video (optional)</label>
+              <label for="pVideo">Upload New Video (optional)</label>
               <input type="file" id="pVideo" name="video" accept="video/mp4,video/webm">
               <p class="form-note">MP4 or WebM only. Max 30 seconds. Max 15MB.</p>
             </div>
