@@ -3230,8 +3230,7 @@ table {
   z-index: 10;
 }
 
-/* Respect users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
+
   .auth-body::after {
     animation: none;
   }
@@ -3239,4 +3238,39 @@ table {
     animation: none;
     opacity: 0.4;
   }
+}
+/* =========================================================
+   PRIVACY AGREEMENT CHECKBOX
+   ========================================================= */
+.privacy-agree-group {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--pink-border);
+}
+
+.privacy-agree-group .form-checkbox {
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--grey);
+  margin-bottom: 0;
+}
+
+.privacy-agree-group .form-checkbox input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pink);
+}
+
+.privacy-agree-group .form-checkbox a {
+  color: var(--pink);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.privacy-agree-group .form-checkbox a:hover {
+  color: var(--pink-deep);
 }

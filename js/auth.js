@@ -69,6 +69,8 @@
     mode = newMode;
     clearMessages();
 
+    const signupPrivacyGroup = document.getElementById('signupPrivacyGroup');
+
     if (mode === 'login') {
       authTitle.textContent = 'Welcome Back';
       authSubtitle.textContent = 'Sign in to your Bisbam Hairs account';
@@ -78,6 +80,7 @@
       authPassword.setAttribute('autocomplete', 'current-password');
       toggleText.innerHTML = `Don't have an account? <a href="#" id="authToggleLink">Sign up here</a>`;
       if (forgotLinkWrap) forgotLinkWrap.style.display = '';
+      if (signupPrivacyGroup) signupPrivacyGroup.hidden = true;
     } else {
       authTitle.textContent = 'Create Account';
       authSubtitle.textContent = 'Join Bisbam Hairs — save wishlists, faster checkout';
@@ -87,6 +90,7 @@
       authPassword.setAttribute('autocomplete', 'new-password');
       toggleText.innerHTML = `Already have an account? <a href="#" id="authToggleLink">Sign in here</a>`;
       if (forgotLinkWrap) forgotLinkWrap.style.display = 'none';
+      if (signupPrivacyGroup) signupPrivacyGroup.hidden = false;
     }
 
     // Re-attach toggle listener
@@ -129,6 +133,13 @@
 
       if (mode === 'signup' && password.length < 6) {
         return showError('Password must be at least 6 characters.');
+      }
+
+      if (mode === 'signup') {
+        const agreePrivacy = document.getElementById('agreePrivacy');
+        if (!agreePrivacy || !agreePrivacy.checked) {
+          return showError('Please agree to the Privacy Policy to continue.');
+        }
       }
 
       clearMessages();

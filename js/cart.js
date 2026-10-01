@@ -271,6 +271,13 @@
         return;
       }
 
+      /* Privacy Policy agreement required */
+      const agreePrivacy = document.getElementById('agreePrivacy');
+      if (!agreePrivacy || !agreePrivacy.checked) {
+        alert('Please agree to the Privacy Policy to continue.');
+        return;
+      }
+
       const btn = document.getElementById('placeOrderBtn');
       const originalText = btn ? btn.textContent : '';
       if (btn) {

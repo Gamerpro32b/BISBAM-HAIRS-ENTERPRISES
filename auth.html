@@ -51,6 +51,14 @@
         <input type="password" id="authPassword" name="password" autocomplete="current-password" minlength="6" required>
       </div>
 
+      <!-- Privacy agreement — shown only in Sign Up mode (toggled by JS) -->
+      <div class="form-group privacy-agree-group" id="signupPrivacyGroup" hidden>
+        <label class="form-checkbox">
+          <input type="checkbox" id="agreePrivacy">
+          <span>I have read and agree to the <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a> *</span>
+        </label>
+      </div>
+
       <button type="submit" class="btn btn-primary btn-block" id="authSubmitBtn">
         Sign In
       </button>
