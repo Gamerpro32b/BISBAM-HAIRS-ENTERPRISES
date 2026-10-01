@@ -483,18 +483,24 @@ function renderExistingImages(product) {
 function renderExistingVideo(product) {
   const group = document.getElementById('existingVideoGroup');
   const preview = document.getElementById('existingVideoPreview');
+  const newVideoGroup = document.getElementById('newVideoGroup');
   if (!group || !preview) return;
 
   const videoUrl = product ? product.video_url : null;
+  const isRemoved = window.BISBAM_REMOVED_EXISTING_VIDEO;
 
-  // If no video, or marked for removal → hide
-  if (!videoUrl || window.BISBAM_REMOVED_EXISTING_VIDEO) {
+  // If no video, or marked for removal → hide the "Current Video" section
+  if (!videoUrl || isRemoved) {
     group.hidden = true;
     preview.innerHTML = '';
+    // Show the upload picker (so she can add a new one)
+    if (newVideoGroup) newVideoGroup.hidden = false;
     return;
   }
 
+  // Video exists → show it, and HIDE the upload picker
   group.hidden = false;
+  if (newVideoGroup) newVideoGroup.hidden = true;
 
   preview.innerHTML = `
     <video src="${videoUrl}" controls preload="metadata" playsinline></video>
@@ -512,7 +518,6 @@ function renderExistingVideo(product) {
     });
   }
 }
-
 /* ============ IMAGE PICKER (CATEGORY) ============ */
 function renderCategoryImagePreview() {
   const grid = document.getElementById('categoryImagePreview');
