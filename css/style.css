@@ -3238,8 +3238,8 @@ table {
     animation: none;
     opacity: 0.4;
   }
-}
-/* =========================================================
+
+/* =====!important====================================================
    PRIVACY AGREEMENT CHECKBOX
    ========================================================= */
 .privacy-agree-group {
@@ -3273,4 +3273,82 @@ table {
 
 .privacy-agree-group .form-checkbox a:hover {
   color: var(--pink-deep);
+}
+/* =========================================================
+   LIQUID GLASS BUTTONS
+   Applies to .btn-primary only.
+   Delete this whole block to revert to default buttons.
+   ========================================================= */
+
+.btn-primary {
+  position: relative;
+  background: linear-gradient(135deg, #E91E8C 0%, #8B0F4A 100%);
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-pill);
+  padding: 14px 36px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow:
+    0 6px 16px rgba(139, 15, 74, 0.28),
+    0 2px 4px rgba(139, 15, 74, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  overflow: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtle glossy highlight across the top */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.05) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: var(--radius-pill) var(--radius-pill) 0 0;
+}
+
+.btn-primary:hover {
+  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(139, 15, 74, 0.35),
+    0 3px 6px rgba(139, 15, 74, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+  background-position: 100% 0;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow:
+    0 4px 10px rgba(139, 15, 74, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+}
+
+/* Fallback: if backdrop-filter isn't supported (older phones) */
+@supports not (backdrop-filter: blur(10px)) {
+  .btn-primary {
+    background: linear-gradient(135deg, #E91E8C 0%, #8B0F4A 100%);
+  }
+}
+
+/* Make sure text stays above the glossy ::before */
+.btn-primary > * {
+  position: relative;
+  z-index: 1;
 }
