@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-body">
+  <script>
+    if (localStorage.getItem('bisbam_theme') === 'dark') { document.body.classList.add('dark-mode'); }
+  </script>
 
   <header class="admin-header">
     <div class="admin-header-inner">
@@ -27,7 +30,6 @@
   </header>
 
   <div class="admin-layout">
-
     <aside class="admin-sidebar">
       <nav>
         <ul>
@@ -46,7 +48,6 @@
     </aside>
 
     <main class="admin-main">
-
       <div class="admin-page-header">
         <h1>Orders</h1>
         <p>Manage all customer orders.</p>
@@ -87,7 +88,6 @@
           </table>
         </div>
       </section>
-
     </main>
   </div>
 

@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-body">
+  <script>
+    if (localStorage.getItem('bisbam_theme') === 'dark') { document.body.classList.add('dark-mode'); }
+  </script>
 
   <header class="admin-header">
     <div class="admin-header-inner">
@@ -27,7 +30,6 @@
   </header>
 
   <div class="admin-layout">
-
     <aside class="admin-sidebar">
       <nav>
         <ul>
@@ -36,7 +38,7 @@
           <li><a href="products.html">Products</a></li>
           <li><a href="categories.html">Categories</a></li>
 <li><a href="delivery-zones.html">Delivery Zones</a></li>
-<li><a href="customers.html">Customers</a></li>
+<li><a href="customers.html" class="active">Customers</a></li>
 <li><a href="settings.html">Settings</a></li>
         </ul>
       </nav>
@@ -46,7 +48,6 @@
     </aside>
 
     <main class="admin-main">
-
       <div class="admin-page-header">
         <h1>Customers</h1>
         <p>Everyone who has placed an order with Bisbam Hairs.</p>
@@ -77,7 +78,6 @@
           </table>
         </div>
       </section>
-
     </main>
   </div>
 

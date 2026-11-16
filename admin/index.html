@@ -8,38 +8,76 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ============ MODERN DASHBOARD EXTRAS ============ */
+    .dash-header-flex { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .dash-header-flex h1 { font-family: 'Inter', sans-serif; font-size: 1.8rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-dark); }
+    .dash-header-flex p { color: var(--text-grey); font-size: 0.95rem; margin: 0; }
+    .dash-search { background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 999px; padding: 10px 20px; display: flex; align-items: center; gap: 10px; width: 320px; color: var(--text-grey); font-size: 0.9rem; }
+    
+    .dash-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+    .dash-stat-card { background: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--border-light); display: flex; flex-direction: column; position: relative; min-height: 120px; }
+    .dash-stat-icon { width: 40px; height: 40px; background: #FFF0F5; color: #7A2B49; border-radius: 10px; display: flex; align-items: center; justify-content: center; position: absolute; top: 20px; left: 20px; font-size: 1.2rem; }
+    body.dark-mode .dash-stat-icon { background: #331A25; color: #FF5FB0; }
+    .dash-stat-card h3 { font-size: 0.85rem; color: var(--text-grey); font-weight: 500; margin: 0 0 10px 52px; }
+    .dash-stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+    .dash-stat-card .stat-trend { font-size: 0.8rem; color: #10B981; display: flex; align-items: center; gap: 4px; }
+
+    .dash-middle-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .luxe-card { background: var(--card-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--border-light); }
+    .luxe-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .luxe-card-header h3 { font-size: 1.05rem; font-weight: 600; color: var(--text-dark); margin: 0; }
+    
+    .chart-container { position: relative; height: 200px; width: 100%; }
+    .donut-container { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; margin-bottom: 20px; }
+
+    @media (max-width: 1024px) {
+      .dash-stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-middle-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .dash-stats-grid { grid-template-columns: 1fr; }
+      .dash-search { width: 100%; }
+      .dash-header-flex { flex-direction: column; }
+      .dash-stat-card h3 { margin-left: 0; margin-top: 50px; }
+      .dash-stat-icon { position: relative; top: 0; left: 0; margin-bottom: 12px; }
+    }
+  </style>
 </head>
 <body class="admin-body">
+  <script>
+    if (localStorage.getItem('bisbam_theme') === 'dark') { document.body.classList.add('dark-mode'); }
+  </script>
 
-  <!-- ============ ADMIN HEADER ============ -->
   <header class="admin-header">
     <div class="admin-header-inner">
       <a href="index.html" class="admin-logo">
         <img src="../assets/logo/logo.png" alt="Bisbam Hairs">
         <span>Admin</span>
       </a>
-      <div class="admin-header-actions">
+      <div class="admin-header-actions" id="headerActions">
         <span class="admin-user">Signed in as Admin</span>
         <button class="btn btn-outline btn-small" id="logoutBtn">Logout</button>
       </div>
     </div>
   </header>
 
-  <!-- ============ ADMIN LAYOUT ============ -->
   <div class="admin-layout">
-
     <aside class="admin-sidebar">
       <nav>
         <ul>
           <li><a href="index.html" class="active">Dashboard</a></li>
           <li><a href="orders.html">Orders</a></li>
           <li><a href="products.html">Products</a></li>
-        <li><a href="categories.html">Categories</a></li>
-<li><a href="delivery-zones.html">Delivery Zones</a></li>
-<li><a href="customers.html">Customers</a></li>
-<li><a href="settings.html">Settings</a></li>
+          <li><a href="categories.html">Categories</a></li>
+          <li><a href="delivery-zones.html">Delivery Zones</a></li>
+          <li><a href="customers.html">Customers</a></li>
+          <li><a href="settings.html">Settings</a></li>
         </ul>
       </nav>
       <div class="admin-sidebar-footer">
@@ -48,84 +86,66 @@
     </aside>
 
     <main class="admin-main">
-
-      <div class="admin-page-header">
-        <h1>Dashboard</h1>
-        <p>Overview of your store activity.</p>
+      <div class="dash-header-flex">
+        <div>
+          <h1>Good evening, Admin 👋</h1>
+          <p>Here's what's happening with your hair business today.</p>
+        </div>
+        <div class="dash-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          Search orders, products...
+        </div>
       </div>
 
-      <section class="admin-stats">
-        <div class="stat-card"><h3>Total Orders</h3><p class="stat-value" id="statTotalOrders">0</p></div>
-        <div class="stat-card"><h3>Pending Orders</h3><p class="stat-value" id="statPendingOrders">0</p></div>
-        <div class="stat-card"><h3>Confirmed Orders</h3><p class="stat-value" id="statConfirmedOrders">0</p></div>
-        <div class="stat-card"><h3>Delivered Orders</h3><p class="stat-value" id="statDeliveredOrders">0</p></div>
-        <div class="stat-card"><h3>Total Products</h3><p class="stat-value" id="statTotalProducts">0</p></div>
-        <div class="stat-card"><h3>Out of Stock</h3><p class="stat-value" id="statOutOfStock">0</p></div>
-        <div class="stat-card"><h3>Total Revenue</h3><p class="stat-value" id="statRevenue">₦0</p></div>
-        <div class="stat-card"><h3>This Week</h3><p class="stat-value" id="statWeekOrders">0 orders</p></div>
+      <section class="dash-stats-grid">
+        <div class="dash-stat-card"><div class="dash-stat-icon">₦</div><h3>Total Revenue</h3><p class="stat-value" id="statRevenue">₦0</p><div class="stat-trend">↑ Live Data</div></div>
+        <div class="dash-stat-card"><div class="dash-stat-icon">📦</div><h3>Total Orders</h3><p class="stat-value" id="statTotalOrders">0</p><div class="stat-trend">↑ Live Data</div></div>
+        <div class="dash-stat-card"><div class="dash-stat-icon">👥</div><h3>Pending Orders</h3><p class="stat-value" id="statPendingOrders">0</p><div class="stat-trend">⏳ Requires action</div></div>
+        <div class="dash-stat-card"><div class="dash-stat-icon">🚚</div><h3>Delivered Orders</h3><p class="stat-value" id="statDeliveredOrders">0</p><div class="stat-trend">✅ Completed</div></div>
       </section>
 
-      <section class="admin-panel">
-        <div class="admin-panel-header">
-          <h2>Recent Orders</h2>
-          <a href="orders.html" class="btn btn-outline btn-small">View All</a>
+      <section class="dash-middle-grid">
+        <div class="luxe-card">
+          <div class="luxe-card-header"><h3>Revenue Overview</h3></div>
+          <div class="chart-container"><canvas id="revenueChart"></canvas></div>
         </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Phone</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="recentOrdersBody">
-              <tr><td colspan="8" class="admin-empty">No orders yet.</td></tr>
-            </tbody>
-          </table>
+        <div class="luxe-card">
+          <div class="luxe-card-header"><h3>Order Status</h3></div>
+          <div class="donut-container"><canvas id="statusChart"></canvas></div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-grey);"><span>Completed</span><span id="legendCompleted">0</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-grey); margin-top:4px;"><span>Pending</span><span id="legendPending">0</span></div>
+        </div>
+        <div class="luxe-card">
+          <div class="luxe-card-header"><h3>Top Selling Products</h3></div>
+          <p style="font-size:0.85rem; color:var(--text-grey); text-align:center; margin-top:40px;">Data calculates after first sale.</p>
         </div>
       </section>
 
-      <section class="admin-panel">
-        <div class="admin-panel-header">
-          <h2>Low Stock Products</h2>
-          <a href="products.html" class="btn btn-outline btn-small">Manage Products</a>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="lowStockBody">
-              <tr><td colspan="5" class="admin-empty">No low-stock products.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+        <section class="luxe-card">
+          <div class="luxe-card-header"><h3>Recent Orders</h3><a href="orders.html" style="font-size:0.85rem; color:#E91E8C; text-decoration:none;">View All →</a></div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="recentOrdersBody"><tr><td colspan="5" class="admin-empty">No orders yet.</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="luxe-card">
+          <div class="luxe-card-header"><h3>Low Stock</h3><a href="products.html" style="font-size:0.85rem; color:#E91E8C; text-decoration:none;">Manage</a></div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Product</th><th>Stock</th></tr></thead>
+              <tbody id="lowStockBody"><tr><td colspan="2" class="admin-empty">No low-stock products.</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
 
-      <section class="admin-panel">
-        <div class="admin-panel-header">
-          <h2>Quick Actions</h2>
-        </div>
-        <div class="admin-quick-actions">
-          <a href="products.html?action=new" class="btn btn-primary">+ Add Product</a>
-          <a href="orders.html?filter=pending" class="btn btn-outline">View Pending Orders</a>
-          <a href="categories.html" class="btn btn-outline">Manage Categories</a>
-          <a href="customers.html" class="btn btn-outline">View Customers</a>
-        </div>
-      </section>
-
+      <!-- HIDDEN STATS -->
+      <div style="display:none;">
+        <span id="statConfirmedOrders">0</span><span id="statTotalProducts">0</span><span id="statOutOfStock">0</span><span id="statWeekOrders">0</span>
+      </div>
     </main>
   </div>
 
@@ -137,5 +157,55 @@
   <script src="../js/categories.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
+
+  <script>
+    setTimeout(() => {
+      const data = window.BisbamAdminData || { orders: [] };
+      const orders = data.orders || [];
+
+      const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+      let gradient = ctxRevenue.createLinearGradient(0, 0, 0, 200);
+      gradient.addColorStop(0, 'rgba(233, 30, 140, 0.2)');
+      gradient.addColorStop(1, 'rgba(233, 30, 140, 0)');
+
+      const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().split('T')[0];
+      });
+      
+      const revenueData = last7Days.map(date => {
+        return orders.filter(o => o.date === date).reduce((sum, o) => sum + (o.total || 0), 0);
+      });
+
+      new Chart(ctxRevenue, {
+        type: 'line',
+        data: {
+          labels: last7Days.map(d => d.slice(5)),
+          datasets: [{ label: 'Revenue', data: revenueData, borderColor: '#E91E8C', backgroundColor: gradient, borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#9CA3AF' } }, y: { display: false } } }
+      });
+
+      const ctxStatus = document.getElementById('statusChart').getContext('2d');
+      const statusCounts = {
+        completed: orders.filter(o => o.status === 'delivered').length,
+        pending: orders.filter(o => o.status === 'pending').length,
+        confirmed: orders.filter(o => o.status === 'confirmed').length
+      };
+
+      document.getElementById('legendCompleted').textContent = statusCounts.completed;
+      document.getElementById('legendPending').textContent = statusCounts.pending;
+
+      new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'Pending', 'Confirmed'],
+          datasets: [{ data: [statusCounts.completed, statusCounts.pending, statusCounts.confirmed], backgroundColor: ['#3B1A2A', '#E91E8C', '#FDE68A'], borderWidth: 0, cutout: '75%' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }, 1500);
+  </script>
 </body>
 </html>
