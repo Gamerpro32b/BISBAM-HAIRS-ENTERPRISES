@@ -207,5 +207,19 @@
       });
     }, 1500);
   </script>
+  <script>
+  // Adds the Store Status Pill automatically when the page loads
+  setTimeout(() => {
+    const headerActions = document.querySelector('.admin-header-actions');
+    if (headerActions && !document.getElementById('storeStatusPill')) {
+      const pill = document.createElement('div');
+      pill.id = 'storeStatusPill';
+      pill.className = 'store-status-pill';
+      pill.innerHTML = '<span class="store-status-dot"></span> Store Online';
+      // Put it right next to the "Signed in as Admin" text
+      headerActions.insertBefore(pill, headerActions.firstChild);
+    }
+  }, 500);
+</script>
 </body>
 </html>

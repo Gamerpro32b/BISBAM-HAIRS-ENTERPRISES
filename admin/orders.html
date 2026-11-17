@@ -112,5 +112,41 @@
   <script src="../js/categories.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
+  <script>
+  // Automatically adds avatars to the first column of the tables
+  setTimeout(() => {
+    // For Orders Page
+    document.querySelectorAll('#ordersBody tr, #recentOrdersBody tr').forEach(row => {
+      const nameTd = row.querySelectorAll('td')[1]; // The 2nd column is Customer Name
+      if (nameTd && !nameTd.querySelector('.customer-avatar')) {
+        const name = nameTd.textContent.trim();
+        if (name && name !== 'Customer') {
+          nameTd.innerHTML = `
+            <div class="customer-name-cell">
+              <div class="customer-avatar">${name.charAt(0)}</div>
+              <span>${name}</span>
+            </div>
+          `;
+        }
+      }
+    });
+
+    // For Customers Page
+    document.querySelectorAll('#customersBody tr').forEach(row => {
+      const nameTd = row.querySelectorAll('td')[0]; // The 1st column is Name
+      if (nameTd && !nameTd.querySelector('.customer-avatar')) {
+        const name = nameTd.textContent.trim();
+        if (name && name !== 'Name') {
+          nameTd.innerHTML = `
+            <div class="customer-name-cell">
+              <div class="customer-avatar">${name.charAt(0)}</div>
+              <span>${name}</span>
+            </div>
+          `;
+        }
+      }
+    });
+  }, 1000); // Waits 1 second for your admin.js to load the data
+</script>
 </body>
 </html>
